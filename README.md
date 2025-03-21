@@ -1,6 +1,8 @@
 # README
 
-Version 2.8.0, January 10 2025
+Version 2.8.0-DevNet, March 21, 2025
+
+> **This is a customized fork of the [Cisco DevNet cloud-cml repository](https://github.com/CiscoDevNet/cloud-cml) with added support for DevNet Expert workstation deployment.**
 
 CML instances can run on Azure and AWS cloud infrastructure.  This repository provides automation tooling using Terraform to deploy and manage CML in the cloud.  We have tested CML deployments using this tool chain in both clouds.  **The use of this tool is considered BETA**.  The tool has certain requirements and prerequisites which are described in this README and in the [documentation](documentation) directory.
 
@@ -19,7 +21,7 @@ CML instances can run on Azure and AWS cloud infrastructure.  This repository pr
 >
 > **Features and capabilities:** Changes to the deployment tooling will be considered like any other feature by adding them to the product roadmap.  This is done at the discretion of the CML team.
 >
-> **Error reporting:** If you encounter any errors or problems that might be related to the code in this repository then please open an issue on the [Github issue tracker for this repository](https://github.com/CiscoDevNet/cloud-cml/issues).
+> **Error reporting:** If you encounter any errors or problems that might be related to the code in this repository then please open an issue on the [Github issue tracker for this repository](https://github.com/davisma20/my-cloud-cml/issues).
 
 > [!IMPORTANT]
 > Read the section below about [cloud provider selection](#important-cloud-provider-selection) (prepare script).

@@ -569,12 +569,40 @@ resource "aws_security_group" "sg_workstation" {
     cidr_blocks = var.options.cfg.common.allowed_ipv4_subnets
   }
 
-  # Allow all outbound
+  # Allow outbound HTTPS for updates and downloads
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    description = "allow HTTPS outbound"
+  }
+  
+  # Allow outbound HTTP for updates and downloads
+  egress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "allow HTTP outbound"
+  }
+  
+  # Allow outbound DNS
+  egress {
+    from_port   = 53
+    to_port     = 53
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "allow DNS outbound"
+  }
+  
+  # Allow NTP
+  egress {
+    from_port   = 123
+    to_port     = 123
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "allow NTP outbound"
   }
 
   tags = {
@@ -601,11 +629,21 @@ resource "aws_instance" "devnet_workstation" {
   ami                  = "ami-0a0e4ef95325270c9"  # Use the correct imported DevNet Expert AMI
   iam_instance_profile = var.options.cfg.aws.profile
   key_name             = var.options.cfg.common.key_name
-  subnet_id           = aws_subnet.public_subnet.id
+  subnet_id            = aws_subnet.public_subnet.id
+  
+  # Require IMDSv2 (more secure metadata service access)
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required" # Require IMDSv2 tokens
+    http_put_response_hop_limit = 1
+    instance_metadata_tags      = "disabled"
+  }
 
   root_block_device {
     volume_size = 50
     volume_type = "gp3"
+    encrypted   = true  # Enable encryption for the root volume
+    delete_on_termination = true
   }
 
   vpc_security_group_ids = [
@@ -616,24 +654,93 @@ resource "aws_instance" "devnet_workstation" {
     Name = "devnet-workstation-${var.options.rand_id}"
   }
   
-  # Only run minimal post-setup for imported DevNet AMI
+  # Enhanced security setup for DevNet workstation
   user_data = <<-EOF
               #!/bin/bash
               
               # Log startup
               echo "DevNet Expert workstation started at $(date)" > /var/log/devnet-setup-complete.log
               
-              # Ensure RDP is enabled and running (in case it's not in the base image)
+              # Ensure RDP is enabled and running
               if command -v systemctl > /dev/null && systemctl list-unit-files | grep -q xrdp; then
                 systemctl enable xrdp
                 systemctl start xrdp
                 echo "XRDP service started" >> /var/log/devnet-setup-complete.log
               fi
               
-              # Allow RDP through firewall if ufw is installed
+              # Security hardening
+              
+              # 1. Update all packages
+              apt-get update && apt-get upgrade -y
+              
+              # 2. Configure firewall
               if command -v ufw > /dev/null; then
-                ufw allow 3389/tcp
-                echo "UFW rule for RDP added" >> /var/log/devnet-setup-complete.log
+                ufw default deny incoming
+                ufw default allow outgoing
+                ufw allow 22/tcp  # SSH
+                ufw allow 3389/tcp  # RDP
+                ufw --force enable
+                echo "UFW firewall configured" >> /var/log/devnet-setup-complete.log
               fi
+              
+              # 3. Set up automatic security updates
+              apt-get install -y unattended-upgrades
+              echo 'APT::Periodic::Update-Package-Lists "1";' > /etc/apt/apt.conf.d/20auto-upgrades
+              echo 'APT::Periodic::Unattended-Upgrade "1";' >> /etc/apt/apt.conf.d/20auto-upgrades
+              echo "Automatic updates configured" >> /var/log/devnet-setup-complete.log
+              
+              # 4. Set password complexity requirements
+              if [ -f /etc/pam.d/common-password ]; then
+                sed -i 's/password.*pam_unix.so.*/password        requisite                       pam_unix.so minlen=12 sha512 shadow remember=5/' /etc/pam.d/common-password
+                echo "Password complexity requirements set" >> /var/log/devnet-setup-complete.log
+              fi
+              
+              # 5. Configure login failure detection and banning
+              apt-get install -y fail2ban
+              cat <<FAIL2BAN > /etc/fail2ban/jail.local
+              [sshd]
+              enabled = true
+              port = 22
+              filter = sshd
+              logpath = /var/log/auth.log
+              maxretry = 5
+              bantime = 3600
+              
+              [xrdp]
+              enabled = true
+              port = 3389
+              filter = xrdp
+              logpath = /var/log/xrdp-sesman.log
+              maxretry = 5
+              bantime = 3600
+              FAIL2BAN
+              
+              # Create filter for XRDP
+              mkdir -p /etc/fail2ban/filter.d
+              cat <<XRDPFILTER > /etc/fail2ban/filter.d/xrdp.conf
+              [Definition]
+              failregex = ^.*authentication failed.*user=.+.*from IP=<HOST>.*$
+              ignoreregex =
+              XRDPFILTER
+              
+              systemctl enable fail2ban
+              systemctl restart fail2ban
+              echo "Fail2ban configured for SSH and RDP protection" >> /var/log/devnet-setup-complete.log
+              
+              # 6. Disable unnecessary services
+              systemctl disable bluetooth.service || true
+              systemctl disable cups.service || true
+              echo "Disabled unnecessary services" >> /var/log/devnet-setup-complete.log
+              
+              # 7. Set secure SSH configuration
+              if [ -f /etc/ssh/sshd_config ]; then
+                sed -i 's/#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+                sed -i 's/#MaxAuthTries.*/MaxAuthTries 5/' /etc/ssh/sshd_config
+                sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+                echo "Secured SSH configuration" >> /var/log/devnet-setup-complete.log
+                systemctl restart sshd
+              fi
+              
+              echo "Security hardening completed at $(date)" >> /var/log/devnet-setup-complete.log
               EOF
 }

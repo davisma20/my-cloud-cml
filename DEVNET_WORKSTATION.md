@@ -130,6 +130,54 @@ To deploy the workstation:
 
 3. The deployment will output the IP address of the workstation.
 
+## Security Features
+
+The DevNet workstation is configured with several security best practices:
+
+### Infrastructure Security
+
+1. **Root Volume Encryption**
+   - The root EBS volume is encrypted to protect data at rest
+   - Delete-on-termination is enabled to prevent data leakage
+
+2. **IMDSv2 Requirement**
+   - Instance Metadata Service version 2 is enforced
+   - Prevents server-side request forgery (SSRF) attacks
+   - HTTP token requirement for metadata access
+
+3. **Restricted Security Groups**
+   - Inbound traffic is limited to SSH (port 22) and RDP (port 3389)
+   - Outbound traffic is restricted to essential services:
+     - HTTP (80) and HTTPS (443) for updates and downloads
+     - DNS (53/UDP) for name resolution
+     - NTP (123/UDP) for time synchronization
+
+### Host-Based Security
+
+The workstation is automatically hardened during initialization with:
+
+1. **Automatic Updates**
+   - Unattended-upgrades package is installed and configured
+   - Security updates are applied automatically
+
+2. **Firewall Configuration**
+   - UFW firewall is configured with default deny policy
+   - Only SSH and RDP ports are allowed inbound
+
+3. **Brute Force Protection**
+   - Fail2ban is installed to monitor and block repeated login attempts
+   - Protects both SSH and RDP from brute force attacks
+   - Configures 1-hour ban after 5 failed attempts
+
+4. **SSH Hardening**
+   - Root login is disabled
+   - Password authentication is disabled (key-based only)
+   - Maximum authentication attempts is limited
+
+5. **System Hardening**
+   - Unnecessary services are disabled
+   - Password complexity requirements are enforced
+
 ## Connecting to the DevNet Workstation
 
 ### RDP Access (Recommended)

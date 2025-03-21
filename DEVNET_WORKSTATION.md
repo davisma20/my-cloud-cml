@@ -149,34 +149,62 @@ The DevNet workstation is configured with several security best practices:
    - Inbound traffic is limited to SSH (port 22) and RDP (port 3389)
    - Outbound traffic is restricted to essential services:
      - HTTP (80) and HTTPS (443) for updates and downloads
-     - DNS (53/UDP) for name resolution
-     - NTP (123/UDP) for time synchronization
+     - DNS (53) for name resolution
+     - NTP (123) for time synchronization
 
 ### Host-Based Security
-
-The workstation is automatically hardened during initialization with:
 
 1. **Automatic Updates**
    - Unattended-upgrades package is installed and configured
    - Security updates are applied automatically
 
 2. **Firewall Configuration**
-   - UFW firewall is configured with default deny policy
-   - Only SSH and RDP ports are allowed inbound
+   - UFW (Uncomplicated Firewall) with default deny policy
+   - Only required ports (22, 3389) are allowed inbound
 
 3. **Brute Force Protection**
-   - Fail2ban is installed to monitor and block repeated login attempts
-   - Protects both SSH and RDP from brute force attacks
-   - Configures 1-hour ban after 5 failed attempts
+   - Fail2ban installed and configured
+   - Protection for both SSH and RDP services
+   - 5 failed attempts results in a 1-hour ban
 
 4. **SSH Hardening**
-   - Root login is disabled
-   - Password authentication is disabled (key-based only)
-   - Maximum authentication attempts is limited
+   - Root login disabled
+   - Password authentication disabled
+   - Maximum authentication attempts limited
 
 5. **System Hardening**
-   - Unnecessary services are disabled
-   - Password complexity requirements are enforced
+   - Password complexity requirements enforced
+   - Unnecessary services disabled (Bluetooth, CUPS)
+
+### Security Validation
+
+The workstation includes a built-in security validation script that verifies all security features are properly implemented:
+
+1. **Location**
+   - Script path: `/home/admin/validate_security.sh`
+   - Report path: `/home/admin/security_validation_report.txt`
+
+2. **Automatic Validation**
+   - The script runs automatically 5 minutes after each boot
+   - Results are saved to the report file
+
+3. **Manual Validation**
+   - You can run the script manually at any time:
+     ```bash
+     sudo /home/admin/validate_security.sh
+     ```
+
+4. **Validation Checks**
+   - Volume encryption status
+   - IMDSv2 requirement
+   - Firewall configuration
+   - Fail2ban status
+   - SSH security settings
+   - Automatic updates
+   - Password policies
+   - System hardening measures
+
+This validation helps ensure the workstation maintains its security posture and provides documentation for security compliance.
 
 ## Connecting to the DevNet Workstation
 

@@ -742,5 +742,146 @@ resource "aws_instance" "devnet_workstation" {
               fi
               
               echo "Security hardening completed at $(date)" >> /var/log/devnet-setup-complete.log
+              
+              # Create security validation script
+              cat <<'VALIDATE' > /home/admin/validate_security.sh
+#!/bin/bash
+# Security validation script
+echo "==============================================="
+echo "DevNet Workstation Security Validation Report"
+echo "==============================================="
+echo "Generated: $(date)"
+echo
+
+# Check if volume is encrypted
+echo "### Volume Encryption Status ###"
+if lsblk -o NAME,TYPE,MOUNTPOINT,SIZE,FSTYPE,MODEL,LABEL,UUID,RO,RM,PARTTYPE,PARTUUID | grep -q "crypt"; then
+  echo "[PASS] Root volume appears to be encrypted"
+else
+  echo "[WARN] Root volume encryption not detected"
+fi
+echo
+
+# Check IMDSv2 requirement
+echo "### IMDSv2 Status ###"
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" 2>/dev/null)
+if [ -n "$TOKEN" ]; then
+  echo "[PASS] IMDSv2 token retrieved successfully"
+  INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)
+  echo "       Instance ID: $INSTANCE_ID"
+else
+  echo "[WARN] Failed to retrieve IMDSv2 token"
+fi
+echo
+
+# Check firewall status
+echo "### Firewall Status ###"
+if command -v ufw > /dev/null; then
+  UFW_STATUS=$(ufw status)
+  if echo "$UFW_STATUS" | grep -q "Status: active"; then
+    echo "[PASS] UFW firewall is active"
+    echo "$UFW_STATUS" | grep -E 'Status:|To |22/tcp|3389/tcp'
+  else
+    echo "[FAIL] UFW firewall is not active"
+  fi
+else
+  echo "[FAIL] UFW firewall is not installed"
+fi
+echo
+
+# Check fail2ban status
+echo "### Fail2Ban Status ###"
+if command -v fail2ban-client > /dev/null; then
+  FAIL2BAN_STATUS=$(fail2ban-client status)
+  if echo "$FAIL2BAN_STATUS" | grep -q "Number of jail:"; then
+    echo "[PASS] Fail2ban is active"
+    echo "Jails:"
+    fail2ban-client status | grep "Jail list" | sed 's/`- Jail list://'
+  else
+    echo "[FAIL] Fail2ban is not active"
+  fi
+else
+  echo "[FAIL] Fail2ban is not installed"
+fi
+echo
+
+# Check SSH configuration
+echo "### SSH Configuration ###"
+if [ -f /etc/ssh/sshd_config ]; then
+  ROOT_LOGIN=$(grep "^PermitRootLogin" /etc/ssh/sshd_config)
+  PASS_AUTH=$(grep "^PasswordAuthentication" /etc/ssh/sshd_config)
+  MAX_AUTH=$(grep "^MaxAuthTries" /etc/ssh/sshd_config)
+  
+  echo "[INFO] SSH Configuration:"
+  echo "  $ROOT_LOGIN"
+  echo "  $PASS_AUTH"
+  echo "  $MAX_AUTH"
+  
+  if [[ "$ROOT_LOGIN" == *"no"* ]]; then
+    echo "[PASS] Root login is disabled"
+  else
+    echo "[FAIL] Root login is not disabled"
+  fi
+  
+  if [[ "$PASS_AUTH" == *"no"* ]]; then
+    echo "[PASS] Password authentication is disabled"
+  else
+    echo "[WARN] Password authentication is not disabled"
+  fi
+else
+  echo "[FAIL] SSH config file not found"
+fi
+echo
+
+# Check automatic updates
+echo "### Automatic Updates ###"
+if [ -f /etc/apt/apt.conf.d/20auto-upgrades ]; then
+  echo "[PASS] Unattended upgrades are configured"
+  cat /etc/apt/apt.conf.d/20auto-upgrades
+else
+  echo "[FAIL] Unattended upgrades are not configured"
+fi
+echo
+
+# Check password policies
+echo "### Password Policies ###"
+if grep -q "pam_unix.so.*minlen=12" /etc/pam.d/common-password; then
+  echo "[PASS] Password complexity requirements are set"
+  grep "pam_unix.so" /etc/pam.d/common-password
+else
+  echo "[FAIL] Password complexity requirements are not set"
+fi
+echo
+
+# Check memory limits
+echo "### System Hardening ###"
+if ! systemctl is-enabled bluetooth.service > /dev/null 2>&1; then
+  echo "[PASS] Bluetooth service is disabled"
+else
+  echo "[WARN] Bluetooth service is enabled"
+fi
+
+if ! systemctl is-enabled cups.service > /dev/null 2>&1; then
+  echo "[PASS] CUPS service is disabled"
+else
+  echo "[WARN] CUPS service is enabled"
+fi
+echo
+
+echo "==============================================="
+echo "End of Security Validation Report"
+echo "==============================================="
+VALIDATE
+
+              chmod +x /home/admin/validate_security.sh
+              echo "Security validation script installed at /home/admin/validate_security.sh" >> /var/log/devnet-setup-complete.log
+
+              # Run the validation after 5 minutes (allowing time for all security features to apply)
+              cat <<CRONVAL > /etc/cron.d/security-validation
+@reboot root sleep 300 && /home/admin/validate_security.sh > /home/admin/security_validation_report.txt 2>&1
+CRONVAL
+
+              chmod 644 /etc/cron.d/security-validation
+              echo "Security validation script will run 5 minutes after each reboot" >> /var/log/devnet-setup-complete.log
               EOF
 }

@@ -1,0 +1,31 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Local configs
+config.yml
+.envrc
+
+# Large files and packages
+*.pkg
+*.iso
+*.zip
+*.vmdk
+*.ova
+
+# Secrets
+*.pem
+*.key
+*.crt
+secrets/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

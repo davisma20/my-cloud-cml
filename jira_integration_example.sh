@@ -7,7 +7,6 @@
 # 3. Update the Jira ticket with deployment information
 #
 # Prerequisites:
-# - Jira API credentials configured
 # - AWS CLI configured
 # - Terraform installed
 # - jira-integration project cloned
@@ -15,17 +14,35 @@
 set -e
 
 # Configuration
-JIRA_PROJECT_KEY="DEVNET"
+JIRA_PROJECT_KEY="CAD"
 DEPLOYMENT_NAME="DevNet-Workstation-$(date +%Y%m%d)"
 JIRA_INTEGRATION_PATH="../jira-integration"
 AWS_REGION="us-east-2"
+AWS_SECRET_NAME="jira/cml-credentials"
 
 echo "📝 Creating Jira ticket for deployment: $DEPLOYMENT_NAME"
 
-# Create a Jira ticket for the deployment
-TICKET_KEY=$(${JIRA_INTEGRATION_PATH}/jira_cli.py create-issue \
+# Create a Jira ticket for the deployment using AWS Secrets Manager
+TICKET_KEY=$(${JIRA_INTEGRATION_PATH}/jira_cli.py --aws-secret "$AWS_SECRET_NAME" --region "$AWS_REGION" create-issue \
   --summary "Deployment: $DEPLOYMENT_NAME" \
-  --description "Deploying a new DevNet workstation using Terraform and my-cloud-cml" \
+  --description "# DevNet Workstation Deployment
+
+This ticket tracks the deployment of a new DevNet Expert workstation in AWS.
+
+## Deployment Details
+* **Name**: $DEPLOYMENT_NAME
+* **Timestamp**: $(date '+%Y-%m-%d %H:%M:%S')
+* **Requested By**: $(whoami)
+
+## Security Features
+This deployment includes the following security features:
+* Root volume encryption
+* IMDSv2 requirement (prevents SSRF attacks)
+* Restricted security groups
+* Automatic security updates
+* UFW firewall with default deny policy
+* Fail2ban for brute force protection
+* System hardening" \
   --project-key "$JIRA_PROJECT_KEY" | grep -o "$JIRA_PROJECT_KEY-[0-9]*")
 
 if [ -z "$TICKET_KEY" ]; then
@@ -50,33 +67,37 @@ fi
 
 echo "✅ Infrastructure deployed - Instance ID: $INSTANCE_ID"
 
-# Update the Jira ticket with Terraform output
+# Update the ticket with deployment information
 echo "📝 Updating Jira ticket with deployment information"
-terraform output -json | ${JIRA_INTEGRATION_PATH}/jira_cli.py terraform \
-  --name "$DEPLOYMENT_NAME" \
-  --issue-key "$TICKET_KEY"
-
-# Update with CML information if available
-if terraform output -json cml2info >/dev/null 2>&1; then
-  echo "📝 Updating Jira ticket with CML information"
-  terraform output -json cml2info | ${JIRA_INTEGRATION_PATH}/jira_cli.py cml-update \
-    --issue-key "$TICKET_KEY"
-fi
-
-# Update with workstation information
-echo "📝 Updating Jira ticket with workstation information"
-${JIRA_INTEGRATION_PATH}/jira_cli.py workstation-update \
+${JIRA_INTEGRATION_PATH}/jira_cli.py --aws-secret "$AWS_SECRET_NAME" --region "$AWS_REGION" aws-ec2 --action update \
   --issue-key "$TICKET_KEY" \
   --instance-id "$INSTANCE_ID" \
-  --region "$AWS_REGION" \
-  --username "admin" \
-  --password "1234QWer!"
+  --region "$AWS_REGION"
+
+# Add workstation connection details
+PUBLIC_IP=$(terraform output -raw workstation_public_ip)
+${JIRA_INTEGRATION_PATH}/jira_cli.py --aws-secret "$AWS_SECRET_NAME" --region "$AWS_REGION" add-comment \
+  --issue-key "$TICKET_KEY" \
+  --comment "## Workstation Connection Information
+* **RDP Connection**: $PUBLIC_IP:3389
+* **Username**: admin
+* **Password**: 1234QWer!
+
+To connect using Remote Desktop:
+1. Open Remote Desktop Connection
+2. Enter server: $PUBLIC_IP:3389
+3. Use the credentials above
+4. Accept any certificate warnings"
+
+echo "✅ Jira ticket updated with deployment details: $TICKET_KEY"
 
 echo "
-✅ Deployment complete and Jira ticket updated: $TICKET_KEY
+✨ Deployment process complete! ✨
 
-Next steps:
-1. Verify the deployment in AWS console
-2. Check the Jira ticket for access information
-3. Connect to the workstation using RDP
+DevNet Workstation details:
+- Instance ID: $INSTANCE_ID
+- Public IP: $PUBLIC_IP
+- Jira Ticket: $TICKET_KEY
+
+You can view the Jira ticket here: https://thea2sllc.atlassian.net/browse/$TICKET_KEY
 "

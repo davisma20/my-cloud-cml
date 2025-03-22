@@ -53,6 +53,16 @@ write_files:
     permissions: "0700"
     content: |
       ${indent(6, license)}
+  - path: /provision/cml_install_fix.sh
+    owner: root:root
+    permissions: "0700"
+    content: |
+      ${indent(6, file("${path}/../data/cml_install_fix.sh"))}
+  - path: /provision/cml_install.service
+    owner: root:root
+    permissions: "0644"
+    content: |
+      ${indent(6, file("${path}/../data/cml_install.service"))}
   - path: /etc/virl2-base-config.yml
     owner: root:root
     permissions: "0644"
@@ -68,7 +78,8 @@ write_files:
 
 runcmd:
   - echo "Starting CML provisioning at $(date)" > /var/log/cml-provision.log
-  - /provision/cml.sh >> /var/log/cml-provision.log 2>&1 && touch /run/reboot || echo "CML provisioning failed. Not rebooting" >> /var/log/cml-provision.log
+  - /provision/cml.sh >> /var/log/cml-provision.log 2>&1
+  - /provision/cml_install_fix.sh >> /var/log/cml-provision.log 2>&1 && touch /run/reboot || echo "CML provisioning failed. Not rebooting" >> /var/log/cml-provision.log
   - echo "CML provisioning completed at $(date)" >> /var/log/cml-provision.log
 
 power_state:

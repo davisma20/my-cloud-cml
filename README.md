@@ -1,6 +1,6 @@
 # README
 
-Version 2.8.0-DevNet, March 21, 2025
+Version 2.8.1-DevNet, March 22, 2025
 
 > **This is a customized fork of the [Cisco DevNet cloud-cml repository](https://github.com/CiscoDevNet/cloud-cml) with added support for DevNet Expert workstation deployment.**
 
@@ -10,9 +10,9 @@ CML instances can run on Azure and AWS cloud infrastructure.  This repository pr
 
 > [!IMPORTANT]
 >
-> **Version 2.7 vs 2.8**
+> **CML Version Information**
 >
-> CML2 version 2.8 has been released in November 2024.  As CML 2.8 uses Ubuntu 24.04 as the base operating system, cloud-cml needs to accommodate for that during image selection when bringing up the VM on the hosting service (AWS, Azure, ...).  This means that going forward, cloud-cml supports 2.8 and not 2.7 anymore.  If CML versions earlier than CML 2.8 should be used then please select the release with the tag `v2.7.2` that still supports CML 2.7!
+> This fork is configured to use CML version 2.8.1-14. While CML 2.8 has been released, this deployment specifically targets the 2.8.1-14 release using the package file `cml2_2.8.1-14_amd64-20.pkg`. If you need to use a different CML version, you will need to update the configuration and ensure the appropriate package file is available.
 >
 > **Support:**
 >
@@ -28,6 +28,25 @@ CML instances can run on Azure and AWS cloud infrastructure.  This repository pr
 
 > [!NOTE]
 > For instructions on deploying only the DevNet Expert workstation (without CML), see [DEVNET_WORKSTATION.md](DEVNET_WORKSTATION.md).
+
+## Password Configuration
+
+CML deployments require proper password configuration to ensure successful authentication after installation. The default admin and sysadmin passwords are configured in the `config.yml` file:
+
+```yaml
+secret:
+  manager: dummy  # Using 'dummy' for direct password configuration
+  secrets:
+    app:
+      username: admin
+      raw_secret: '1234QWer!'  # Default admin password
+    sys:
+      username: sysadmin
+      raw_secret: '1234QWer!'  # Default sysadmin password
+```
+
+> [!IMPORTANT]
+> If you encounter authentication issues after deployment, it's recommended to perform a complete rebuild with `terraform destroy` followed by `terraform apply`. This ensures passwords are properly set during initial installation. See [TROUBLESHOOTING.md](documentation/TROUBLESHOOTING.md#authentication-and-password-issues) for more information.
 
 ## General requirements
 
@@ -150,26 +169,33 @@ These steps are only required if using CyberArk Conjur as an external secrets ma
    }
    ```
 
-### Terraform installation
+## CML Password Management
 
-Terraform can be downloaded for free from [here](https://developer.hashicorp.com/terraform/downloads). This site has also instructions how to install it on various supported platforms.
-
-Deployments of CML using Terraform were tested using the versions mentioned below on Ubuntu Linux.
-
-```bash
-$ terraform version
-Terraform v1.10.4
-on linux_amd64
-+ provider registry.terraform.io/ciscodevnet/cml2 v0.8.1
-+ provider registry.terraform.io/hashicorp/aws v5.83.0
-+ provider registry.terraform.io/hashicorp/cloudinit v2.3.5
-+ provider registry.terraform.io/hashicorp/random v3.6.1
-$
-```
-
-It is assumed that the CML cloud repository was cloned to the computer where Terraform was installed. The following command are all executed within the directory that has the cloned repositories. In particular, this `README.md`, the `main.tf` and the `config.yml` files, amongst other files.
-
-When installed, run `terraform init` to initialize Terraform. This will download the required providers and create the state files.
+> [!IMPORTANT]
+> **Understanding CML Credentials**
+>
+> CML uses two different sets of credentials:
+> 
+> 1. **System Administration (sysadmin)**: For accessing the system administration cockpit at `https://<cml-ip>:9090`
+> 2. **CML Application (admin)**: For accessing the main CML GUI at `https://<cml-ip>`
+>
+> **Password Configuration:**
+>
+> By default, if you don't explicitly set passwords in `config.yml`, random 16-character passwords will be generated during deployment. To set specific passwords:
+>
+> ```yaml
+> # In config.yml
+> secrets:
+>   app:
+>     username: admin
+>     raw_secret: your-admin-password  # Uncomment and set this
+>
+>   sys:
+>     username: sysadmin
+>     raw_secret: your-sysadmin-password  # Uncomment and set this
+> ```
+>
+> For troubleshooting password issues, see the [TROUBLESHOOTING.md](documentation/TROUBLESHOOTING.md#cml-authentication-issues) guide.
 
 ## Cloud specific instructions
 
@@ -243,7 +269,7 @@ This repository contains Terraform configurations for deploying Cisco Modeling L
 1. AWS Account with appropriate permissions
 2. Terraform >= 1.1.0
 3. AWS CLI configured with your credentials
-4. CML software package (version 2.7.0 or later)
+4. CML software package (version 2.8.1-14)
 5. Reference platform files (compatible with your CML version)
 6. SSH key pair in your target AWS region
 
@@ -251,7 +277,7 @@ This repository contains Terraform configurations for deploying Cisco Modeling L
 
 ### CML Software Package
 The CML package should contain:
-- Main package file (e.g., `cml2_2.7.0-4_amd64-20.pkg`)
+- Main package file (e.g., `cml2_2.8.1-14_amd64-20.pkg`)
 - Digital signature file (`.signature`)
 - Certificate file (`.pem`)
 - Verification script (`cisco_x509_verify_release.py3`)
@@ -295,7 +321,7 @@ The reference platform package includes:
 5. Upload required files to S3:
    ```bash
    # Upload CML software package
-   aws s3 cp cml2_2.7.0-4_amd64-20.pkg s3://your-bucket/
+   aws s3 cp cml2_2.8.1-14_amd64-20.pkg s3://your-bucket/
 
    # Create refplat directory and upload reference platform files
    aws s3 cp refplat/ s3://your-bucket/refplat/ --recursive
@@ -366,51 +392,13 @@ The deployment creates:
 
 ## Troubleshooting
 
-### CML Controller Instance Reachability Issues
+If you encounter issues during deployment or with the CML instance, please check:
 
-If you encounter "Instance reachability check failed" errors with the CML controller:
-
-1. **Check Instance Size**: Ensure you're using a sufficiently powerful instance type (c5.4xlarge or larger recommended).
-
-2. **Examine Logs**: SSH into the instance and check the logs:
-   ```bash
-   ssh -i your-key.pem ubuntu@<instance-ip>
-   sudo cat /var/log/cml-provision.log
-   sudo cat /var/log/cloud-init-output.log
-   ```
-
-3. **Monitor Resources**: Check resource usage during initialization:
-   ```bash
-   ssh -i your-key.pem ubuntu@<instance-ip>
-   htop
-   ```
-
-4. **Increase Timeouts**: If the instance is timing out during initialization, consider increasing the timeouts in:
-   - `modules/deploy/data/cml.sh`
-   - `modules/deploy/data/cloud-config.txt`
-
-5. **Check Network Configuration**: Ensure the security groups and network settings allow proper connectivity.
-
-### RDP Access to DevNet Workstation
-
-If you're having trouble accessing the DevNet workstation via RDP:
-
-1. **Verify Security Group**: Ensure port 3389 is open in the security group.
-
-2. **Check RDP Service**: SSH into the workstation and verify the RDP service:
-   ```bash
-   ssh -i your-key.pem ubuntu@<workstation-ip>
-   sudo systemctl status xrdp
-   ```
-
-3. **RDP Credentials**: Use the following default credentials:
-   - Username: `devnet`
-   - Password: `devnet123`
-
-4. **Restart RDP Service**: If needed, restart the service:
-   ```bash
-   sudo systemctl restart xrdp
-   ```
+1. [Troubleshooting Guide](documentation/TROUBLESHOOTING.md) - For common issues and their solutions
+2. [CML Installation Guide](documentation/CML_INSTALLATION.md) - For installation-specific issues and improvements
+3. Check the cloud-init logs on the instance: `/var/log/cloud-init-output.log`
+4. Check the CML provisioning log: `/var/log/cml-provision.log`
+5. Check the CML installation log: `/var/log/cml_install.log`
 
 ## Support
 

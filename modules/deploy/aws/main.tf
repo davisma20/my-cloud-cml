@@ -5,8 +5,8 @@
 #
 
 locals {
-  workstation_enable = true  # Force enable workstation
-  cml_enable = false  # Disable CML controller
+  workstation_enable = var.options.cfg.aws.workstation.enable
+  cml_enable = true  # Enable CML controller
   num_computes = var.options.cfg.cluster.enable_cluster ? var.options.cfg.cluster.number_of_compute_nodes : 0
   compute_hostnames = [
     for i in range(1, local.num_computes + 1) :
@@ -428,45 +428,87 @@ resource "aws_ec2_transit_gateway_multicast_group_member" "cml_compute_int" {
 
 resource "aws_instance" "cml_controller" {
   instance_type        = var.options.cfg.aws.flavor
-  ami                  = data.aws_ami.ubuntu.id
+  ami                  = var.options.cfg.aws.cml_ami != null ? var.options.cfg.aws.cml_ami : data.aws_ami.ubuntu.id
   iam_instance_profile = var.options.cfg.aws.profile
   key_name             = var.options.cfg.common.key_name
+  subnet_id            = aws_subnet.public_subnet.id
   
-  timeouts {
-    create = "10m"
+  # Security enhancements
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = var.options.cfg.common.security.require_imdsv2 ? "required" : "optional"
+    http_put_response_hop_limit = 1
   }
 
   root_block_device {
-    volume_size = var.options.cfg.common.disk_size
-    volume_type = "gp3"
-    encrypted   = var.options.cfg.aws.enable_ebs_encryption
+    volume_size           = var.options.cfg.common.disk_size
+    volume_type           = "gp3"
+    encrypted             = var.options.cfg.aws.enable_ebs_encryption
+    delete_on_termination = true
   }
-  network_interface {
-    network_interface_id = aws_network_interface.pub_int_cml.id
-    device_index         = 0
+
+  vpc_security_group_ids = concat(
+    [aws_security_group.sg_tf.id],
+    var.options.cfg.common.enable_patty ? [aws_security_group.sg_patty[0].id] : []
+  )
+
+  tags = {
+    Name = "${var.options.cfg.common.controller_hostname}-${var.options.rand_id}"
   }
-  dynamic "network_interface" {
-    for_each = var.options.cfg.cluster.enable_cluster ? [1] : []
-    content {
-      network_interface_id = aws_network_interface.cluster_int_cml[0].id
-      device_index         = 1
-    }
-  }
-  user_data = data.cloudinit_config.cml_controller.rendered
-  depends_on           = [aws_route_table_association.public_subnet]
-  dynamic "instance_market_options" {
-    for_each = var.options.cfg.aws.spot_instances.use_spot_for_controller ? [1] : []
-    content {
-      market_type = "spot"
-      spot_options {
-        instance_interruption_behavior = "stop"
-        spot_instance_type             = "persistent"
-      }
-    }
-  }
-  tags                 = { Name = "CML-controller-${var.options.rand_id}" }
-  ebs_optimized        = "true"
-  count                = local.cml_enable ? 1 : 0
+
+  # User data script to apply security hardening measures
+  user_data = <<-EOF
+#!/bin/bash
+echo "CML deployment started at $(date)" > /var/log/cml-setup.log
+
+# Apply security hardening measures
+if [ "${var.options.cfg.common.security.enable_auto_updates}" = "true" ]; then
+  echo "Configuring automatic security updates..." >> /var/log/cml-setup.log
+  apt-get update && apt-get install -y unattended-upgrades
+  cat <<AUTOCONF > /etc/apt/apt.conf.d/20auto-upgrades
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::AutocleanInterval "7";
+AUTOCONF
+fi
+
+if [ "${var.options.cfg.common.security.setup_ufw_firewall}" = "true" ]; then
+  echo "Configuring UFW firewall..." >> /var/log/cml-setup.log
+  apt-get update && apt-get install -y ufw
+  ufw default deny incoming
+  ufw default allow outgoing
+  ufw allow 80/tcp
+  ufw allow 443/tcp
+  ufw allow 22/tcp
+  ufw allow 1122/tcp
+  echo "y" | ufw enable
+fi
+
+if [ "${var.options.cfg.common.security.configure_fail2ban}" = "true" ]; then
+  echo "Configuring fail2ban..." >> /var/log/cml-setup.log
+  apt-get update && apt-get install -y fail2ban
+  cat <<FAILCONF > /etc/fail2ban/jail.local
+[sshd]
+enabled = true
+port = 22,1122
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 5
+findtime = 600
+bantime = 3600
+FAILCONF
+  systemctl enable fail2ban
+  systemctl start fail2ban
+fi
+
+echo "CML deployment initialization completed at $(date)" >> /var/log/cml-setup.log
+EOF
+
+  depends_on = [
+    aws_internet_gateway.public_igw,
+    aws_subnet.public_subnet
+  ]
+  count = local.cml_enable ? 1 : 0
 }
 
 resource "aws_instance" "cml_compute" {
@@ -569,40 +611,12 @@ resource "aws_security_group" "sg_workstation" {
     cidr_blocks = var.options.cfg.common.allowed_ipv4_subnets
   }
 
-  # Allow outbound HTTPS for updates and downloads
+  # Allow all outbound
   egress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "allow HTTPS outbound"
-  }
-  
-  # Allow outbound HTTP for updates and downloads
-  egress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "allow HTTP outbound"
-  }
-  
-  # Allow outbound DNS
-  egress {
-    from_port   = 53
-    to_port     = 53
-    protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "allow DNS outbound"
-  }
-  
-  # Allow NTP
-  egress {
-    from_port   = 123
-    to_port     = 123
-    protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "allow NTP outbound"
   }
 
   tags = {
@@ -626,23 +640,22 @@ resource "aws_security_group_rule" "allow_workstation_to_cml" {
 resource "aws_instance" "devnet_workstation" {
   count               = local.workstation_enable ? 1 : 0
   instance_type        = var.options.cfg.aws.workstation.instance_type
-  ami                  = "ami-0a0e4ef95325270c9"  # Use the correct imported DevNet Expert AMI
+  ami                  = var.options.cfg.aws.workstation.ami
   iam_instance_profile = var.options.cfg.aws.profile
   key_name             = var.options.cfg.common.key_name
   subnet_id            = aws_subnet.public_subnet.id
   
-  # Require IMDSv2 (more secure metadata service access)
+  # Security enhancements
   metadata_options {
     http_endpoint               = "enabled"
-    http_tokens                 = "required" # Require IMDSv2 tokens
+    http_tokens                 = var.options.cfg.common.security.require_imdsv2 ? "required" : "optional"
     http_put_response_hop_limit = 1
-    instance_metadata_tags      = "disabled"
   }
 
   root_block_device {
-    volume_size = 50
-    volume_type = "gp3"
-    encrypted   = true  # Enable encryption for the root volume
+    volume_size           = 50  # Minimum size required for the AMI
+    volume_type           = "gp3"
+    encrypted             = var.options.cfg.aws.enable_ebs_encryption
     delete_on_termination = true
   }
 
@@ -654,234 +667,78 @@ resource "aws_instance" "devnet_workstation" {
     Name = "devnet-workstation-${var.options.rand_id}"
   }
   
-  # Enhanced security setup for DevNet workstation
+  # Extended user data script with security hardening
   user_data = <<-EOF
-              #!/bin/bash
-              
-              # Log startup
-              echo "DevNet Expert workstation started at $(date)" > /var/log/devnet-setup-complete.log
-              
-              # Ensure RDP is enabled and running
-              if command -v systemctl > /dev/null && systemctl list-unit-files | grep -q xrdp; then
-                systemctl enable xrdp
-                systemctl start xrdp
-                echo "XRDP service started" >> /var/log/devnet-setup-complete.log
-              fi
-              
-              # Security hardening
-              
-              # 1. Update all packages
-              apt-get update && apt-get upgrade -y
-              
-              # 2. Configure firewall
-              if command -v ufw > /dev/null; then
-                ufw default deny incoming
-                ufw default allow outgoing
-                ufw allow 22/tcp  # SSH
-                ufw allow 3389/tcp  # RDP
-                ufw --force enable
-                echo "UFW firewall configured" >> /var/log/devnet-setup-complete.log
-              fi
-              
-              # 3. Set up automatic security updates
-              apt-get install -y unattended-upgrades
-              echo 'APT::Periodic::Update-Package-Lists "1";' > /etc/apt/apt.conf.d/20auto-upgrades
-              echo 'APT::Periodic::Unattended-Upgrade "1";' >> /etc/apt/apt.conf.d/20auto-upgrades
-              echo "Automatic updates configured" >> /var/log/devnet-setup-complete.log
-              
-              # 4. Set password complexity requirements
-              if [ -f /etc/pam.d/common-password ]; then
-                sed -i 's/password.*pam_unix.so.*/password        requisite                       pam_unix.so minlen=12 sha512 shadow remember=5/' /etc/pam.d/common-password
-                echo "Password complexity requirements set" >> /var/log/devnet-setup-complete.log
-              fi
-              
-              # 5. Configure login failure detection and banning
-              apt-get install -y fail2ban
-              cat <<FAIL2BAN > /etc/fail2ban/jail.local
-              [sshd]
-              enabled = true
-              port = 22
-              filter = sshd
-              logpath = /var/log/auth.log
-              maxretry = 5
-              bantime = 3600
-              
-              [xrdp]
-              enabled = true
-              port = 3389
-              filter = xrdp
-              logpath = /var/log/xrdp-sesman.log
-              maxretry = 5
-              bantime = 3600
-              FAIL2BAN
-              
-              # Create filter for XRDP
-              mkdir -p /etc/fail2ban/filter.d
-              cat <<XRDPFILTER > /etc/fail2ban/filter.d/xrdp.conf
-              [Definition]
-              failregex = ^.*authentication failed.*user=.+.*from IP=<HOST>.*$
-              ignoreregex =
-              XRDPFILTER
-              
-              systemctl enable fail2ban
-              systemctl restart fail2ban
-              echo "Fail2ban configured for SSH and RDP protection" >> /var/log/devnet-setup-complete.log
-              
-              # 6. Disable unnecessary services
-              systemctl disable bluetooth.service || true
-              systemctl disable cups.service || true
-              echo "Disabled unnecessary services" >> /var/log/devnet-setup-complete.log
-              
-              # 7. Set secure SSH configuration
-              if [ -f /etc/ssh/sshd_config ]; then
-                sed -i 's/#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
-                sed -i 's/#MaxAuthTries.*/MaxAuthTries 5/' /etc/ssh/sshd_config
-                sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
-                echo "Secured SSH configuration" >> /var/log/devnet-setup-complete.log
-                systemctl restart sshd
-              fi
-              
-              echo "Security hardening completed at $(date)" >> /var/log/devnet-setup-complete.log
-              
-              # Create security validation script
-              cat <<'VALIDATE' > /home/admin/validate_security.sh
 #!/bin/bash
-# Security validation script
-echo "==============================================="
-echo "DevNet Workstation Security Validation Report"
-echo "==============================================="
-echo "Generated: $(date)"
-echo
+echo "DevNet Expert workstation started at $(date)" > /var/log/devnet-setup.log
 
-# Check if volume is encrypted
-echo "### Volume Encryption Status ###"
-if lsblk -o NAME,TYPE,MOUNTPOINT,SIZE,FSTYPE,MODEL,LABEL,UUID,RO,RM,PARTTYPE,PARTUUID | grep -q "crypt"; then
-  echo "[PASS] Root volume appears to be encrypted"
-else
-  echo "[WARN] Root volume encryption not detected"
+# Ensure RDP is running
+if command -v systemctl > /dev/null && systemctl list-unit-files | grep -q xrdp; then
+  systemctl enable xrdp
+  systemctl start xrdp
+  echo "XRDP service started" >> /var/log/devnet-setup.log
 fi
-echo
 
-# Check IMDSv2 requirement
-echo "### IMDSv2 Status ###"
-TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" 2>/dev/null)
-if [ -n "$TOKEN" ]; then
-  echo "[PASS] IMDSv2 token retrieved successfully"
-  INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)
-  echo "       Instance ID: $INSTANCE_ID"
-else
-  echo "[WARN] Failed to retrieve IMDSv2 token"
+# Apply security hardening measures
+if [ "${var.options.cfg.common.security.setup_ufw_firewall}" = "true" ]; then
+  echo "Configuring UFW firewall..." >> /var/log/devnet-setup.log
+  apt-get update && apt-get install -y ufw
+  ufw default deny incoming
+  ufw default allow outgoing
+  ufw allow 3389/tcp  # RDP
+  ufw allow 22/tcp    # SSH
+  echo "y" | ufw enable
 fi
-echo
 
-# Check firewall status
-echo "### Firewall Status ###"
-if command -v ufw > /dev/null; then
-  UFW_STATUS=$(ufw status)
-  if echo "$UFW_STATUS" | grep -q "Status: active"; then
-    echo "[PASS] UFW firewall is active"
-    echo "$UFW_STATUS" | grep -E 'Status:|To |22/tcp|3389/tcp'
-  else
-    echo "[FAIL] UFW firewall is not active"
-  fi
-else
-  echo "[FAIL] UFW firewall is not installed"
-fi
-echo
+if [ "${var.options.cfg.common.security.configure_fail2ban}" = "true" ]; then
+  echo "Configuring fail2ban..." >> /var/log/devnet-setup.log
+  apt-get update && apt-get install -y fail2ban
+  cat <<FAILCONF > /etc/fail2ban/jail.local
+[sshd]
+enabled = true
+port = 22
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 5
+findtime = 600
+bantime = 3600
 
-# Check fail2ban status
-echo "### Fail2Ban Status ###"
-if command -v fail2ban-client > /dev/null; then
-  FAIL2BAN_STATUS=$(fail2ban-client status)
-  if echo "$FAIL2BAN_STATUS" | grep -q "Number of jail:"; then
-    echo "[PASS] Fail2ban is active"
-    echo "Jails:"
-    fail2ban-client status | grep "Jail list" | sed 's/`- Jail list://'
-  else
-    echo "[FAIL] Fail2ban is not active"
-  fi
-else
-  echo "[FAIL] Fail2ban is not installed"
-fi
-echo
-
-# Check SSH configuration
-echo "### SSH Configuration ###"
-if [ -f /etc/ssh/sshd_config ]; then
-  ROOT_LOGIN=$(grep "^PermitRootLogin" /etc/ssh/sshd_config)
-  PASS_AUTH=$(grep "^PasswordAuthentication" /etc/ssh/sshd_config)
-  MAX_AUTH=$(grep "^MaxAuthTries" /etc/ssh/sshd_config)
+[rdp-brute]
+enabled = true
+filter = rdp-brute
+port = 3389
+logpath = /var/log/auth.log
+maxretry = 5
+findtime = 600
+bantime = 3600
+FAILCONF
   
-  echo "[INFO] SSH Configuration:"
-  echo "  $ROOT_LOGIN"
-  echo "  $PASS_AUTH"
-  echo "  $MAX_AUTH"
-  
-  if [[ "$ROOT_LOGIN" == *"no"* ]]; then
-    echo "[PASS] Root login is disabled"
-  else
-    echo "[FAIL] Root login is not disabled"
-  fi
-  
-  if [[ "$PASS_AUTH" == *"no"* ]]; then
-    echo "[PASS] Password authentication is disabled"
-  else
-    echo "[WARN] Password authentication is not disabled"
-  fi
-else
-  echo "[FAIL] SSH config file not found"
-fi
-echo
+  # Create custom RDP filter
+  cat <<RDPFILTER > /etc/fail2ban/filter.d/rdp-brute.conf
+[Definition]
+failregex = ^.*sshd.*: Failed .* from <HOST>
+ignoreregex =
+RDPFILTER
 
-# Check automatic updates
-echo "### Automatic Updates ###"
-if [ -f /etc/apt/apt.conf.d/20auto-upgrades ]; then
-  echo "[PASS] Unattended upgrades are configured"
-  cat /etc/apt/apt.conf.d/20auto-upgrades
-else
-  echo "[FAIL] Unattended upgrades are not configured"
-fi
-echo
-
-# Check password policies
-echo "### Password Policies ###"
-if grep -q "pam_unix.so.*minlen=12" /etc/pam.d/common-password; then
-  echo "[PASS] Password complexity requirements are set"
-  grep "pam_unix.so" /etc/pam.d/common-password
-else
-  echo "[FAIL] Password complexity requirements are not set"
-fi
-echo
-
-# Check memory limits
-echo "### System Hardening ###"
-if ! systemctl is-enabled bluetooth.service > /dev/null 2>&1; then
-  echo "[PASS] Bluetooth service is disabled"
-else
-  echo "[WARN] Bluetooth service is enabled"
+  systemctl enable fail2ban
+  systemctl start fail2ban
 fi
 
-if ! systemctl is-enabled cups.service > /dev/null 2>&1; then
-  echo "[PASS] CUPS service is disabled"
-else
-  echo "[WARN] CUPS service is enabled"
+if [ "${var.options.cfg.common.security.enable_auto_updates}" = "true" ]; then
+  echo "Configuring automatic security updates..." >> /var/log/devnet-setup.log
+  apt-get update && apt-get install -y unattended-upgrades
+  cat <<AUTOCONF > /etc/apt/apt.conf.d/20auto-upgrades
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::AutocleanInterval "7";
+AUTOCONF
 fi
-echo
 
-echo "==============================================="
-echo "End of Security Validation Report"
-echo "==============================================="
-VALIDATE
+echo "DevNet workstation security hardening completed at $(date)" >> /var/log/devnet-setup.log
+EOF
 
-              chmod +x /home/admin/validate_security.sh
-              echo "Security validation script installed at /home/admin/validate_security.sh" >> /var/log/devnet-setup-complete.log
-
-              # Run the validation after 5 minutes (allowing time for all security features to apply)
-              cat <<CRONVAL > /etc/cron.d/security-validation
-@reboot root sleep 300 && /home/admin/validate_security.sh > /home/admin/security_validation_report.txt 2>&1
-CRONVAL
-
-              chmod 644 /etc/cron.d/security-validation
-              echo "Security validation script will run 5 minutes after each reboot" >> /var/log/devnet-setup-complete.log
-              EOF
+  depends_on = [
+    aws_internet_gateway.public_igw,
+    aws_subnet.public_subnet
+  ]
 }

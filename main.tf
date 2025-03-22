@@ -32,19 +32,19 @@ module "deploy" {
   azure_tenant_id       = var.azure_tenant_id
 }
 
-# Disable CML2 provider when we're only deploying the workstation
-#provider "cml2" {
-#  address        = "https://${module.deploy.public_ip}"
-#  username       = local.cfg.secrets.app.username
-#  password       = local.cfg.secrets.app.secret
-#  skip_verify    = true
-#  dynamic_config = true
-#}
+# Enable CML2 provider for interaction with CML
+provider "cml2" {
+  address        = "https://${module.deploy.public_ip}"
+  username       = local.cfg.secrets.app.username
+  password       = local.cfg.secrets.app.secret
+  skip_verify    = true
+  dynamic_config = true
+}
 
-# Disable the ready module when we're only deploying the workstation
-#module "ready" {
-#  source = "./modules/readyness"
-#  depends_on = [
-#    module.deploy.public_ip
-#  ]
-#}
+# Enable the ready module to check CML readiness
+module "ready" {
+  source = "./modules/readyness"
+  depends_on = [
+    module.deploy.public_ip
+  ]
+}

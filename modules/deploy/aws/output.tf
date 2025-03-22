@@ -5,7 +5,11 @@
 #
 
 output "public_ip" {
-  value = aws_eip.server_eip.public_ip
+  value = local.cml_enable ? aws_instance.cml_controller[0].public_ip : null
+}
+
+output "workstation_ip" {
+  value = local.workstation_enable ? aws_instance.devnet_workstation[0].public_ip : null
 }
 
 output "sas_token" {

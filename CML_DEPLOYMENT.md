@@ -5,8 +5,8 @@ This document outlines the configuration for deploying Cisco Modeling Labs (CML)
 ## Overview
 
 This feature branch configures both:
-1. A CML instance using the AMI converted from the OVA file (ami-0a0e4ef95325270c9)
-2. A DevNet workstation using the same AMI, which comes pre-configured with all necessary tools
+1. A CML instance using a custom AMI that needs to be created by importing the CML OVA
+2. A DevNet workstation using the DevNet Expert AMI (ami-0a0e4ef95325270c9), which comes pre-configured with all necessary tools
 
 The deployment includes security hardening measures for both instances and provides tools to verify connectivity between them.
 
@@ -25,14 +25,15 @@ Both the CML instance and DevNet workstation are configured with:
 
 ### CML Configuration
 
-- Uses custom AMI: ami-0a0e4ef95325270c9
+- Requires a custom AMI created from importing the CML OVA file
+- The AMI ID should be set in the `config.yml` file under `aws.cml_ami`
 - Instance type: c5.2xlarge (configurable in config.yml)
 - Deployed with CML Enterprise license
 - Accessible via HTTPS and SSH (port 1122)
 
 ### DevNet Workstation
 
-- Uses custom AMI: ami-0a0e4ef95325270c9
+- Uses DevNet Expert AMI: ami-0a0e4ef95325270c9 (Ubuntu 20.04 based)
 - Instance type: t3.large (configurable in config.yml)
 - Accessible via RDP (port 3389)
 - Credentials: admin/1234QWer!

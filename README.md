@@ -76,7 +76,7 @@ CML cloud supports these storage methods for the required platform and applicati
 - Random secrets by not specifiying any secrets
 - [Hashicorp Vault](https://www.vaultproject.io/)
 - [CyberArk Conjur](https://www.conjur.org/)
-- [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/)
+- [AWS Secrets Manager](https://aws.amazon.com/secretsmanager/)
 
 See the sections below for additional details how to use and manage secrets.
 
@@ -314,6 +314,41 @@ The reference platform package includes:
 - ISO file (e.g., `refplat-20241223-fcs.iso`)
 - Digital signature and verification files
 - Node definitions and images (if any)
+
+## Jira Integration
+
+This project includes integration with Jira for tracking deployments and infrastructure resources. The integration allows you to:
+
+1. Create Jira tickets for new deployments
+2. Update tickets with deployment status and access information
+3. Attach AWS resource details to Jira tickets
+
+### Setup Jira Integration
+
+1. Clone the Jira integration repository:
+   ```bash
+   git clone https://github.com/davisma20/jira-integration.git
+   cd jira-integration
+   pip install -r requirements.txt
+   ```
+
+2. Configure Jira credentials (choose one method):
+   - Environment variables:
+     ```bash
+     export JIRA_BASE_URL="https://your-domain.atlassian.net"
+     export JIRA_USERNAME="your.email@example.com" 
+     export JIRA_API_TOKEN="your-api-token"
+     export JIRA_PROJECT_KEY="PROJECT"
+     ```
+   - Config file at `~/.jira/config.yml`
+   - AWS Secrets Manager (recommended for production)
+
+3. Run the integration example:
+   ```bash
+   ./jira_integration_example.sh
+   ```
+
+For detailed instructions on using the Jira integration, see the [jira-integration README](../jira-integration/README.md).
 
 ## Quick Start
 

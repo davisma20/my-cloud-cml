@@ -4,6 +4,19 @@
 *.tfstate.*
 .terraform.lock.hcl
 
+# Logs and temporary files
+cml_deployment_logs/
+cml_install_logs/
+cml_logs/
+sessionmanager-bundle/
+import-cml.json
+
+# Scripts and service files (that are generated or temporary)
+cml_fix.sh
+fix_cml_install.sh
+cml_install_fix_manual.sh
+cml_install_improved.service
+
 # Local configs
 config.yml
 .envrc
@@ -33,5 +46,3 @@ Thumbs.db
 # Terraform state files
 terraform.tfstate
 terraform.tfstate.backup
-.terraform/
-.terraform.lock.hcl

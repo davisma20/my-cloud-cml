@@ -1,93 +1,114 @@
 #!/bin/bash
 #
 # Fix script for CML installation issues
-# To be run as part of cloud-init
+# To be run as part of cloud-init or manually via SSM if needed
 
-# Ensure installation completes properly even if service fails
-function ensure_cml_install() {
-    echo "Starting CML installation fix script at $(date)"
-    
-    # Create improved service file that doesn't have escape sequence issues
+# Create a log file for our activities
+LOGFILE="/var/log/cml_fix_install.log"
+echo "Starting CML installation fix at $(date)" | tee $LOGFILE
+
+# Ensure any problematic service files are removed
+function remove_problematic_services() {
+    echo "Checking for problematic service files..." | tee -a $LOGFILE
     if [ -f /etc/systemd/system/cml_install.service ]; then
-        echo "Replacing problematic systemd service file with improved version..."
-        # Copy our improved service file to the system location
-        cp /provision/cml_install.service /etc/systemd/system/cml_install.service
-        
-        # Reload systemd to apply changes
+        echo "Found problematic service file, removing it..." | tee -a $LOGFILE
+        systemctl stop cml_install.service 2>/dev/null || true
+        systemctl disable cml_install.service 2>/dev/null || true
+        rm -f /etc/systemd/system/cml_install.service
         systemctl daemon-reload
-        
-        # Try installation via improved service
-        echo "Attempting CML installation via improved systemd service..."
-        systemctl start cml_install.service
-        
-        # Wait for service to complete (it's a oneshot service)
-        echo "Waiting for installation service to complete..."
-        timeout 30m systemctl start cml_install.service
-        
-        # Check installation status
-        systemctl status cml_install.service || true
+        echo "Problematic service file removed" | tee -a $LOGFILE
     else
-        echo "CML installation service file not found, creating it..."
-        # Copy our improved service file to the system location
-        cp /provision/cml_install.service /etc/systemd/system/cml_install.service
-        
-        # Reload systemd and start the service
-        systemctl daemon-reload
-        systemctl start cml_install.service
-        
-        # Wait for service to complete (it's a oneshot service)
-        echo "Waiting for installation service to complete..."
-        timeout 30m systemctl start cml_install.service
+        echo "No problematic service files found" | tee -a $LOGFILE
     fi
-    
-    # Check if package is installed, if not install manually
-    if ! dpkg -l | grep -q cml2; then
-        echo "CML package not installed via service, installing manually..."
-        
-        # Check if package file exists
-        if ls /root/cml2*.deb 1> /dev/null 2>&1; then
-            echo "Found CML package file, installing..."
-            apt-get update
-            apt-get -y install /root/cml2*.deb
-        else
-            echo "ERROR: CML package file not found in /root/"
-            return 1
-        fi
-    fi
-    
-    # Check again and report status
+}
+
+# Ensure installation completes properly using direct package installation
+function ensure_cml_install() {
+    echo "Checking if CML2 is already installed..." | tee -a $LOGFILE
     if dpkg -l | grep -q cml2; then
-        echo "CML package successfully installed!"
+        echo "CML2 is already installed, checking services..." | tee -a $LOGFILE
+    else
+        echo "CML2 is not installed, proceeding with installation..." | tee -a $LOGFILE
         
-        # Set log level to WARNING directly (avoiding problematic sed command)
-        if [ -f /etc/default/virl2 ]; then
-            echo "Setting log levels to WARNING..."
-            grep -q "^LOG_LEVEL=" /etc/default/virl2 && \
-            sed -i 's/^LOG_LEVEL=.*/LOG_LEVEL=WARNING/' /etc/default/virl2
+        # Check if the package file exists
+        if ls /root/cml2*.deb 1> /dev/null 2>&1; then
+            echo "Found CML package file, preparing for installation..." | tee -a $LOGFILE
             
-            grep -q "^SMART_LOG_LEVEL=" /etc/default/virl2 && \
-            sed -i 's/^SMART_LOG_LEVEL=.*/SMART_LOG_LEVEL=WARNING/' /etc/default/virl2
-        fi
-        
-        # Ensure the first-time configuration flag is set
-        if [ ! -f /etc/.virl2_unconfigured ]; then
-            echo "Creating unconfigured flag to ensure first-time setup runs..."
+            # Set up wireshark non-interactively
+            echo "Setting up wireshark..." | tee -a $LOGFILE
+            echo 'wireshark-common wireshark-common/install-setuid boolean true' | debconf-set-selections
+            DEBIAN_FRONTEND=noninteractive dpkg-reconfigure wireshark-common
+            
+            # Install the CML package
+            echo "Installing CML package..." | tee -a $LOGFILE
+            apt-get update
+            DEBIAN_FRONTEND=noninteractive apt-get -y install /root/cml2*.deb
+            
+            # Set log levels
+            if [ -f /etc/default/virl2 ]; then
+                echo "Setting log levels..." | tee -a $LOGFILE
+                sed -i 's/^LOG_LEVEL=.*/LOG_LEVEL=WARNING/' /etc/default/virl2
+                sed -i 's/^SMART_LOG_LEVEL=.*/SMART_LOG_LEVEL=WARNING/' /etc/default/virl2
+            fi
+            
+            # Create the unconfigured flag file
+            echo "Creating unconfigured flag file..." | tee -a $LOGFILE
             touch /etc/.virl2_unconfigured
+            
+            echo "CML installation completed at $(date)" | tee -a $LOGFILE
+        else
+            echo "ERROR: CML package file not found in /root/" | tee -a $LOGFILE
+            exit 1
         fi
+    fi
+}
+
+# Start CML services and verify installation
+function start_cml_services() {
+    echo "Starting CML services..." | tee -a $LOGFILE
+    systemctl start virl2-controller.service || true
+    systemctl enable virl2-controller.service || true
+    
+    # Verify that nginx is running (for web UI)
+    echo "Verifying web UI service..." | tee -a $LOGFILE
+    if systemctl is-active --quiet nginx; then
+        echo "Nginx is running successfully" | tee -a $LOGFILE
+    else
+        echo "Warning: Nginx is not running, attempting to start it..." | tee -a $LOGFILE
+        systemctl start nginx || echo "Failed to start Nginx" | tee -a $LOGFILE
+    fi
+    
+    # Install additional packages if they're not already installed
+    echo "Checking for additional required packages..." | tee -a $LOGFILE
+    if ! dpkg -l | grep -q iol-tools; then
+        echo "Installing iol-tools package..." | tee -a $LOGFILE
+        DEBIAN_FRONTEND=noninteractive apt-get -y install iol-tools || echo "Warning: Failed to install iol-tools" | tee -a $LOGFILE
+    fi
+    
+    if ! dpkg -l | grep -q patty; then
+        echo "Installing patty package..." | tee -a $LOGFILE
+        DEBIAN_FRONTEND=noninteractive apt-get -y install patty || echo "Warning: Failed to install patty" | tee -a $LOGFILE
+    fi
+    
+    # Verify installation status
+    echo "Verifying installation..." | tee -a $LOGFILE
+    if dpkg -l | grep -q cml2; then
+        echo "CML2 is successfully installed!" | tee -a $LOGFILE
         
-        # Ensure all CML services are running
-        echo "Starting CML services..."
-        systemctl start virl2-controller.service || true
-        
-        # Create flag file to indicate success
+        # Create success flag
         touch /etc/.virl2_installed
-        echo "CML installation fix completed successfully at $(date)"
+        echo "CML installation fix completed successfully at $(date)" | tee -a $LOGFILE
         return 0
     else
-        echo "CML installation failed at $(date)!"
+        echo "CML installation failed!" | tee -a $LOGFILE
         return 1
     fi
 }
 
-# Run the function
+# Main execution path
+remove_problematic_services
 ensure_cml_install
+start_cml_services
+
+# Create a success flag to signal completion
+touch /run/reboot

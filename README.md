@@ -29,6 +29,35 @@ CML instances can run on Azure and AWS cloud infrastructure.  This repository pr
 > [!NOTE]
 > For instructions on deploying only the DevNet Expert workstation (without CML), see [DEVNET_WORKSTATION.md](DEVNET_WORKSTATION.md).
 
+## Custom AMI Building with Packer
+
+This repository includes support for building custom CML AMIs using Packer. The Packer templates and scripts are located in the `packer` directory and provide the following benefits:
+
+- **Customizable AMI**: Build a CML AMI with all required dependencies pre-installed
+- **Security Hardening**: Includes security best practices like automatic updates, UFW firewall, and fail2ban protection
+- **Reproducible Builds**: Create consistent AMIs across different AWS regions
+
+To build a custom CML AMI:
+
+1. Navigate to the packer directory:
+   ```bash
+   cd packer
+   ```
+
+2. Run the Packer build command:
+   ```bash
+   packer build cml-simple.pkr.hcl
+   ```
+
+3. After the build completes (approximately 15 minutes), the new AMI ID will be displayed in the output.
+
+4. Update the `cml_ami` value in the `config.yml` file with the new AMI ID.
+
+The custom AMI includes:
+- All required dependencies for CML virtualization
+- Security hardening features (UFW, fail2ban, automatic updates)
+- Performance optimizations for KVM and networking
+
 ## Password Configuration
 
 CML deployments require proper password configuration to ensure successful authentication after installation. The default admin and sysadmin passwords are configured in the `config.yml` file:

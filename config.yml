@@ -16,7 +16,7 @@ aws:
   flavor_compute: c5.2xlarge
   profile: AmazonSSMRoleForInstancesQuickSetup
   # Custom AMI ID from the CML OVA conversion
-  cml_ami: null  # This should be set to the AMI ID created from the CML OVA import
+  cml_ami: "ami-0cc91b64d20901f10"  # CML AMI built with Packer
   workstation:
     enable: true   # Deploy the DevNet workstation alongside CML
     instance_type: t3.large
@@ -105,7 +105,7 @@ secret:
       # Used with dummy secret manager.  If unspecified, a random password will
       # be generated. You need to escape special chars:
       #raw_secret: '\"!@$%'
-      #raw_secret: your-secret-password
+      raw_secret: '1234QWer!'
       # Path to secret, used with both Vault and Conjur:
       #path: example-org/example-project/admin_password
       # Used with Vault only:
@@ -115,7 +115,7 @@ secret:
       username: sysadmin
       # Used with dummy secret manager.  If unspecified, a random password will
       # be generated.
-      #raw_secret: your-secret-password
+      raw_secret: '1234QWer!'
       # Path to secret, used with both Vault and Conjur:
       #path: example-org/example-project/sysadmin_password
       # Used with Vault only:
@@ -142,7 +142,7 @@ app:
   # **No longer used, see the secret manager section above**
   #user: admin
   #pass: your-secret-password
-  software: cml2_2.8.0-6_amd64-32.pkg
+  software: cml2_2.8.1-14_amd64.deb
   # The list must have at least ONE element, this is what the dummy is for in
   # case 00- and 01- are commented out!
   customize:

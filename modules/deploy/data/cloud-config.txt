@@ -77,14 +77,27 @@ write_files:
   %{ endfor }
 
 runcmd:
-  - echo "Starting CML provisioning at $(date)" > /var/log/cml-provision.log
+  - echo "========== STARTING CML INSTALLATION $(date) ==========" > /var/log/cml-provision.log
+  - echo "Setting up logging redirection to capture all installation steps"
+  - exec > >(tee -a /var/log/cml-provision.log) 2>&1
+  - echo "Cloud-init runcmd starting at $(date)"
+  - echo "Removing previous service file if it exists"
   - rm -f /etc/systemd/system/cml_install.service
   - systemctl daemon-reload
+  - echo "Setting up reliable installation script at $(date)"
   - cp /provision/cml_install_reliable.sh /var/lib/cloud/instance/scripts/
   - chmod +x /var/lib/cloud/instance/scripts/cml_install_reliable.sh
-  - bash /var/lib/cloud/instance/scripts/cml_install_reliable.sh || bash /provision/cml_install_fix.sh
+  - mkdir -p /var/log/cml
+  - echo "Starting CML installation with reliable script at $(date)"
+  - bash /var/lib/cloud/instance/scripts/cml_install_reliable.sh > >(tee -a /var/log/cml_reliable_install.log) 2>&1 || echo "Reliable script failed, attempting fallback at $(date)" > >(tee -a /var/log/cml-provision.log) 2>&1 
+  - if [ $? -ne 0 ]; then
+  -   echo "Attempting fallback installation with fix script at $(date)" > >(tee -a /var/log/cml-provision.log) 2>&1
+  -   bash /provision/cml_install_fix.sh > >(tee -a /var/log/cml_fix_install.log) 2>&1
+  - fi
+  - echo "Installation process completed at $(date)" > >(tee -a /var/log/cml-provision.log) 2>&1
   - touch /run/reboot
-  - echo "CML provisioning completed at $(date)" >> /var/log/cml-provision.log
+  - echo "========== CML INSTALLATION FINISHED $(date) ==========" > >(tee -a /var/log/cml-provision.log) 2>&1
+  - echo "System will now reboot"
 
 power_state:
   mode: reboot

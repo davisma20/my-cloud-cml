@@ -445,7 +445,7 @@ Within the app section, the following keys must be set with the correct values:
 There are currently two scripts provided for CML instance customization.
 
 1. Patch VMX. The `00-patch_vmx.sh` script disables/bypasses the VMX CPU flag check. This allows to run some reference platforms on non-metal AWS instance flavors. This limits the list of nodes that actually work quite significantly and is not supported. Use at your own risk.
-2. Let's Encrypt.  The `03-letsencrypt.sh` script copies a cert from storage if it exists and matches the configured hostname.  If not, it requests one via the Let's Encrypt service.  For this to work, it needs to have a valid hostname in DNS.  The script uses DynDNS which likely has to be replaced with something else to make this work.  Also note, that this script uses 'extra' variables to e.g. store the username and password for the DynDNS service.
+2. Let's Encrypt.  The `03-letsencrypt.sh` script copies a cert from storage if it exists and matches the configured hostname.  If not, it requests one via the Let's Encrypt service.  For this to work, it needs to have a valid hostname in DNS.  The script uses 'extra' variables to e.g. store the username and password for the DynDNS service.
 
 There's also a dummy entry in that list as the list must have at least one element. So, when not doing any of the predefined entries, at least the dummy must be present.
 
@@ -482,7 +482,7 @@ The reference platform files are taken from the reference platform ISO and can b
 
 ```plain
 $ aws s3 ls --recursive s3://aws-bucket-name/
-2024-04-16 07:43:56  175189664 cml2_2.7.0-4_amd64-20.pkg
+2024-04-16 07:43:56  99442144 cml2_2.8.1-14_amd64.deb
 2023-03-02 14:38:10       2136 refplat/node-definitions/alpine.yaml
 2023-03-03 11:29:24       1652 refplat/node-definitions/iosv.yaml
 2023-03-03 11:29:23       1690 refplat/node-definitions/iosvl2.yaml
@@ -507,7 +507,7 @@ Uploading the files into the S3 bucket is only required for the first time or wh
 The upload tool makes it easy to quickly select and upload the software package and images to a defined S3 bucket (the bucket must exist already).
 
 > [!NOTE]
-> The required CML software is the "pkg" file that is available for download from the Cisco software download page.  Example: `cml2_2.7.0-4_amd64-20.pkg`. Also note the .pkg suffix.
+> The required CML software is the "pkg" file that is available for download from the Cisco software download page.  Example: `cml2_2.8.1-14_amd64.deb`. Also note the .deb suffix.
 
 Start the tool by providing the bucket name as an argument and the location of the reference platform images. The defaults for both are `aws-cml-images` for the bucket name and `/var/lib/libvirt/images` for the reference platform image location.
 

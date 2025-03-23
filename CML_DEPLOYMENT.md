@@ -10,6 +10,13 @@ This feature branch configures both:
 
 The deployment includes security hardening measures for both instances and provides tools to verify connectivity between them.
 
+## Version Information
+
+This deployment is specifically configured for:
+- CML version: 2.8.1-14
+- Installation package: `cml2_2.8.1-14_amd64.deb`
+- Required key pair for SSH access: `terraform-key` (must exist in the AWS region)
+
 ## Configuration Details
 
 ### Security Features

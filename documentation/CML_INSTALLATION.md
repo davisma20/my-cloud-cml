@@ -33,6 +33,22 @@ The `cml_install_fix.sh` script has been updated to:
 - Ensure the first-time configuration flag is set
 - Provide more detailed status information
 
+### Reliable Installation Script
+
+Based on production troubleshooting, we've added a more reliable direct installation script
+(`cml_install_reliable.sh`) that:
+
+- Bypasses the systemd service approach entirely to avoid escape sequence issues
+- Directly installs the CML package using non-interactive commands
+- Sets up proper logging in `/var/log/cml_install.log`
+- Creates the first-time configuration flag file (`/etc/.virl2_unconfigured`)
+- Properly configures wireshark without interactive prompts
+- Sets appropriate log levels in the configuration
+- Starts the CML controller service directly
+
+This reliable installation script is now the preferred method used in the Terraform deployment
+and provides a more robust installation process.
+
 ## Troubleshooting
 
 If you encounter CML installation issues:

@@ -102,9 +102,9 @@ Also ensure, that the layout of the software matches the required layout as spec
 Note in the screenshot above:
 
 - The `refplat` folder has the reference platform images.
-- The `cml2_2.7.0-4_amd64-20.pkg` package is stored in the folder. The .deb file is included in the pkg file and is no longer needed separately.
+- The `cml2_2.8.1-14_amd64.deb` package is stored in the root folder.
 - The `hostname-fullchain.pem` and `hostname-privkey.pem` files contain a certificate/key that, if the hostname part of the filename matches the configured controller hostname, will be installed using the `03-letsencrypt.sh` script.
-- Make sure that the `app.software` config value corresponds to the file name of the CML .pkg package in your storage container.
+- Make sure that the `app.software` config value corresponds to the file name of the CML .deb package in your storage container.
 
 ## Running the deployment
 

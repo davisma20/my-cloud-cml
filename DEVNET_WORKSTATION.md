@@ -1,8 +1,12 @@
 # DevNet Workstation Deployment Guide
 
-*Last Updated: March 21, 2025*
+*Last Updated: March 22, 2025*
 
 This document outlines the steps required to deploy the Cisco DevNet Expert workstation in AWS using the Cloud-CML Terraform configuration. This workstation can be used for studying for the CCIE DevNet exam.
+
+## CML Version Compatibility
+
+This DevNet workstation deployment is compatible with CML version 2.8.1-14 and has been tested with the package file `cml2_2.8.1-14_amd64.deb`.
 
 ## Prerequisites
 
@@ -220,6 +224,74 @@ The workstation is configured for Remote Desktop access:
 ### SSH Access
 
 SSH is typically not enabled on the DevNet workstation by default. If SSH access is required, you would need to modify the instance after deployment.
+
+## Connecting to CML from the DevNet Workstation
+
+When deployed alongside CML, the DevNet workstation is configured to access the CML environment for lab exercises.
+
+### Accessing CML Web Interface
+
+1. **From the DevNet Workstation RDP session**:
+   - Launch a web browser (Firefox or Chrome)
+   - Navigate to the CML URL shown in your Terraform output (typically `https://<cml-public-ip>`)
+   - **Login Credentials**:
+     - Username: `admin`
+     - Password: Either your configured password or a randomly generated one (see note below)
+
+> [!IMPORTANT]
+> **About CML Password Management**
+>
+> By default, CML uses randomly generated passwords unless explicitly configured in the `config.yml` file.
+>
+> If you can't access the CML GUI with expected credentials:
+>
+> 1. Check if you explicitly set the password in `config.yml` (under `secrets.app.raw_secret`)
+> 2. Try common default passwords: `cisco`, `C1sco12345`
+> 3. You may need to reset the password using SSH/SSM access to the CML instance
+>
+> See the [TROUBLESHOOTING.md](documentation/TROUBLESHOOTING.md#cml-authentication-issues) guide for detailed help.
+
+### Verifying CML Connectivity
+
+The DevNet workstation includes a verification script to test connectivity with CML:
+
+```bash
+# From the DevNet workstation terminal
+cd ~/scripts
+./verify_connectivity.sh
+```
+
+This script tests:
+- Network connectivity to the CML instance
+- Web service availability 
+- API accessibility (if credentials are provided)
+
+### Troubleshooting CML Connectivity
+
+If you experience issues connecting to CML from the DevNet workstation:
+
+1. **Verify Network Connectivity**:
+   ```bash
+   ping <cml-private-ip>
+   ```
+
+2. **Check Security Group Rules**:
+   Ensure security groups allow traffic between the DevNet workstation and CML (ports 80, 443, and any other required ports).
+
+3. **Verify CML Services**:
+   Make sure all CML services are running properly:
+   ```bash
+   # From CML instance via SSH or SSM
+   systemctl status cml
+   ```
+
+4. **Review System Logs**:
+   ```bash
+   # From CML instance
+   journalctl -u cml
+   ```
+
+For additional troubleshooting steps, refer to the [Troubleshooting Guide](documentation/TROUBLESHOOTING.md).
 
 ## Troubleshooting
 

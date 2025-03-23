@@ -76,14 +76,15 @@ cluster:
   compute_disk_size: 32
 
 secret:
-  # At this time, 'vault', 'conjur' and 'dummy' are supported secrets managers.
+  # At this time, 'vault', 'conjur', 'aws' and 'dummy' are supported secrets managers.
   # Make sure that you also run the prepare.sh / prepare.bat script, otherwise
   # a 'raw_secret' will be used.  If 'raw_secret' is not defined, a random
   # password will be used.
   # https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password
   #manager: vault
   #manager: conjur
-  manager: dummy
+  manager: aws
+  #manager: dummy
 
   conjur:
 
@@ -93,6 +94,10 @@ secret:
     kv_secret_v2_mount: secret
     # Set this to true to prevent the creation of ephemeral child token used by this provider.
     skip_child_token: true
+    
+  aws:
+    # AWS Secrets Manager configuration
+    region: us-east-2  # Region where secrets are stored
 
   # These are the secrets that will be used by the CML instances.  This key
   # gets mapped to the main configuration under 'secrets'.  The values are
@@ -102,41 +107,21 @@ secret:
   secrets:
     app:
       username: admin
-      # Used with dummy secret manager.  If unspecified, a random password will
-      # be generated. You need to escape special chars:
-      #raw_secret: '\"!@$%'
-      raw_secret: '1234QWer!'
-      # Path to secret, used with both Vault and Conjur:
-      #path: example-org/example-project/admin_password
-      # Used with Vault only:
-      #field: secret
+      # For AWS Secrets Manager:
+      path: cml/cml-devnet/app
 
     sys:
       username: sysadmin
-      # Used with dummy secret manager.  If unspecified, a random password will
-      # be generated.
-      raw_secret: '1234QWer!'
-      # Path to secret, used with both Vault and Conjur:
-      #path: example-org/example-project/sysadmin_password
-      # Used with Vault only:
-      #field: secret
+      # For AWS Secrets Manager:
+      path: cml/cml-devnet/sys
 
     smartlicense_token:
-      # Only used with dummy secret manager
-      raw_secret: your-smart-licensing-token
-      # Path to secret, used with both Vault and Conjur:
-      #path: example-org/example-project/smartlicense_token
-      # Used with Vault only:
-      #field: token
+      # For AWS Secrets Manager:
+      path: cml/cml-devnet/smartlicense_token
 
     cluster:
-      # Used with dummy secret manager.  If unspecified, a random password will
-      # be generated.
-      #raw_secret: your-secret-password
-      # Path to secret, used with both Vault and Conjur:
-      #path: example-org/example-project/cluster_secret
-      # Used with Vault only:
-      #field: secret
+      # For AWS Secrets Manager:
+      path: cml/cml-devnet/cluster
 
 app:
   # **No longer used, see the secret manager section above**

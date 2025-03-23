@@ -4,23 +4,19 @@
 # All rights reserved.
 #
 
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">=3.82.0"
-    }
-  }
-  required_version = ">= 1.1.0"
-}
+# Note: The required_providers block is now in aws.tf to avoid duplication
+# The azurerm provider is declared there
 
 provider "azurerm" {
+  skip_provider_registration = true
   features {}
-
+  
+  # Only load this provider when Azure is explicitly chosen as target
+  alias = "azure_provider"
+  
+  # These will only be used if Azure is the target
   subscription_id = var.azure_subscription_id
   tenant_id       = var.azure_tenant_id
-
-  # Configuration options
 }
 
 module "azure" {
@@ -28,4 +24,3 @@ module "azure" {
   count   = var.cfg.target == "azure" ? 1 : 0
   options = local.options
 }
-

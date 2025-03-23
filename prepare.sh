@@ -67,3 +67,12 @@ else
     rm vault.tf || true
     ln -s vault-off.t-f vault.tf
 fi
+if ask_yes_no "External Secrets Manager - Enable AWS Secrets Manager?"; then
+    echo "Enabling AWS Secrets Manager."
+    rm aws.tf || true
+    ln -s aws-on.t-f aws.tf
+else
+    echo "Disabling AWS Secrets Manager."
+    rm aws.tf || true
+    ln -s aws-off.t-f aws.tf
+fi

@@ -15,43 +15,65 @@ locals {
 
   # Late binding required as the token is only known within the module.
   # (Azure specific)
-  vars = templatefile("${path.module}/../data/vars.sh", {
-    cfg = merge(
-      var.options.cfg,
-      # Need to have this as it's referenced in the template (Azure specific)
-      { sas_token = "undefined" }
-    )
-    }
-  )
+  vars = "export CML_CLOUD_PROVIDER=aws"
 
+  # Create a properly structured object for the template
   cml_config_controller = templatefile("${path.module}/../data/virl2-base-config.yml", {
     hostname      = var.options.cfg.common.controller_hostname,
     is_controller = true
     is_compute    = !var.options.cfg.cluster.enable_cluster || var.options.cfg.cluster.allow_vms_on_controller
-    cfg = merge(
-      var.options.cfg,
-      # Need to have this as it's referenced in the template (Azure specific)
-      { sas_token = "undefined" }
-    )
+    cfg = {
+      common = var.options.cfg.common
+      aws = var.options.cfg.aws
+      cluster = var.options.cfg.cluster
+      secrets = {
+        # Explicitly structure the secrets as expected by the template
+        app = {
+          username = lookup(var.options.cfg.secrets, "app", {username = "admin", secret = "dummy_password"}).username
+          secret = lookup(var.options.cfg.secrets, "app", {username = "admin", secret = "dummy_password"}).secret
+        }
+        sys = {
+          username = lookup(var.options.cfg.secrets, "sys", {username = "sysadmin", secret = "dummy_password"}).username
+          secret = lookup(var.options.cfg.secrets, "sys", {username = "sysadmin", secret = "dummy_password"}).secret
+        }
+        cluster = {
+          secret = lookup(var.options.cfg.secrets, "cluster", {secret = "dummy_cluster_secret"}).secret
+        }
+        smartlicense_token = {
+          secret = lookup(var.options.cfg.secrets, "smartlicense_token", {secret = "your-smart-licensing-token"}).secret
+        }
+      }
     }
-  )
+  })
 
   cml_config_compute = [for compute_hostname in local.compute_hostnames : templatefile("${path.module}/../data/virl2-base-config.yml", {
     hostname      = compute_hostname,
     is_controller = false,
     is_compute    = true,
-    cfg = merge(
-      var.options.cfg,
-      # Need to have this as it's referenced in the template.
-      # (Azure specific)
-      { sas_token = "undefined" }
-    )
+    cfg = {
+      common = var.options.cfg.common
+      aws = var.options.cfg.aws
+      cluster = var.options.cfg.cluster
+      secrets = {
+        # Explicitly structure the secrets as expected by the template
+        app = {
+          username = lookup(var.options.cfg.secrets, "app", {username = "admin", secret = "dummy_password"}).username
+          secret = lookup(var.options.cfg.secrets, "app", {username = "admin", secret = "dummy_password"}).secret
+        }
+        sys = {
+          username = lookup(var.options.cfg.secrets, "sys", {username = "sysadmin", secret = "dummy_password"}).username
+          secret = lookup(var.options.cfg.secrets, "sys", {username = "sysadmin", secret = "dummy_password"}).secret
+        }
+        cluster = {
+          secret = lookup(var.options.cfg.secrets, "cluster", {secret = "dummy_cluster_secret"}).secret
+        }
+        smartlicense_token = {
+          secret = lookup(var.options.cfg.secrets, "smartlicense_token", {secret = "your-smart-licensing-token"}).secret
+        }
+      }
     }
-  )]
+  })]
 
-  # Ensure there's no tabs in the template file! Also ensure that the list of
-  # reference platforms has no single quotes in the file names or keys (should
-  # be reasonable, but you never know...)
   cloud_config = templatefile("${path.module}/../data/cloud-config.txt", {
     vars          = local.vars
     cml_config    = local.cml_config_controller
@@ -62,6 +84,7 @@ locals {
     del           = var.options.del
     interface_fix = var.options.interface_fix
     license       = var.options.license
+    reliable_install = var.options.reliable_install
     extras        = var.options.extras
     hostname      = var.options.cfg.common.controller_hostname
     path          = path.module
@@ -77,6 +100,7 @@ locals {
     del           = var.options.del
     interface_fix = var.options.interface_fix
     license       = "empty"
+    reliable_install = var.options.reliable_install
     extras        = var.options.extras
     hostname      = local.compute_hostnames[i]
     path          = path.module
@@ -89,7 +113,7 @@ locals {
     {
       "description" : "allow SSH",
       "from_port" : 1122,
-      "to_port" : 1122
+      "to_port" : 1122,
       "protocol" : "tcp",
       "cidr_blocks" : var.options.cfg.common.allowed_ipv4_subnets,
       "ipv6_cidr_blocks" : [],
@@ -100,7 +124,7 @@ locals {
     {
       "description" : "allow CML termserver",
       "from_port" : 22,
-      "to_port" : 22
+      "to_port" : 22,
       "protocol" : "tcp",
       "cidr_blocks" : var.options.cfg.common.allowed_ipv4_subnets,
       "ipv6_cidr_blocks" : [],
@@ -111,7 +135,7 @@ locals {
     {
       "description" : "allow Cockpit",
       "from_port" : 9090,
-      "to_port" : 9090
+      "to_port" : 9090,
       "protocol" : "tcp",
       "cidr_blocks" : var.options.cfg.common.allowed_ipv4_subnets,
       "ipv6_cidr_blocks" : [],
@@ -122,7 +146,7 @@ locals {
     {
       "description" : "allow HTTP",
       "from_port" : 80,
-      "to_port" : 80
+      "to_port" : 80,
       "protocol" : "tcp",
       "cidr_blocks" : var.options.cfg.common.allowed_ipv4_subnets,
       "ipv6_cidr_blocks" : [],
@@ -133,7 +157,7 @@ locals {
     {
       "description" : "allow HTTPS",
       "from_port" : 443,
-      "to_port" : 443
+      "to_port" : 443,
       "protocol" : "tcp",
       "cidr_blocks" : var.options.cfg.common.allowed_ipv4_subnets,
       "ipv6_cidr_blocks" : [],
@@ -147,7 +171,7 @@ locals {
     {
       "description" : "allow PATty TCP",
       "from_port" : 2000,
-      "to_port" : 7999
+      "to_port" : 7999,
       "protocol" : "tcp",
       "cidr_blocks" : var.options.cfg.common.allowed_ipv4_subnets,
       "ipv6_cidr_blocks" : [],
@@ -158,7 +182,7 @@ locals {
     {
       "description" : "allow PATty UDP",
       "from_port" : 2000,
-      "to_port" : 7999
+      "to_port" : 7999,
       "protocol" : "udp",
       "cidr_blocks" : var.options.cfg.common.allowed_ipv4_subnets,
       "ipv6_cidr_blocks" : [],
@@ -180,7 +204,7 @@ resource "aws_security_group" "sg_tf" {
     {
       "description" : "any",
       "from_port" : 0,
-      "to_port" : 0
+      "to_port" : 0,
       "protocol" : "-1",
       "cidr_blocks" : [
         "0.0.0.0/0"
@@ -205,7 +229,7 @@ resource "aws_security_group" "sg_tf_cluster_int" {
     {
       "description" : "any",
       "from_port" : 0,
-      "to_port" : 0
+      "to_port" : 0,
       "protocol" : "-1",
       "cidr_blocks" : [],
       "ipv6_cidr_blocks" : ["::/0"],
@@ -218,7 +242,7 @@ resource "aws_security_group" "sg_tf_cluster_int" {
     {
       "description" : "any",
       "from_port" : 0,
-      "to_port" : 0
+      "to_port" : 0,
       "protocol" : "-1",
       "cidr_blocks" : [],
       "ipv6_cidr_blocks" : ["::/0"],
@@ -449,7 +473,7 @@ resource "aws_instance" "cml_controller" {
 
   vpc_security_group_ids = concat(
     [aws_security_group.sg_tf.id],
-    var.options.cfg.common.enable_patty ? [aws_security_group.sg_patty[0].id] : []
+    var.options.cfg.common.enable_patty ? [] : []
   )
 
   tags = {
@@ -457,52 +481,7 @@ resource "aws_instance" "cml_controller" {
   }
 
   # User data script to apply security hardening measures
-  user_data = <<-EOF
-#!/bin/bash
-echo "CML deployment started at $(date)" > /var/log/cml-setup.log
-
-# Apply security hardening measures
-if [ "${var.options.cfg.common.security.enable_auto_updates}" = "true" ]; then
-  echo "Configuring automatic security updates..." >> /var/log/cml-setup.log
-  apt-get update && apt-get install -y unattended-upgrades
-  cat <<AUTOCONF > /etc/apt/apt.conf.d/20auto-upgrades
-APT::Periodic::Update-Package-Lists "1";
-APT::Periodic::Unattended-Upgrade "1";
-APT::Periodic::AutocleanInterval "7";
-AUTOCONF
-fi
-
-if [ "${var.options.cfg.common.security.setup_ufw_firewall}" = "true" ]; then
-  echo "Configuring UFW firewall..." >> /var/log/cml-setup.log
-  apt-get update && apt-get install -y ufw
-  ufw default deny incoming
-  ufw default allow outgoing
-  ufw allow 80/tcp
-  ufw allow 443/tcp
-  ufw allow 22/tcp
-  ufw allow 1122/tcp
-  echo "y" | ufw enable
-fi
-
-if [ "${var.options.cfg.common.security.configure_fail2ban}" = "true" ]; then
-  echo "Configuring fail2ban..." >> /var/log/cml-setup.log
-  apt-get update && apt-get install -y fail2ban
-  cat <<FAILCONF > /etc/fail2ban/jail.local
-[sshd]
-enabled = true
-port = 22,1122
-filter = sshd
-logpath = /var/log/auth.log
-maxretry = 5
-findtime = 600
-bantime = 3600
-FAILCONF
-  systemctl enable fail2ban
-  systemctl start fail2ban
-fi
-
-echo "CML deployment initialization completed at $(date)" >> /var/log/cml-setup.log
-EOF
+  user_data = data.cloudinit_config.cml_controller.rendered
 
   depends_on = [
     aws_internet_gateway.public_igw,

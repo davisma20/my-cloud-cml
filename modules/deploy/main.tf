@@ -17,8 +17,8 @@ locals {
     del           = file("${path.module}/data/del.sh")
     interface_fix = file("${path.module}/data/interface_fix.py")
     license       = file("${path.module}/data/license.py")
+    reliable_install = file("${path.module}/data/cml_install_reliable.sh")
     extras        = var.extras
     rand_id       = random_id.id.hex
   }
 }
-

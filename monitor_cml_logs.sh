@@ -38,17 +38,13 @@ echo ""
 stream_logs() {
     local log_file=$1
     echo "=== Streaming $log_file logs ===" | tee -a "$LOG_FILE"
-    aws ssm send-command \
+    COMMAND_RESULT=$(aws ssm send-command \
         --instance-ids "$INSTANCE_ID" \
         --document-name "AWS-RunShellScript" \
         --parameters "commands=[\"tail -f $log_file\"]" \
-        --output text
-
-    # Wait a moment for the command to execute
-    sleep 2
-    
-    # Get the command ID from the most recent command
-    COMMAND_ID=$(aws ssm list-commands --filters "Key=status,Values=Pending,InProgress" --query "Commands[?InstanceIds[0]=='$INSTANCE_ID'].CommandId" --output text | head -1)
+        --output text)
+        
+    COMMAND_ID=$(echo "$COMMAND_RESULT" | awk '{print $1}')
     
     if [ -n "$COMMAND_ID" ]; then
         echo "Streaming command ID: $COMMAND_ID" | tee -a "$LOG_FILE"
@@ -83,28 +79,27 @@ capture_logs() {
     
     for log_file in "${LOG_FILES[@]}"; do
         echo "=== Contents of $log_file ===" | tee -a "$LOG_FILE"
-        aws ssm send-command \
+        COMMAND_RESULT=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
             --parameters "commands=[\"if [ -f $log_file ]; then cat $log_file; else echo 'Log file not found'; fi\"]" \
-            --output text >> "$LOG_FILE" 2>&1
+            --output text)
             
-        # Wait for the command to complete
-        sleep 2
-        
-        # Get the command ID from the most recent command
-        COMMAND_ID=$(aws ssm list-commands --filters "Key=status,Values=Pending,InProgress,Success" --query "Commands[0].CommandId" --output text)
+        COMMAND_ID=$(echo "$COMMAND_RESULT" | awk '{print $1}')
         
         if [ -n "$COMMAND_ID" ]; then
-            # Wait for the command to complete
-            aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID"
+            # Wait for the command to finish
+            sleep 3
             
             # Get the output
+            echo "Retrieving logs from command $COMMAND_ID" | tee -a "$LOG_FILE"
             aws ssm get-command-invocation \
                 --command-id "$COMMAND_ID" \
                 --instance-id "$INSTANCE_ID" \
                 --query "StandardOutputContent" \
                 --output text | tee -a "$LOG_FILE"
+        else
+            echo "Failed to retrieve log for $log_file" | tee -a "$LOG_FILE"
         fi
     done
 }
@@ -123,28 +118,27 @@ check_cml_status() {
     
     for cmd in "${STATUS_COMMANDS[@]}"; do
         echo "=== Running: $cmd ===" | tee -a "$LOG_FILE"
-        aws ssm send-command \
+        COMMAND_RESULT=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
             --parameters "commands=[\"$cmd || echo 'Command failed with status \$?'\"]" \
-            --output text >> "$LOG_FILE" 2>&1
+            --output text)
             
-        # Wait for the command to complete
-        sleep 2
-        
-        # Get the command ID from the most recent command
-        COMMAND_ID=$(aws ssm list-commands --filters "Key=status,Values=Pending,InProgress,Success" --query "Commands[0].CommandId" --output text)
+        COMMAND_ID=$(echo "$COMMAND_RESULT" | awk '{print $1}')
         
         if [ -n "$COMMAND_ID" ]; then
-            # Wait for the command to complete
-            aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID"
+            # Wait for the command to finish
+            sleep 3
             
             # Get the output
+            echo "Retrieving status from command $COMMAND_ID" | tee -a "$LOG_FILE"
             aws ssm get-command-invocation \
                 --command-id "$COMMAND_ID" \
                 --instance-id "$INSTANCE_ID" \
                 --query "StandardOutputContent" \
                 --output text | tee -a "$LOG_FILE"
+        else
+            echo "Failed to retrieve status for command: $cmd" | tee -a "$LOG_FILE"
         fi
     done
 }

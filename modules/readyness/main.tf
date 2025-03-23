@@ -5,7 +5,7 @@
 #
 
 data "cml2_system" "state" {
-  timeout       = "20m"
+  timeout       = "45m"
   ignore_errors = true
 }
 

@@ -35,8 +35,8 @@ module "deploy" {
 # Enable CML2 provider for interaction with CML
 provider "cml2" {
   address        = "https://${module.deploy.public_ip}"
-  username       = local.cfg.secrets.app.username
-  password       = local.cfg.secrets.app.secret
+  username       = "admin"  # Default admin username for CML
+  password       = "admin"  # Default initial password for CML
   skip_verify    = true
   dynamic_config = true
 }

@@ -38,6 +38,7 @@ locals {
     del           = var.options.del
     interface_fix = var.options.interface_fix
     license       = var.options.license
+    reliable_install = var.options.reliable_install
     extras        = var.options.extras
     hostname      = var.options.cfg.common.controller_hostname
     path          = path.module

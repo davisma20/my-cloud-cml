@@ -4,12 +4,14 @@
 # All rights reserved.
 #
 
-output "cml2info" {
+output "cml_controller" {
   value = {
     "address" : module.deploy.public_ip
-    "del" : nonsensitive("ssh -p1122 ${local.cfg.secrets.sys.username}@${module.deploy.public_ip} /provision/del.sh")
     "url" : "https://${module.deploy.public_ip}"
-    "version" : module.ready.state.version
+    "alt_url" : "https://${module.deploy.public_ip}:443"
+    "alt_address_url" : "https://${module.deploy.public_ip}"
+    "ssh" : "ssh -p 1122 sysadmin@${module.deploy.public_ip}"
+    "username" : "admin"
   }
 }
 
@@ -20,10 +22,10 @@ output "cml2secrets" {
 
 output "devnet_workstation" {
   value = {
-    "address" : module.deploy.workstation_ip
-    "rdp_url" : "rdp://${module.deploy.workstation_ip}:3389"
-    "rdp_username" : "admin"
-    "rdp_password" : nonsensitive("1234QWer!")
+    "address" : try(module.deploy.module.aws[0].aws_instance.devnet_workstation[0].public_ip, "N/A")
+    "rdp_url" : try("rdp://${module.deploy.module.aws[0].aws_instance.devnet_workstation[0].public_ip}:3389", "N/A")
+    "username" : "admin"
+    "rdp_password" : "1234QWer!"
   }
   description = "DevNet workstation connection information"
 }
@@ -31,26 +33,18 @@ output "devnet_workstation" {
 output "deployment_summary" {
   value = <<-EOT
     
-    =================================================================
-    DEPLOYMENT COMPLETE - SUMMARY
-    =================================================================
+    ====== DEPLOYMENT SUMMARY ======
     
-    CML DEPLOYMENT:
+    CML Controller:
     - URL: https://${module.deploy.public_ip}
-    - Username: ${local.cfg.secrets.app.username}
-    - Password: [Available in Terraform state]
-    - SSH: ssh -p1122 ${local.cfg.secrets.sys.username}@${module.deploy.public_ip}
+    - SSH: ssh -p 1122 sysadmin@${module.deploy.public_ip}
+    - Username: admin
     
-    DEVNET WORKSTATION:
-    - IP Address: ${module.deploy.workstation_ip}
-    - RDP: ${module.deploy.workstation_ip}:3389
+    DevNet Workstation:
+    - RDP: rdp://${try(module.deploy.module.aws[0].aws_instance.devnet_workstation[0].public_ip, "N/A")}:3389
     - Username: admin
     - Password: 1234QWer!
     
-    CONNECTIVITY VERIFICATION:
-    - From DevNet workstation to CML: ping ${module.deploy.public_ip}
-    - Web access to CML from workstation: https://${module.deploy.public_ip}
-    
-    =================================================================
+    Use the verify_connectivity.sh script from the DevNet workstation to confirm connectivity to CML.
   EOT
 }

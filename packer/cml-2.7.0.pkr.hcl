@@ -221,8 +221,14 @@ build {
       "echo 'Checking for Debian packages in extracted files...'",
       "find /opt/cml-installer/extracted -name \"*.deb\" | sudo xargs -I{} dpkg -i {} 2>/dev/null || echo 'No Debian packages found or installation failed'",
       
-      "echo 'Attempting bash installation...'",
-      "sudo bash -c 'cd /opt/cml-installer && (sh ./cml-2.7.0.pkg || bash ./cml-2.7.0.pkg || true)'",
+      "echo 'Fixing package dependencies...'",
+      "sudo apt-get update",
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get -y --fix-broken install",
+      "sudo apt-get -y install $(dpkg -I /opt/cml-installer/extracted/*.deb 2>/dev/null | grep Depends | sed 's/Depends://g' | tr ',' ' ' | tr '|' ' ') || true",
+      
+      "echo 'Retrying installation of any .deb packages that failed due to dependencies...'",
+      "find /opt/cml-installer/extracted -name \"*.deb\" | sudo xargs -I{} dpkg -i {} 2>/dev/null || true", 
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get -y --fix-broken install",
       
       "echo 'Looking for any installation files that were created...'",
       "sudo find /opt/cml-installer -type f -name \"*.sh\" -o -name \"install*\" -o -name \"setup*\" | xargs -I{} chmod +x {} 2>/dev/null || true",
@@ -287,22 +293,59 @@ build {
   provisioner "shell" {
     inline = [
       "echo 'Checking CML service status...'",
+      "sudo systemctl daemon-reload || true",
+      
+      "echo 'Fixing any broken package dependencies...'",
+      "sudo apt-get update",
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get -y --fix-broken install",
+      
+      "echo 'Looking for CML service files...'",
+      "find /etc/systemd/system -name '*virl*' -o -name '*cml*' || true",
+      "find /lib/systemd/system -name '*virl*' -o -name '*cml*' || true",
+      
+      "echo 'Checking current service status...'",
       "sudo systemctl status virl2-controller.service || true",
       "sudo systemctl status nginx.service || true",
-      "sudo tail -n 50 /var/log/virl2/controller.log || true",
+      
+      "echo 'Checking logs for clues...'",
+      "sudo find /var/log -name \"*virl*\" -o -name \"*cml*\" | sudo xargs ls -la 2>/dev/null || true",
+      "sudo find /var/log -type f -name \"*virl*\" -o -name \"*cml*\" | sudo xargs tail -n 20 2>/dev/null || true",
+      "sudo tail -n 50 /var/log/nginx/error.log 2>/dev/null || true",
+      
       "echo 'Verifying CML installation...'",
-      "ls -la /usr/local/bin/refplat || true",
-      "ls -la /etc/virl2 || true",
-      "ls -la /etc/nginx/sites-enabled/ || true",
-      "echo 'Attempting to start CML services...'",
+      "ls -la /usr/local/bin/refplat 2>/dev/null || echo 'refplat binary not found'",
+      "ls -la /etc/virl2 2>/dev/null || echo 'virl2 config directory not found'",
+      "ls -la /etc/nginx/sites-enabled/ 2>/dev/null || echo 'nginx sites not found'",
+      
+      "echo 'Checking if the service unit files exist...'",
+      "ls -la /lib/systemd/system/virl2-controller.service 2>/dev/null || echo 'Service unit file not found'",
+      
+      "echo 'Testing nginx configuration...'",
+      "sudo nginx -t || true",
+      
+      "echo 'Trying to reload nginx configuration...'",
+      "sudo systemctl reload nginx || true",
+      
+      "echo 'Attempting to start or restart CML services...'",
       "sudo systemctl daemon-reload || true",
+      "sudo systemctl enable virl2-controller.service 2>/dev/null || true",
       "sudo systemctl restart virl2-controller.service || true",
+      "sudo systemctl enable nginx.service 2>/dev/null || true",
       "sudo systemctl restart nginx.service || true",
+      
+      "echo 'Checking if services are running now...'",
+      "sudo systemctl status virl2-controller.service || true",
+      "sudo systemctl status nginx.service || true",
+      
       "echo 'Waiting for services to initialize...'",
-      "sleep 30"
+      "sleep 30",
+      
+      "echo 'Verifying ports are listening...'",
+      "sudo lsof -i :443 || echo 'Nothing listening on port 443'",
+      "sudo lsof -i :80 || echo 'Nothing listening on port 80'"
     ]
   }
-
+  
   // Wait for CML web interface to become available and test login
   provisioner "shell" {
     inline = [

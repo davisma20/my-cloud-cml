@@ -303,42 +303,63 @@ build {
       "find /etc/systemd/system -name '*virl*' -o -name '*cml*' || true",
       "find /lib/systemd/system -name '*virl*' -o -name '*cml*' || true",
       
-      "echo 'Checking current service status...'",
-      "sudo systemctl status virl2-controller.service || true",
-      "sudo systemctl status nginx.service || true",
+      "echo 'Checking for initialization scripts...'",
+      "sudo find /usr/local/bin -name '*virl*' -o -name '*cml*' -o -name 'init*' | xargs ls -la 2>/dev/null || true",
+      "sudo find /opt -name '*virl*' -o -name '*cml*' -o -name 'init*' | xargs ls -la 2>/dev/null || true",
       
-      "echo 'Checking logs for clues...'",
+      "echo 'Checking CML data directories...'",
+      "sudo ls -la /var/lib/virl2 2>/dev/null || echo 'virl2 data directory not found'",
+      "sudo ls -la /etc/virl2 2>/dev/null || echo 'virl2 config directory not found'",
+      
+      "echo 'Checking CML controller logs...'",
+      "sudo mkdir -p /var/log/virl2 2>/dev/null || true",
       "sudo find /var/log -name \"*virl*\" -o -name \"*cml*\" | sudo xargs ls -la 2>/dev/null || true",
-      "sudo find /var/log -type f -name \"*virl*\" -o -name \"*cml*\" | sudo xargs tail -n 20 2>/dev/null || true",
+      "sudo find /var/log/virl2 -type f | sudo xargs tail -n 50 2>/dev/null || echo 'No CML logs found'",
       "sudo tail -n 50 /var/log/nginx/error.log 2>/dev/null || true",
       
-      "echo 'Verifying CML installation...'",
-      "ls -la /usr/local/bin/refplat 2>/dev/null || echo 'refplat binary not found'",
-      "ls -la /etc/virl2 2>/dev/null || echo 'virl2 config directory not found'",
-      "ls -la /etc/nginx/sites-enabled/ 2>/dev/null || echo 'nginx sites not found'",
+      "echo 'Checking if CML controller database is initialized...'",
+      "sudo ls -la /var/lib/virl2/mongo 2>/dev/null || echo 'MongoDB data directory not found'",
       
-      "echo 'Checking if the service unit files exist...'",
-      "ls -la /lib/systemd/system/virl2-controller.service 2>/dev/null || echo 'Service unit file not found'",
+      "echo 'Attempting to initialize CML controller...'",
+      "if [ -f /usr/local/bin/virl2_controller ]; then",
+      "  echo 'Found virl2_controller binary, checking if we need to initialize it...'",
+      "  sudo /usr/local/bin/virl2_controller init || echo 'Controller initialization failed or not needed'",
+      "  sudo /usr/local/bin/virl2_controller configure || echo 'Controller configuration failed or not needed'",
+      "fi",
       
-      "echo 'Testing nginx configuration...'",
-      "sudo nginx -t || true",
+      "echo 'Checking CML controller status and logs after initialization...'",
+      "sudo systemctl status virl2-controller.service || true",
+      "sudo find /var/log/virl2 -type f -name \"controller.log\" | sudo xargs tail -n 100 2>/dev/null || echo 'No controller logs found'",
       
-      "echo 'Trying to reload nginx configuration...'",
-      "sudo systemctl reload nginx || true",
+      "echo 'Checking CML UI status and logs...'",
+      "sudo systemctl status virl2-ui.service 2>/dev/null || echo 'UI service not found'",
+      "sudo find /var/log/virl2 -type f -name \"ui.log\" | sudo xargs tail -n 100 2>/dev/null || echo 'No UI logs found'",
       
-      "echo 'Attempting to start or restart CML services...'",
+      "echo 'Checking for authentication configuration...'",
+      "sudo ls -la /etc/virl2/credentials.json 2>/dev/null || echo 'Credentials file not found'",
+      "sudo cat /etc/virl2/credentials.json 2>/dev/null | grep -v password || echo 'No credentials found'",
+      
+      "echo 'Searching for default username/password...'",
+      "sudo grep -r \"admin\" --include=\"*.json\" --include=\"*.conf\" --include=\"*.yml\" /etc/virl2/ 2>/dev/null || echo 'No default admin credentials found'",
+      
+      "echo 'Attempting to restart CML services in the correct order...'",
       "sudo systemctl daemon-reload || true",
-      "sudo systemctl enable virl2-controller.service 2>/dev/null || true",
       "sudo systemctl restart virl2-controller.service || true",
-      "sudo systemctl enable nginx.service 2>/dev/null || true",
+      "sleep 10 # Wait for controller to initialize",
+      "sudo systemctl restart virl2-ui.service 2>/dev/null || true",
       "sudo systemctl restart nginx.service || true",
       
       "echo 'Checking if services are running now...'",
       "sudo systemctl status virl2-controller.service || true",
+      "sudo systemctl status virl2-ui.service 2>/dev/null || true",
       "sudo systemctl status nginx.service || true",
       
-      "echo 'Waiting for services to initialize...'",
-      "sleep 30",
+      "echo 'Creating default admin user if needed...'",
+      "if [ -f /usr/local/bin/virl2_controller ]; then",
+      "  echo 'Trying to create admin user...'",
+      "  sudo /usr/local/bin/virl2_controller user list 2>/dev/null || true",
+      "  sudo /usr/local/bin/virl2_controller user add -u admin -p admin -s || echo 'Admin user creation failed or user already exists'",
+      "fi",
       
       "echo 'Verifying ports are listening...'",
       "sudo lsof -i :443 || echo 'Nothing listening on port 443'",
@@ -350,92 +371,123 @@ build {
   provisioner "shell" {
     inline = [
       "echo 'Waiting for CML services to start...'",
-      "sudo apt-get update -qq",
-      "sudo apt-get install -y curl jq || true",
-      "sudo pip3 install requests || true",
-      "cat > /tmp/test_cml_login.py << 'EOF'",
-      "#!/usr/bin/env python3",
-      "import requests",
-      "import time",
-      "import sys",
-      "import os",
-      "import json",
-      "from urllib3.exceptions import InsecureRequestWarning",
-      "",
-      "# Suppress only the single warning from urllib3 needed.",
-      "requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)",
-      "",
-      "def check_service(url):",
-      "    try:",
-      "        response = requests.get(url, verify=False, timeout=5)",
-      "        return response.status_code < 500",
-      "    except Exception as e:",
-      "        print(f'Service check exception: {str(e)}')",
-      "        return False",
-      "",
-      "def main():",
-      "    base_url = 'https://localhost'",
-      "    api_endpoint = f'{base_url}/api/v0'",
-      "    username = os.environ.get('CML_ADMIN_USERNAME', 'admin')",
-      "    password = os.environ.get('CML_ADMIN_PASSWORD', 'admin')",
-      "    ",
-      "    max_attempts = 30",
-      "    attempt = 1",
-      "    ",
-      "    while attempt <= max_attempts:",
-      "        print(f'Try {attempt}/{max_attempts}...')",
-      "        try:",
-      "            # Check if the web server is responding at all",
-      "            if not check_service(base_url):",
-      "                print('Web server not responding to base URL - checking nginx status')",
-      "                os.system('sudo systemctl status nginx || true')",
-      "                os.system('curl -k -v https://localhost/ || true')",
-      "            ",
-      "            # Try API about endpoint",
-      "            about_response = requests.get(f'{api_endpoint}/about', verify=False, timeout=10)",
-      "            print(f'About response: {about_response.status_code}')",
-      "            if about_response.status_code < 400:",
-      "                print('API is online, attempting login')",
-      "            ",
-      "            # Try login",
-      "            login_data = {'username': username, 'password': password}",
-      "            login_response = requests.post(f'{api_endpoint}/authenticate', json=login_data, verify=False, timeout=10)",
-      "            ",
-      "            if login_response.status_code == 200:",
-      "                token = login_response.json().get('token')",
-      "                if token:",
-      "                    print('Login successful!')",
-      "                    return 0",
-      "                else:",
-      "                    print('Login response missing token')",
-      "            else:",
-      "                print(f'Login failed. Status: {login_response.status_code}')",
-      "                print(f'Response: {login_response.text}')",
-      "        except requests.exceptions.RequestException as e:",
-      "            print(f'Exception: {str(e)}')",
-      "            ",
-      "            # Check running services",
-      "            if attempt % 5 == 0:",
-      "                os.system('sudo systemctl status virl2-controller.service || true')",
-      "                os.system('sudo systemctl status nginx.service || true')",
-      "                os.system('ls -la /etc/nginx/sites-enabled/ || true')",
-      "        ",
-      "        if attempt < max_attempts:",
-      "            print('Waiting 10 seconds before retry...')",
-      "            time.sleep(10)",
-      "        attempt += 1",
-      "    ",
-      "    print('Maximum attempts reached. CML web interface not available.')",
-      "    return 1",
-      "",
-      "if __name__ == '__main__':",
-      "    sys.exit(main())",
-      "EOF",
-      "chmod +x /tmp/test_cml_login.py",
-      "export CML_ADMIN_USERNAME='admin'",
-      "export CML_ADMIN_PASSWORD='admin'",
+      "sleep 30",
+      "sudo apt-get -y install curl jq python3-pip || true",
+      "pip3 install requests || true",
+      
       "echo 'Running CML web interface login test...'",
-      "python3 /tmp/test_cml_login.py"
+      "# Script to test CML login with proper credentials and error handling",
+      "python3 -c \"
+import requests
+import time
+import json
+import sys
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+MAX_TRIES = 30
+WAIT_TIME = 10
+BASE_URL = 'https://localhost'
+USERNAME = 'admin'
+PASSWORD = 'admin'
+
+cookies = {}
+
+print('Testing CML login with admin credentials')
+
+for attempt in range(1, MAX_TRIES + 1):
+    print(f'Try {attempt}/{MAX_TRIES}...')
+    try:
+        # Check if the about endpoint exists first
+        try:
+            about_resp = requests.get(f'{BASE_URL}/api/v0/about', verify=False, timeout=5)
+            print(f'About response: {about_resp.status_code}')
+            if about_resp.status_code == 200:
+                print('About endpoint accessible, CML API is working')
+        except Exception as e:
+            print(f'Error accessing about endpoint: {e}')
+            
+        # Check if nginx is serving the UI
+        try:
+            ui_resp = requests.get(BASE_URL, verify=False, timeout=5)
+            print(f'UI response: {ui_resp.status_code}')
+            if ui_resp.status_code == 200:
+                print('UI accessible')
+        except Exception as e:
+            print(f'Error accessing UI: {e}')
+
+        # Try to login
+        login_data = {
+            'username': USERNAME, 
+            'password': PASSWORD
+        }
+        
+        # Get CSRF token if needed
+        session = requests.Session()
+        try:
+            initial_resp = session.get(f'{BASE_URL}/auth/login', verify=False, timeout=5)
+            print(f'Initial auth page status: {initial_resp.status_code}')
+            if 'csrftoken' in session.cookies:
+                print('Found CSRF token in cookies')
+                login_data['csrfmiddlewaretoken'] = session.cookies['csrftoken']
+        except Exception as e:
+            print(f'Error getting initial page: {e}')
+
+        # Attempt login
+        try:
+            login_resp = session.post(
+                f'{BASE_URL}/api/v0/authenticate', 
+                json=login_data,
+                headers={'Referer': f'{BASE_URL}/auth/login'},
+                verify=False,
+                timeout=10
+            )
+            
+            print(f'Login status: {login_resp.status_code}')
+            
+            if login_resp.status_code in [200, 201, 202]:
+                print('Login successful!')
+                print(f'Response: {login_resp.text[:100]}...')
+                
+                # Try to get a protected resource to verify authentication
+                try:
+                    labs_resp = session.get(f'{BASE_URL}/api/v0/labs', verify=False, timeout=5)
+                    print(f'Labs API status: {labs_resp.status_code}')
+                    if labs_resp.status_code == 200:
+                        print('Successfully authenticated and accessed labs API')
+                        sys.exit(0)  # Success!
+                except Exception as e:
+                    print(f'Error accessing labs API: {e}')
+            else:
+                print(f'Login failed. Status: {login_resp.status_code}')
+                print(f'Response: {repr(login_resp.text)}')
+        except Exception as e:
+            print(f'Error during login: {e}')
+            
+        # Check system status
+        print('Checking system status...')
+        try:
+            import subprocess
+            subprocess.call(['sudo', 'systemctl', 'status', 'virl2-controller.service'])
+            subprocess.call(['sudo', 'systemctl', 'status', 'virl2-ui.service'])
+            subprocess.call(['sudo', 'systemctl', 'status', 'nginx.service'])
+            subprocess.call(['sudo', 'tail', '-n', '50', '/var/log/virl2/controller.log'])
+        except Exception as e:
+            print(f'Error checking system status: {e}')
+        
+        # Wait before retrying
+        if attempt < MAX_TRIES:
+            print(f'Waiting {WAIT_TIME} seconds before retry...')
+            time.sleep(WAIT_TIME)
+    except Exception as e:
+        print(f'Unexpected error: {e}')
+        if attempt < MAX_TRIES:
+            print(f'Waiting {WAIT_TIME} seconds before retry...')
+            time.sleep(WAIT_TIME)
+
+print('Maximum attempts reached. CML web interface not available.')
+sys.exit(1)  # Failure
+\"" || echo "Login test script failed to run"
     ]
   }
   

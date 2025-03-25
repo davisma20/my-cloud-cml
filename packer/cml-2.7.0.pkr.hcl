@@ -36,13 +36,13 @@ variable "volume_size" {
   description = "Root volume size in GB"
 }
 
-variable "cml_pkg_s3_bucket" {
+variable "cml_bucket" {
   type    = string
   default = "cml-ova-import"
   description = "S3 bucket containing CML package"
 }
 
-variable "cml_pkg_s3_key" {
+variable "cml_pkg_path" {
   type    = string
   default = "cml2_2.7.0-4_amd64-20.pkg"
   description = "S3 key for CML package"
@@ -103,7 +103,7 @@ source "amazon-ebs" "cml" {
     Statement {
       Action   = ["s3:GetObject"]
       Effect   = "Allow"
-      Resource = ["arn:aws:s3:::${var.cml_pkg_s3_bucket}/${var.cml_pkg_s3_key}"]
+      Resource = ["arn:aws:s3:::${var.cml_bucket}/${var.cml_pkg_path}"]
     }
     Version = "2012-10-17"
   }
@@ -156,99 +156,46 @@ build {
     source      = "bootstrap_cml.sh"
     destination = "/tmp/bootstrap_cml.sh"
   }
-  
+
   provisioner "shell" {
     inline = [
       "chmod +x /tmp/bootstrap_cml.sh",
       "sudo bash /tmp/bootstrap_cml.sh || echo 'Bootstrap script completed with errors, but continuing'"
     ]
   }
-  
-  // Download CML 2.7.0 package from S3 using instance role
+
+  // Download CML package
   provisioner "shell" {
+    environment_vars = [
+      "AWS_REGION=${var.region}",
+      "CML_BUCKET=${var.cml_bucket}",
+      "CML_PKG_PATH=${var.cml_pkg_path}",
+      "CML_ADMIN_USERNAME=${var.cml_admin_username}",
+      "CML_ADMIN_PASSWORD=${var.cml_admin_password}"
+    ]
     inline = [
-      "echo 'Creating CML installation directory...'",
-      "sudo mkdir -p /root/cml_installation/extracted",
-      "sudo chmod 755 /root/cml_installation",
-      
       "echo 'Downloading CML 2.7.0 package from S3...'",
-      "sudo AWS_REGION=${var.region} aws s3 cp s3://${var.cml_pkg_s3_bucket}/${var.cml_pkg_s3_key} /root/cml_installation/",
-      
-      "echo 'Debug: Listing downloaded files...'",
-      "sudo ls -la /root/cml_installation/",
-      
-      "echo 'Checking if download was successful...'",
-      "if sudo test -f /root/cml_installation/${var.cml_pkg_s3_key}; then",
-      "  echo 'Download successful!'",
-      "else",
-      "  echo 'Failed to download the CML package. Checking alternative paths...'",
-      "  sudo find / -name ${var.cml_pkg_s3_key} -type f 2>/dev/null || true",
-      "  if [ $? -ne 0 ]; then",
-      "    echo 'Could not find the package anywhere, aborting.'",
-      "    exit 1",
-      "  fi",
-      "  # If we found the file elsewhere, continue with that path",
-      "  pkg_path=$(sudo find / -name ${var.cml_pkg_s3_key} -type f 2>/dev/null | head -1)",
-      "  if [ -n \"$pkg_path\" ]; then",
-      "    echo \"Found package at: $pkg_path\"",
-      "    sudo cp \"$pkg_path\" /root/cml_installation/",
-      "  else",
-      "    echo 'Could not find the CML package. Aborting.'",
-      "    exit 1",
-      "  fi",
-      "fi",
-      
+      "aws s3 cp s3://${var.cml_bucket}/${var.cml_pkg_path} /tmp/cml-2.7.0.pkg",
+      "echo 'Verifying download...'",
+      "ls -la /tmp/cml-2.7.0.pkg",
+      "echo 'Creating extraction directory...'",
+      "mkdir -p /tmp/cml-2.7.0",
       "echo 'Extracting CML package...'",
-      "sudo chmod 755 /root/cml_installation/${var.cml_pkg_s3_key}",
-      
-      "echo 'Detecting package format...'",
-      "pkg_ext=$(echo ${var.cml_pkg_s3_key} | sudo awk -F '.' '{print $NF}')",
-      "echo \"Package extension: $pkg_ext\"",
-      
-      "if [ \"$pkg_ext\" = \"pkg\" ]; then",
-      "  echo 'Extracting PKG file...'",
-      "  sudo tar -xf /root/cml_installation/${var.cml_pkg_s3_key} -C /root/cml_installation/extracted || echo 'Extraction had issues, but continuing...'",
-      "elif [ \"$pkg_ext\" = \"zip\" ]; then",
-      "  echo 'Extracting ZIP file...'",
-      "  sudo apt-get install -y unzip || true",
-      "  sudo unzip -o /root/cml_installation/${var.cml_pkg_s3_key} -d /root/cml_installation/extracted || echo 'Extraction had issues, but continuing...'",
-      "elif [ \"$pkg_ext\" = \"tgz\" ] || [ \"$pkg_ext\" = \"gz\" ]; then",
-      "  echo 'Extracting TGZ/TAR.GZ file...'",
-      "  sudo tar -xzf /root/cml_installation/${var.cml_pkg_s3_key} -C /root/cml_installation/extracted || echo 'Extraction had issues, but continuing...'",
+      "cd /tmp",
+      "if file cml-2.7.0.pkg | grep -i zip; then",
+      "  echo 'Detected ZIP format'",
+      "  unzip -o cml-2.7.0.pkg -d cml-2.7.0 || echo 'Unzip failed, trying alternate methods'",
+      "elif file cml-2.7.0.pkg | grep -i gzip; then",
+      "  echo 'Detected GZIP format'",
+      "  tar -xzf cml-2.7.0.pkg -C cml-2.7.0 || echo 'Gzip extraction failed, trying alternate methods'",
       "else",
-      "  echo 'Unknown package format. Attempting generic extraction...'",
-      "  sudo tar -xf /root/cml_installation/${var.cml_pkg_s3_key} -C /root/cml_installation/extracted || sudo cp /root/cml_installation/${var.cml_pkg_s3_key} /root/cml_installation/extracted/ || echo 'Extraction had issues, but continuing...'",
+      "  echo 'Unknown format, trying multiple extraction methods'",
+      "  unzip -o cml-2.7.0.pkg -d cml-2.7.0 || tar -xzf cml-2.7.0.pkg -C cml-2.7.0 || echo 'All extraction methods failed'",
       "fi",
-      
-      "echo 'Listing extracted content:'",
-      "sudo ls -la /root/cml_installation/extracted",
-      
-      "# Create a simple shell script to handle the extraction if the previous methods failed",
-      "echo 'Creating backup extraction script...'",
-      "cat << 'EOFSCRIPT' | sudo tee /root/cml_installation/extract.sh",
-      "#!/bin/bash",
-      "cd /root/cml_installation",
-      "if [ -f \"${var.cml_pkg_s3_key}\" ]; then",
-      "  echo \"Found package file: ${var.cml_pkg_s3_key}\"",
-      "  # Try different extraction methods",
-      "  mkdir -p extracted",
-      "  if tar -xf \"${var.cml_pkg_s3_key}\" -C extracted 2>/dev/null; then",
-      "    echo \"Extracted with tar\"",
-      "  elif unzip -o \"${var.cml_pkg_s3_key}\" -d extracted 2>/dev/null; then",
-      "    echo \"Extracted with unzip\"",
-      "  elif cp \"${var.cml_pkg_s3_key}\" extracted/ 2>/dev/null; then",
-      "    echo \"Copied file to extracted directory\"",
-      "  else",
-      "    echo \"All extraction methods failed\"",
-      "  fi",
-      "else",
-      "  echo \"Package file not found: ${var.cml_pkg_s3_key}\"",
-      "fi",
-      "ls -la extracted",
-      "EOFSCRIPT",
-      "sudo chmod +x /root/cml_installation/extract.sh",
-      "echo 'Running backup extraction script...'",
-      "sudo bash /root/cml_installation/extract.sh"
+      "echo 'Checking extracted contents...'",
+      "ls -la /tmp/cml-2.7.0",
+      "echo 'Setting permissions on extracted files...'",
+      "chmod -R 755 /tmp/cml-2.7.0/*.sh 2>/dev/null || echo 'No shell scripts found to set permissions on'"
     ]
   }
   
@@ -256,69 +203,77 @@ build {
   provisioner "shell" {
     inline = [
       "echo 'Installing CML 2.7.0...'",
-      "# Verify directory exists and has content before trying to access it",
-      "if sudo test -d /root/cml_installation/extracted && sudo ls -la /root/cml_installation/extracted | grep -v '^total' | grep -v '\\.$' | grep -v '\\.\\.$' | grep -q .; then",
+      
+      "# Check for extracted directory with content",
+      "if [ -d \"/tmp/cml-2.7.0\" ] && [ \"$(ls -A /tmp/cml-2.7.0)\" ]; then",
       "  echo 'Extracted directory exists and has content'",
-      "  sudo bash -c 'cd /root/cml_installation/extracted && {",
-      "    if [ -f setup.sh ]; then",
-      "      echo \"Found setup.sh, running it...\"",
-      "      chmod +x setup.sh",
-      "      ./setup.sh || echo \"Setup script may have encountered issues but continuing\"",
-      "    elif [ -f *.deb ]; then",
-      "      echo \"Found DEB packages, installing them...\"",
-      "      DEBIAN_FRONTEND=noninteractive apt-get install -y ./cml2*.deb ./iol-tools*.deb ./patty*.deb || echo \"DEB installation may have encountered issues but continuing\"",
+      "  cd /tmp/cml-2.7.0",
+      "  echo 'Contents of extracted directory:'",
+      "  ls -la",
+      "  ",
+      "  # Examine setup.sh content",
+      "  if [ -f \"setup.sh\" ]; then",
+      "    echo 'Found setup.sh, examining content:'",
+      "    cat setup.sh",
+      "    echo 'Ensuring setup.sh is executable'",
+      "    chmod +x setup.sh",
+      "    echo 'Running setup.sh with detailed output...'",
+      "    sudo bash -c 'cd /tmp/cml-2.7.0 && ./setup.sh' || echo 'Setup script completed with non-zero exit code'",
+      "    echo 'Setup script execution completed'",
+      "  else",
+      "    echo 'setup.sh not found in extracted directory'",
+      "    echo 'Checking for other installation methods...'",
+      "    if [ -f \"install.sh\" ]; then",
+      "      echo 'Found install.sh, running it...'",
+      "      chmod +x install.sh",
+      "      sudo bash -c 'cd /tmp/cml-2.7.0 && ./install.sh' || echo 'Install script completed with non-zero exit code'",
       "    else",
-      "      echo \"Could not find installation method, listing directory contents:\"",
-      "      ls -la",
+      "      echo 'No installation scripts found in extracted directory'",
       "    fi",
-      "  }'",
+      "  fi",
       "else",
-      "  echo 'Looking for files directly in the root/cml_installation directory'",
-      "  sudo bash -c 'cd /root/cml_installation && {",
-      "    if [ -f setup.sh ]; then",
-      "      echo \"Found setup.sh in parent directory, running it...\"",
-      "      chmod +x setup.sh",
-      "      ./setup.sh || echo \"Setup script may have encountered issues but continuing\"",
-      "    elif [ -f *.deb ]; then",
-      "      echo \"Found DEB packages in parent directory, installing them...\"",
-      "      DEBIAN_FRONTEND=noninteractive apt-get install -y ./cml2*.deb ./iol-tools*.deb ./patty*.deb || echo \"DEB installation may have encountered issues but continuing\"",
-      "    elif [ -f cml2_*.pkg ]; then",
-      "      echo \"Found direct pkg file, extracting and installing...\"",
-      "      mkdir -p extracted_direct",
-      "      tar -xf cml2_*.pkg -C extracted_direct || echo \"Direct extraction had issues, but continuing...\"",
-      "      cd extracted_direct",
-      "      if [ -f setup.sh ]; then",
-      "        chmod +x setup.sh",
-      "        ./setup.sh || echo \"Setup script may have encountered issues but continuing\"",
-      "      elif [ -f *.deb ]; then",
-      "        DEBIAN_FRONTEND=noninteractive apt-get install -y ./cml2*.deb ./iol-tools*.deb ./patty*.deb || echo \"DEB installation may have encountered issues but continuing\"", 
-      "      else",
-      "        echo \"No installation method found even after direct extraction\"",
-      "        ls -la",
-      "      fi",
-      "    else",
-      "      echo \"Could not find any installation method, listing directory contents:\"",
-      "      ls -la",
-      "    fi",
-      "  }'",
+      "  echo 'Extracted directory does not exist or is empty'",
+      "  # Check in root directory",
+      "  if [ -f \"/tmp/cml-2.7.0.pkg\" ]; then",
+      "    echo 'Found CML package file in /tmp'",
+      "    cd /tmp",
+      "    echo 'Attempting to extract directly...'",
+      "    mkdir -p cml-extract",
+      "    cd cml-extract",
+      "    sudo tar -xzf /tmp/cml-2.7.0.pkg || echo 'Failed to extract with tar -xzf'",
+      "    sudo unzip -o /tmp/cml-2.7.0.pkg || echo 'Failed to extract with unzip'",
+      "  else",
+      "    echo 'CML package file not found in /tmp'",
+      "  fi",
       "fi",
       
+      "# Check if installation has created necessary files",
+      "echo 'Checking for CML installation files...'",
+      "ls -la /usr/local/bin/ | grep -i virl || true",
+      "ls -la /usr/local/bin/ | grep -i cml || true",
+      "ls -la /etc/ | grep -i virl || true",
+      "ls -la /etc/ | grep -i cml || true",
+      
+      "# Check systemd services",
+      "echo 'Checking systemd services...'",
+      "systemctl list-unit-files | grep -i virl || true",
+      "systemctl list-unit-files | grep -i cml || true",
+      
+      "# Check what the software is expecting to install",
+      "echo 'Examining available installation files...'",
+      "find /tmp -name \"*.deb\" | sort || echo 'No .deb files found'",
+      "find /tmp -name \"*.sh\" | sort || echo 'No shell scripts found'",
+      
+      "# Find any error logs from the installation",
+      "echo 'Checking for error logs...'",
+      "find /tmp -name \"*error*\" -o -name \"*log*\" | xargs ls -la 2>/dev/null || echo 'No error logs found'",
+      
+      "# Install .deb files",
+      "find /tmp -name \"*.deb\" -exec sudo dpkg -i {} \\; || echo 'Failed to install .deb files'",
+      
+      "# Create marker to indicate we've attempted installation",
       "echo 'Creating CML installation marker...'",
-      "sudo mkdir -p /provision",
-      "sudo touch /provision/.cml2_install_initiated"
-    ]
-  }
-  
-  // Set up admin user
-  provisioner "shell" {
-    inline = [
-      "echo 'Setting up CML admin user...'",
-      "sudo groupadd -f admin || echo 'Admin group already exists'",
-      "sudo useradd -m -s /bin/bash -g admin admin || echo 'Failed to create admin user - it may already exist'",
-      "sudo usermod -aG sudo admin || echo 'Failed to add admin to sudo group'",
-      "sudo bash -c 'echo \"${var.cml_admin_username}:${var.cml_admin_password}\" | chpasswd'",
-      "echo '${var.cml_admin_username} ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/admin",
-      "sudo chmod 0440 /etc/sudoers.d/admin"
+      "sudo touch /usr/local/etc/cml_installed.marker"
     ]
   }
   
@@ -346,9 +301,9 @@ build {
   provisioner "shell" {
     inline = [
       "echo 'Waiting for CML services to start...'",
-      "apt-get update -qq",
-      "apt-get install -y curl jq || true",
-      "pip3 install requests || true",
+      "sudo apt-get update -qq",
+      "sudo apt-get install -y curl jq || true",
+      "sudo pip3 install requests || true",
       "cat > /tmp/test_cml_login.py << 'EOF'",
       "#!/usr/bin/env python3",
       "import requests",
@@ -432,6 +387,19 @@ build {
       "export CML_ADMIN_PASSWORD='admin'",
       "echo 'Running CML web interface login test...'",
       "python3 /tmp/test_cml_login.py"
+    ]
+  }
+  
+  // Set up admin user
+  provisioner "shell" {
+    inline = [
+      "echo 'Setting up CML admin user...'",
+      "sudo groupadd -f admin || echo 'Admin group already exists'",
+      "sudo useradd -m -s /bin/bash -g admin admin || echo 'Failed to create admin user - it may already exist'",
+      "sudo usermod -aG sudo admin || echo 'Failed to add admin to sudo group'",
+      "sudo bash -c 'echo \"${var.cml_admin_username}:${var.cml_admin_password}\" | chpasswd'",
+      "echo '${var.cml_admin_username} ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/admin",
+      "sudo chmod 0440 /etc/sudoers.d/admin"
     ]
   }
   

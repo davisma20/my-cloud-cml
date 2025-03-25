@@ -53,10 +53,13 @@ To build a custom CML AMI:
 
 4. Update the `cml_ami` value in the `config.yml` file with the new AMI ID.
 
+> **Detailed Instructions**: For comprehensive documentation on the CML Packer build process, including troubleshooting and security features, see [PACKER_BUILD.md](documentation/PACKER_BUILD.md).
+
 The custom AMI includes:
 - All required dependencies for CML virtualization
 - Security hardening features (UFW, fail2ban, automatic updates)
 - Performance optimizations for KVM and networking
+- Properly initialized CML controller with default admin credentials
 
 ## Password Configuration
 

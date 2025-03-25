@@ -376,8 +376,8 @@ build {
       "pip3 install requests || true",
       
       "echo 'Running CML web interface login test...'",
-      "# Script to test CML login with proper credentials and error handling",
-      "python3 -c \"
+      <<EOT
+      cat > /tmp/test_cml_login.py << 'EOF'
 import requests
 import time
 import json
@@ -387,107 +387,110 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 MAX_TRIES = 30
 WAIT_TIME = 10
-BASE_URL = 'https://localhost'
-USERNAME = 'admin'
-PASSWORD = 'admin'
+BASE_URL = "https://localhost"
+USERNAME = "admin"
+PASSWORD = "admin"
 
 cookies = {}
 
-print('Testing CML login with admin credentials')
+print("Testing CML login with admin credentials")
 
 for attempt in range(1, MAX_TRIES + 1):
-    print(f'Try {attempt}/{MAX_TRIES}...')
+    print(f"Try {attempt}/{MAX_TRIES}...")
     try:
         # Check if the about endpoint exists first
         try:
-            about_resp = requests.get(f'{BASE_URL}/api/v0/about', verify=False, timeout=5)
-            print(f'About response: {about_resp.status_code}')
+            about_resp = requests.get(f"{BASE_URL}/api/v0/about", verify=False, timeout=5)
+            print(f"About response: {about_resp.status_code}")
             if about_resp.status_code == 200:
-                print('About endpoint accessible, CML API is working')
+                print("About endpoint accessible, CML API is working")
         except Exception as e:
-            print(f'Error accessing about endpoint: {e}')
+            print(f"Error accessing about endpoint: {e}")
             
         # Check if nginx is serving the UI
         try:
             ui_resp = requests.get(BASE_URL, verify=False, timeout=5)
-            print(f'UI response: {ui_resp.status_code}')
+            print(f"UI response: {ui_resp.status_code}")
             if ui_resp.status_code == 200:
-                print('UI accessible')
+                print("UI accessible")
         except Exception as e:
-            print(f'Error accessing UI: {e}')
+            print(f"Error accessing UI: {e}")
 
         # Try to login
         login_data = {
-            'username': USERNAME, 
-            'password': PASSWORD
+            "username": USERNAME, 
+            "password": PASSWORD
         }
         
         # Get CSRF token if needed
         session = requests.Session()
         try:
-            initial_resp = session.get(f'{BASE_URL}/auth/login', verify=False, timeout=5)
-            print(f'Initial auth page status: {initial_resp.status_code}')
-            if 'csrftoken' in session.cookies:
-                print('Found CSRF token in cookies')
-                login_data['csrfmiddlewaretoken'] = session.cookies['csrftoken']
+            initial_resp = session.get(f"{BASE_URL}/auth/login", verify=False, timeout=5)
+            print(f"Initial auth page status: {initial_resp.status_code}")
+            if "csrftoken" in session.cookies:
+                print("Found CSRF token in cookies")
+                login_data["csrfmiddlewaretoken"] = session.cookies["csrftoken"]
         except Exception as e:
-            print(f'Error getting initial page: {e}')
+            print(f"Error getting initial page: {e}")
 
         # Attempt login
         try:
             login_resp = session.post(
-                f'{BASE_URL}/api/v0/authenticate', 
+                f"{BASE_URL}/api/v0/authenticate", 
                 json=login_data,
-                headers={'Referer': f'{BASE_URL}/auth/login'},
+                headers={"Referer": f"{BASE_URL}/auth/login"},
                 verify=False,
                 timeout=10
             )
             
-            print(f'Login status: {login_resp.status_code}')
+            print(f"Login status: {login_resp.status_code}")
             
             if login_resp.status_code in [200, 201, 202]:
-                print('Login successful!')
-                print(f'Response: {login_resp.text[:100]}...')
+                print("Login successful!")
+                print(f"Response: {login_resp.text[:100]}...")
                 
                 # Try to get a protected resource to verify authentication
                 try:
-                    labs_resp = session.get(f'{BASE_URL}/api/v0/labs', verify=False, timeout=5)
-                    print(f'Labs API status: {labs_resp.status_code}')
+                    labs_resp = session.get(f"{BASE_URL}/api/v0/labs", verify=False, timeout=5)
+                    print(f"Labs API status: {labs_resp.status_code}")
                     if labs_resp.status_code == 200:
-                        print('Successfully authenticated and accessed labs API')
+                        print("Successfully authenticated and accessed labs API")
                         sys.exit(0)  # Success!
                 except Exception as e:
-                    print(f'Error accessing labs API: {e}')
+                    print(f"Error accessing labs API: {e}")
             else:
-                print(f'Login failed. Status: {login_resp.status_code}')
-                print(f'Response: {repr(login_resp.text)}')
+                print(f"Login failed. Status: {login_resp.status_code}")
+                print(f"Response: {repr(login_resp.text)}")
         except Exception as e:
-            print(f'Error during login: {e}')
+            print(f"Error during login: {e}")
             
         # Check system status
-        print('Checking system status...')
+        print("Checking system status...")
         try:
             import subprocess
-            subprocess.call(['sudo', 'systemctl', 'status', 'virl2-controller.service'])
-            subprocess.call(['sudo', 'systemctl', 'status', 'virl2-ui.service'])
-            subprocess.call(['sudo', 'systemctl', 'status', 'nginx.service'])
-            subprocess.call(['sudo', 'tail', '-n', '50', '/var/log/virl2/controller.log'])
+            subprocess.call(["sudo", "systemctl", "status", "virl2-controller.service"])
+            subprocess.call(["sudo", "systemctl", "status", "virl2-ui.service"])
+            subprocess.call(["sudo", "systemctl", "status", "nginx.service"])
+            subprocess.call(["sudo", "tail", "-n", "50", "/var/log/virl2/controller.log"])
         except Exception as e:
-            print(f'Error checking system status: {e}')
+            print(f"Error checking system status: {e}")
         
         # Wait before retrying
         if attempt < MAX_TRIES:
-            print(f'Waiting {WAIT_TIME} seconds before retry...')
+            print(f"Waiting {WAIT_TIME} seconds before retry...")
             time.sleep(WAIT_TIME)
     except Exception as e:
-        print(f'Unexpected error: {e}')
+        print(f"Unexpected error: {e}")
         if attempt < MAX_TRIES:
-            print(f'Waiting {WAIT_TIME} seconds before retry...')
+            print(f"Waiting {WAIT_TIME} seconds before retry...")
             time.sleep(WAIT_TIME)
 
-print('Maximum attempts reached. CML web interface not available.')
+print("Maximum attempts reached. CML web interface not available.")
 sys.exit(1)  # Failure
-\"" || echo "Login test script failed to run"
+EOF
+chmod +x /tmp/test_cml_login.py
+python3 /tmp/test_cml_login.py
+EOT
     ]
   }
   

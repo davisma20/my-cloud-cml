@@ -5,26 +5,46 @@ echo "============================"
 echo "CML Web UI Setup and Testing"
 echo "============================"
 
+# Setup proper error handling
+handle_error() {
+    echo "Error occurred at line $1"
+    exit 1
+}
+trap 'handle_error $LINENO' ERR
+
 # Initial system check
 echo "Checking system status before configuration..."
-systemctl status mongod || true
-systemctl status virl2-controller.service || true
-systemctl status virl2-ui.service || true
-systemctl status nginx.service || true
+sudo systemctl status mongod || true
+sudo systemctl status virl2-controller.service || true
+sudo systemctl status virl2-ui.service || true
+sudo systemctl status nginx.service || true
 
 echo "Checking current network configuration..."
-netstat -tulpn | grep -E ':(80|443|8000|8001)' || true
+sudo netstat -tulpn | grep -E ':(80|443|8000|8001)' || true
 
 # Stop all services to avoid conflicts
 echo "Stopping all services for clean configuration..."
-systemctl stop nginx || true
-systemctl stop virl2-ui.service || true 
-systemctl stop virl2-controller.service || true
+sudo systemctl stop nginx || true
+sudo systemctl stop virl2-ui.service || true 
+sudo systemctl stop virl2-controller.service || true
 sleep 5
+
+# Generate self-signed SSL certificate if needed
+if [ ! -f /etc/ssl/certs/ssl-cert-snakeoil.pem ] || [ ! -f /etc/ssl/private/ssl-cert-snakeoil.key ]; then
+    echo "Generating self-signed SSL certificate..."
+    sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout /etc/ssl/private/ssl-cert-snakeoil.key \
+        -out /etc/ssl/certs/ssl-cert-snakeoil.pem \
+        -subj "/C=US/ST=California/L=San Francisco/O=CML/CN=localhost"
+    sudo chmod 600 /etc/ssl/private/ssl-cert-snakeoil.key
+fi
 
 # Configure nginx properly with a secure setup
 echo "Configuring nginx for CML web interface..."
-cat > /etc/nginx/sites-available/cml << 'EOF'
+sudo mkdir -p /etc/nginx/sites-available
+sudo mkdir -p /etc/nginx/sites-enabled
+
+sudo tee /etc/nginx/sites-available/cml > /dev/null << 'EOF'
 server {
     listen 80;
     server_name _;
@@ -50,81 +70,74 @@ server {
     add_header X-Frame-Options SAMEORIGIN;
     add_header X-XSS-Protection "1; mode=block";
     
-    # Proxy configuration
+    # Proxy settings for CML UI
     location / {
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:8001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        
-        # WebSocket support
+    }
+    
+    # Proxy settings for CML API
+    location /api {
+        proxy_pass http://127.0.0.1:8000;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        
-        # Timeouts
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 300s;
-        proxy_read_timeout 300s;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 EOF
 
-# Create symlink and remove default site
-rm -f /etc/nginx/sites-enabled/default || true
-ln -sf /etc/nginx/sites-available/cml /etc/nginx/sites-enabled/
-mkdir -p /etc/nginx/ssl
+# Enable the site and disable default
+echo "Enabling CML nginx site..."
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo ln -sf /etc/nginx/sites-available/cml /etc/nginx/sites-enabled/
 
-# Generate self-signed certificate if not present
-if [ ! -f /etc/ssl/certs/ssl-cert-snakeoil.pem ]; then
-    echo "Generating self-signed SSL certificate..."
-    apt-get update -y
-    apt-get install -y ssl-cert
-    make-ssl-cert generate-default-snakeoil
-fi
-
-# Test nginx configuration
+# Test nginx config
 echo "Testing nginx configuration..."
-nginx -t || echo "Nginx config test failed"
+sudo nginx -t
 
-# Start services in correct order
+# Ensure all required services are running in the correct order
+echo "Starting services in proper order..."
+sudo systemctl daemon-reload
+
+# Start MongoDB first
 echo "Starting MongoDB..."
-systemctl restart mongod
+sudo systemctl start mongod
 sleep 5
 
-echo "Starting CML Controller..."
-systemctl restart virl2-controller.service
+# Start CML controller
+echo "Starting CML controller..."
+sudo systemctl start virl2-controller.service
 sleep 10
 
+# Start CML UI
 echo "Starting CML UI..."
-systemctl restart virl2-ui.service
+sudo systemctl start virl2-ui.service
 sleep 5
 
-echo "Starting Nginx..."
-systemctl restart nginx
-sleep 5
+# Start nginx last
+echo "Starting nginx..."
+sudo systemctl start nginx
 
-# Verify services are running
-echo "Verifying service status..."
-systemctl status mongod --no-pager || true
-systemctl status virl2-controller.service --no-pager || true
-systemctl status virl2-ui.service --no-pager || true
-systemctl status nginx.service --no-pager || true
+# Verify everything is running
+echo "Verifying all services are running..."
+sudo systemctl status mongod || true
+sudo systemctl status virl2-controller.service || true
+sudo systemctl status virl2-ui.service || true
+sudo systemctl status nginx.service || true
 
-# Check for listening ports
-echo "Checking listening ports..."
-netstat -tulpn | grep -E ':(80|443|8000|8001)' || true
+# Configure UFW firewall with required ports
+echo "Configuring UFW firewall rules..."
+sudo ufw allow 22/tcp comment "SSH"
+sudo ufw allow 80/tcp comment "HTTP"
+sudo ufw allow 443/tcp comment "HTTPS"
+sudo ufw --force enable
 
-# Create admin user if needed
-echo "Ensuring admin user exists..."
-if command -v virl2_controller; then
-    virl2_controller users list | grep -q "admin" || virl2_controller users add admin -p admin --full-name "System Administrator" --email admin@example.com
-    virl2_controller users grant admin admin || true
-    virl2_controller users grant admin root || true
-    virl2_controller users list
-else
-    echo "virl2_controller command not found, skipping user creation"
-fi
-
-echo "Web UI setup complete. You should now be able to access the CML interface via HTTPS."
+echo "CML Web UI setup completed successfully"

@@ -498,12 +498,12 @@ build {
   
   // Wait for CML web interface to become available and test login
   provisioner "file" {
-    source      = "${path.root}/../scripts/web-ui/setup_cml_web_ui.sh"
+    source      = "../../scripts/web-ui/setup_cml_web_ui.sh"
     destination = "/tmp/setup_cml_web_ui.sh" 
   }
 
   provisioner "file" {
-    source      = "${path.root}/../scripts/web-ui/test_cml_web_ui.py"
+    source      = "../../scripts/web-ui/test_cml_web_ui.py"
     destination = "/tmp/test_cml_web_ui.py"
   }
 

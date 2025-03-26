@@ -364,7 +364,7 @@ build {
       "  virl2_controller init || true",
       "  echo 'Init completed, checking status...'",
       "  virl2_controller status || true",
-      "  
+      
       "  # Create admin user if it doesn't exist",
       "  echo 'Creating admin user...'",
       "  virl2_controller users add admin -p admin --full-name 'System Administrator' --email admin@example.com || true",

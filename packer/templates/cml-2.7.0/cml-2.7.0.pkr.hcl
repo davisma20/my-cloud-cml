@@ -159,6 +159,7 @@ build {
       "sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32 871920D1991BC93C",
       "sudo apt-get update || true"
     ]
+    execute_command = "sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
   }
   
   // Install CML dependencies
@@ -168,6 +169,7 @@ build {
       "sudo DEBIAN_FRONTEND=noninteractive apt-get -y upgrade || true",
       "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y qemu-kvm libvirt-daemon libvirt-daemon-system libvirt-clients bridge-utils virt-manager libguestfs-tools openvswitch-switch python3-openvswitch openvpn wireguard awscli vlan wget curl unzip software-properties-common jq nginx gnupg apt-transport-https libnss-libvirt cloud-init python3-pip || true"
     ]
+    execute_command = "sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
   }
   
   // Upload and run CML optimization script
@@ -181,6 +183,7 @@ build {
       "chmod +x /tmp/bootstrap_cml.sh",
       "sudo /tmp/bootstrap_cml.sh || echo 'Bootstrap script completed with errors, but continuing'"
     ]
+    execute_command = "sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
   }
 
   provisioner "file" {
@@ -193,6 +196,7 @@ build {
       "chmod +x /tmp/install_cml_2.7.0.sh",
       "sudo /tmp/install_cml_2.7.0.sh || echo 'Installation script completed with errors, but continuing'"
     ]
+    execute_command = "sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
   }
 
   // Download CML package
@@ -265,6 +269,7 @@ build {
       "sudo find /opt/cml-installer -type f -name \"*.sh\" -o -name \"install*\" -o -name \"setup*\" | xargs -I{} chmod +x {} 2>/dev/null || true",
       "sudo find /opt/cml-installer -type f -name \"*.sh\" -o -name \"install*\" -o -name \"setup*\" | xargs -I{} bash -c 'echo \"Running {}\"; {} || true' 2>/dev/null || true"
     ]
+    execute_command = "sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
   }
   
   // Attempt to install CML
@@ -318,6 +323,7 @@ build {
       "echo 'Creating CML installation marker...'",
       "sudo touch /usr/local/etc/cml_installed.marker"
     ]
+    execute_command = "sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
   }
   
   // Check service status before web interface test
@@ -504,27 +510,39 @@ build {
       "systemctl status virl2-ui.service || true", 
       "systemctl status nginx.service || true"
     ]
+    execute_command = "sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
   }
   
   // Wait for CML web interface to become available and test login
   provisioner "file" {
-    source      = "setup_cml_web_ui.sh"
+    source      = var.setup_web_ui_script
     destination = "/tmp/setup_cml_web_ui.sh" 
   }
 
   provisioner "file" {
-    source      = "test_cml_web_ui.py"
+    source      = var.test_web_ui_script
     destination = "/tmp/test_cml_web_ui.py"
   }
 
+  // Setup CML web UI with proper permissions
   provisioner "shell" {
     inline = [
-      "echo 'Setting up and testing CML web UI...'",
       "chmod +x /tmp/setup_cml_web_ui.sh",
-      "chmod +x /tmp/test_cml_web_ui.py",
-      "sudo /tmp/setup_cml_web_ui.sh",
-      "python3 /tmp/test_cml_web_ui.py"
+      "sudo /tmp/setup_cml_web_ui.sh"
     ]
+    execute_command = "sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
+  }
+
+  // Install Python dependencies and run test script
+  provisioner "shell" {
+    inline = [
+      "sudo apt-get update",
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-pip",
+      "sudo pip3 install requests",
+      "chmod +x /tmp/test_cml_web_ui.py",
+      "sudo python3 /tmp/test_cml_web_ui.py"
+    ]
+    execute_command = "sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
   }
 
   // Set up admin user
@@ -538,6 +556,7 @@ build {
       "echo '${var.cml_admin_username} ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/admin",
       "sudo chmod 0440 /etc/sudoers.d/admin"
     ]
+    execute_command = "sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
   }
   
   // Clean up
@@ -552,5 +571,6 @@ build {
       
       "echo 'CML 2.7.0 AMI preparation complete!'"
     ]
+    execute_command = "sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
   }
 }

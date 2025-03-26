@@ -51,6 +51,8 @@ packer build -debug \
   -var "cml_pkg_path=cml2_2.7.0-4_amd64-20.pkg" \
   -var "bootstrap_script=$(pwd)/bootstrap_cml.sh" \
   -var "install_script=$(pwd)/install_cml_2.7.0.sh" \
+  -var "setup_web_ui_script=$(pwd)/setup_cml_web_ui.sh" \
+  -var "test_web_ui_script=$(pwd)/test_cml_web_ui.py" \
   ../templates/cml-2.7.0/cml-2.7.0.pkr.hcl
 
 echo "Packer build completed. Check the output above for the AMI ID."

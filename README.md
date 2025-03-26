@@ -2,7 +2,7 @@
 
 Version 2.8.1-DevNet, March 22, 2025
 
-> **This is a customized fork of the [Cisco DevNet cloud-cml repository](https://github.com/CiscoDevNet/cloud-cml) with added support for DevNet Expert workstation deployment.**
+> **This is a customized fork of the [Cisco DevNet cloud-cml repository](https://github.com/CiscoDevNet/cloud-cml) with added support for DevNet Expert workstation deployment and enhanced security features.**
 
 CML instances can run on Azure and AWS cloud infrastructure.  This repository provides automation tooling using Terraform to deploy and manage CML in the cloud.  We have tested CML deployments using this tool chain in both clouds.  **The use of this tool is considered BETA**.  The tool has certain requirements and prerequisites which are described in this README and in the [documentation](documentation) directory.
 
@@ -446,3 +446,80 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 ## License
 
 This project is licensed under the terms of the LICENSE file included in this repository.
+
+# my-cloud-cml
+
+This is an enhanced fork of the Cisco DevNet cloud-cml repository with improved security features, enhanced CML deployment capabilities, and better repository organization.
+
+## Repository Structure
+
+The repository is organized as follows:
+
+```
+my-cloud-cml/
+│
+├── documentation/            # Documentation for deploying and using CML
+│   ├── AWS.md                # AWS-specific documentation
+│   ├── CML_INSTALLATION.md   # CML installation guide
+│   ├── PACKER_BUILD.md       # Enhanced Packer build documentation
+│   └── TROUBLESHOOTING.md    # Troubleshooting guide
+│
+├── packer/                   # Packer templates and scripts
+│   ├── templates/            # Organized Packer templates
+│   │   ├── cml-2.7.0/        # Enhanced CML 2.7.0 template with security features
+│   │   └── cml-network/      # Network validation templates
+│   ├── scripts/              # Build and installation scripts
+│   └── logs/                 # Build logs
+│
+├── security/                 # Security-related documentation and configuration
+│   └── hardening/            # Details on security hardening measures
+│
+├── scripts/                  # Utility scripts
+│   ├── install/              # Installation and configuration scripts
+│   ├── monitoring/           # Monitoring scripts
+│   └── logs/                 # Log management
+│
+├── terraform/                # Terraform configuration
+│   ├── main/                 # Main Terraform files
+│   ├── modules/              # Terraform modules
+│   └── config/               # Variable configurations
+│
+└── logs/                     # Various log directories
+```
+
+## Key Enhancements
+
+### Security Hardening
+
+This fork implements comprehensive security best practices:
+
+- **Infrastructure Security**:
+  - Root volume encryption
+  - IMDSv2 requirement (prevents SSRF attacks)
+  - Restricted security groups
+
+- **Host-based Security**:
+  - Automatic security updates
+  - UFW firewall with default deny policy
+  - Fail2ban for brute force protection
+  - Secure SSH configuration
+  - System hardening
+
+For details, see [security/hardening](./security/hardening/README.md).
+
+### Improved CML Deployment
+
+The CML deployment process has been significantly enhanced:
+
+- **Proper Controller Initialization**
+  - Fixed MongoDB initialization
+  - Improved nginx configuration
+  - Correct service sequencing
+  - Default admin user creation
+
+- **Diagnostics and Monitoring**
+  - Detailed logging
+  - Service status verification
+  - Web interface validation
+
+For details on the build process, see [documentation/PACKER_BUILD.md](./documentation/PACKER_BUILD.md).

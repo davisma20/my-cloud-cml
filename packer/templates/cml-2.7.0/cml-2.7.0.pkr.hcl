@@ -45,7 +45,16 @@ variable "cml_bucket" {
 variable "cml_pkg_path" {
   type    = string
   default = "cml2_2.7.0-4_amd64-20.pkg"
-  description = "S3 key for CML package"
+}
+
+variable "bootstrap_script" {
+  type    = string
+  default = "${path.root}/../../scripts/bootstrap_cml.sh" 
+}
+
+variable "install_script" {
+  type    = string
+  default = "${path.root}/../../scripts/install_cml_2.7.0.sh"
 }
 
 variable "cml_admin_username" {
@@ -153,14 +162,26 @@ build {
   
   // Upload and run CML optimization script
   provisioner "file" {
-    source      = "bootstrap_cml.sh"
+    source      = var.bootstrap_script
     destination = "/tmp/bootstrap_cml.sh"
   }
 
   provisioner "shell" {
     inline = [
       "chmod +x /tmp/bootstrap_cml.sh",
-      "sudo bash /tmp/bootstrap_cml.sh || echo 'Bootstrap script completed with errors, but continuing'"
+      "sudo /tmp/bootstrap_cml.sh || echo 'Bootstrap script completed with errors, but continuing'"
+    ]
+  }
+
+  provisioner "file" {
+    source      = var.install_script
+    destination = "/tmp/install_cml_2.7.0.sh"
+  }
+
+  provisioner "shell" {
+    inline = [
+      "chmod +x /tmp/install_cml_2.7.0.sh",
+      "sudo /tmp/install_cml_2.7.0.sh || echo 'Installation script completed with errors, but continuing'"
     ]
   }
 

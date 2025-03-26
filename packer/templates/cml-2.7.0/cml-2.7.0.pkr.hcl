@@ -57,6 +57,16 @@ variable "install_script" {
   default = "install_cml_2.7.0.sh"
 }
 
+variable "setup_web_ui_script" {
+  type    = string
+  default = "setup_cml_web_ui.sh"
+}
+
+variable "test_web_ui_script" {
+  type    = string
+  default = "test_cml_web_ui.py"
+}
+
 variable "cml_admin_username" {
   type    = string
   default = "admin"
@@ -498,12 +508,12 @@ build {
   
   // Wait for CML web interface to become available and test login
   provisioner "file" {
-    source      = "../../scripts/web-ui/setup_cml_web_ui.sh"
+    source      = "setup_cml_web_ui.sh"
     destination = "/tmp/setup_cml_web_ui.sh" 
   }
 
   provisioner "file" {
-    source      = "../../scripts/web-ui/test_cml_web_ui.py"
+    source      = "test_cml_web_ui.py"
     destination = "/tmp/test_cml_web_ui.py"
   }
 

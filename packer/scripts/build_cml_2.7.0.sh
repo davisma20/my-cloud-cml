@@ -23,6 +23,11 @@ chmod +x ./bootstrap_cml.sh
 # Create logs directory if it doesn't exist
 mkdir -p ../logs
 
+# Copy web UI scripts to local directory for Packer to find
+echo "Copying web UI scripts to local directory..."
+cp -f ./web-ui/setup_cml_web_ui.sh .
+cp -f ./web-ui/test_cml_web_ui.py .
+
 # Clean Packer cache more thoroughly
 echo "Cleaning Packer cache..."
 rm -rf ~/.packer.d/tmp/* 2>/dev/null || true

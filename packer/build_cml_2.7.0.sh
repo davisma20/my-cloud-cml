@@ -20,14 +20,18 @@ fi
 chmod +x install_cml_2.7.0.sh
 chmod +x bootstrap_cml.sh
 
-# Clean packer cache just in case
+# Clean Packer cache more thoroughly
 echo "Cleaning Packer cache..."
 rm -rf ~/.packer.d/tmp/* 2>/dev/null || true
+rm -rf ~/.packer.d/plugins/* 2>/dev/null || true
+rm -rf ~/.cache/packer/* 2>/dev/null || true
 
 # Set environment variable to help with Ubuntu GPG issues
-export PACKER_LOG=1
-export PACKER_LOG_PATH="packer-build-cml-2.7.0.log"
 export DEBIAN_FRONTEND=noninteractive
+
+# Add more debugging options
+export PACKER_LOG=1
+export PACKER_LOG_PATH="packer_build.log"
 
 # Run Packer build with appropriate variables
 echo "Starting Packer build with debug mode..."

@@ -49,12 +49,12 @@ variable "cml_pkg_path" {
 
 variable "bootstrap_script" {
   type    = string
-  default = "${path.root}/../../scripts/bootstrap_cml.sh" 
+  default = "bootstrap_cml.sh" 
 }
 
 variable "install_script" {
   type    = string
-  default = "${path.root}/../../scripts/install_cml_2.7.0.sh"
+  default = "install_cml_2.7.0.sh"
 }
 
 variable "cml_admin_username" {

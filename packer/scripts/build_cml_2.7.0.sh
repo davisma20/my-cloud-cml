@@ -44,8 +44,8 @@ packer build -debug \
   -var "volume_size=50" \
   -var "cml_bucket=cml-ova-import" \
   -var "cml_pkg_path=cml2_2.7.0-4_amd64-20.pkg" \
-  -var "bootstrap_script=./bootstrap_cml.sh" \
-  -var "install_script=./install_cml_2.7.0.sh" \
+  -var "bootstrap_script=$(pwd)/bootstrap_cml.sh" \
+  -var "install_script=$(pwd)/install_cml_2.7.0.sh" \
   ../templates/cml-2.7.0/cml-2.7.0.pkr.hcl
 
 echo "Packer build completed. Check the output above for the AMI ID."

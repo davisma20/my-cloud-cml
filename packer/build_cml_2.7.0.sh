@@ -34,8 +34,8 @@ export PACKER_LOG=1
 export PACKER_LOG_PATH="packer_build.log"
 
 # Run Packer build with appropriate variables
-echo "Starting Packer build with debug mode..."
-packer build -debug \
+echo "Starting Packer build..."
+packer build \
   -var "region=$region" \
   -var "instance_type=c5.2xlarge" \
   -var "volume_size=50" \

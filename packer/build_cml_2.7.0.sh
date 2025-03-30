@@ -40,7 +40,6 @@ packer build \
   -var "instance_type=c5.2xlarge" \
   -var "volume_size=50" \
   -var "cml_bucket=cml-ova-import" \
-  -var "cml_pkg_path=cml2_2.7.0-4_amd64-20.pkg" \
   cml-2.7.0.pkr.hcl
 
 echo "Packer build completed. Check the output above for the AMI ID."

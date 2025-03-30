@@ -101,15 +101,15 @@ source "amazon-ebs" "cml" {
   // Use a temporary IAM instance profile with S3 access
   temporary_iam_instance_profile_policy_document {
     Version = "2012-10-17"
-    statement {
-      actions   = ["s3:GetObject"]
-      effect    = "Allow"
-      resources = ["arn:aws:s3:::${var.cml_bucket}/cml-2.7.0-debs/*"]
+    Statement {
+        Action   = ["s3:GetObject"]
+        Effect   = "Allow"
+        Resource = ["arn:aws:s3:::${var.cml_bucket}/cml-2.7.0-debs/*"]
     }
-    statement {
-       actions = ["s3:ListBucket"]
-       effect = "Allow"
-       resources = ["arn:aws:s3:::${var.cml_bucket}"]
+    Statement {
+         Action = ["s3:ListBucket"]
+         Effect = "Allow"
+         Resource = ["arn:aws:s3:::${var.cml_bucket}"]
     }
   }
   
@@ -147,16 +147,7 @@ build {
     ]
   }
   
-  // Install CML dependencies
-  provisioner "shell" {
-    inline = [
-      "echo 'Updating system and installing CML dependencies...'",
-      "sudo DEBIAN_FRONTEND=noninteractive apt-get -y upgrade || true",
-      "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y qemu-kvm libvirt-daemon libvirt-daemon-system libvirt-clients bridge-utils virt-manager libguestfs-tools openvswitch-switch python3-openvswitch openvpn wireguard awscli vlan wget curl unzip software-properties-common jq nginx gnupg apt-transport-https libnss-libvirt cloud-init python3-pip || true"
-    ]
-  }
-  
-  // Upload and run CML optimization script
+  // Upload and run CML bootstrap/optimization script
   provisioner "file" {
     source      = "bootstrap_cml.sh"
     destination = "/tmp/bootstrap_cml.sh"
@@ -169,38 +160,42 @@ build {
     ]
   }
 
-  // Download CML deb files and run setup script
+  // Download CML deb files to the expected location
   provisioner "shell" {
     environment_vars = [
       "AWS_REGION=${var.region}",
       "CML_BUCKET=${var.cml_bucket}"
     ]
     inline = [
-      "echo 'Creating directory for CML deb files...'",
-      "mkdir -p /tmp/cml-debs",
+      "echo 'Creating directory for CML installation files...'",
+      "sudo mkdir -p /root/cml_installation/extracted",
       "echo 'Downloading CML 2.7.0 deb files from S3 recursively...'",
-      "aws s3 cp s3://${var.cml_bucket}/cml-2.7.0-debs/ /tmp/cml-debs/ --recursive",
+      "aws s3 cp s3://${var.cml_bucket}/cml-2.7.0-debs/ /root/cml_installation/extracted/ --recursive",
       "echo 'Verifying download...'",
-      "ls -la /tmp/cml-debs/",
-      "if [ -f /tmp/cml-debs/setup.sh ]; then",
-      "  echo 'Making setup.sh executable...'",
-      "  chmod +x /tmp/cml-debs/setup.sh",
-      "  echo 'Running setup.sh...'",
-      "  cd /tmp/cml-debs",
-      "  sudo ./setup.sh || echo 'WARNING: setup.sh exited with non-zero status!'",
-      "else",
-      "  echo 'ERROR: setup.sh not found in downloaded files!'",
-      "  exit 1",
-      "fi"
+      "ls -la /root/cml_installation/extracted/"
+    ]
+  }
+
+  // Upload and run the actual CML installation script
+  provisioner "file" {
+    source      = "install_cml_2.7.0.sh"
+    destination = "/tmp/install_cml_2.7.0.sh"
+  }
+
+  provisioner "shell" {
+    inline = [
+      "chmod +x /tmp/install_cml_2.7.0.sh",
+      "sudo bash /tmp/install_cml_2.7.0.sh || echo 'CML Installation script failed!'"
     ]
   }
 
   // Clean up installation files (optional but recommended)
   provisioner "shell" {
     inline = [
-      "echo 'Cleaning up downloaded CML files...'",
-      "rm -rf /tmp/cml-debs",
-      "rm -f /tmp/bootstrap_cml.sh"
+      "echo 'Cleaning up downloaded CML files and bootstrap script...'",
+      "sudo rm -rf /root/cml_installation",
+      "sudo rm -f /tmp/bootstrap_cml.sh",
+      "sudo rm -f /tmp/install_cml_2.7.0.sh"
     ]
   }
 

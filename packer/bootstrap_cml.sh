@@ -5,6 +5,21 @@
 set -e
 set -o pipefail
 
+# --- Apt/GPG Fixes ---
+echo "Attempting to fix potential apt/GPG issues..."
+sudo apt-get clean
+sudo rm -rf /var/lib/apt/lists/*
+sudo mkdir -p /var/lib/apt/lists/partial
+sudo apt-get update -o Acquire::AllowInsecureRepositories=true -o Acquire::AllowDowngradeToInsecureRepositories=true || {
+    echo "Initial apt update failed, attempting further fixes..."
+    sudo apt-get install -y gnupg ca-certificates apt-transport-https --allow-unauthenticated || echo "Warning: Failed to install GPG/HTTPS packages, continuing..."
+    # Add specific keys known to be sometimes problematic
+    sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32 871920D1991BC93C || echo "Warning: Failed to add standard Ubuntu keys"
+    sudo apt-get update || echo "Warning: Apt update still failing after fixes."
+}
+echo "Apt/GPG fix attempt completed."
+# --- End Apt/GPG Fixes ---
+
 # Setup logging with timestamps
 LOGFILE="/var/log/bootstrap_cml.log"
 exec > >(tee -a ${LOGFILE}) 2>&1

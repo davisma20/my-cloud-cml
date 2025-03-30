@@ -156,7 +156,7 @@ build {
   provisioner "shell" {
     inline = [
       "chmod +x /tmp/bootstrap_cml.sh",
-      "sudo bash /tmp/bootstrap_cml.sh || echo 'Bootstrap script completed with errors, but continuing'"
+      "sudo bash /tmp/bootstrap_cml.sh"
     ]
   }
 

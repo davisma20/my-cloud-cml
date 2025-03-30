@@ -100,12 +100,17 @@ source "amazon-ebs" "cml" {
   
   // Use a temporary IAM instance profile with S3 access
   temporary_iam_instance_profile_policy_document {
-    Statement {
-      Action   = ["s3:GetObject"]
-      Effect   = "Allow"
-      Resource = ["arn:aws:s3:::${var.cml_bucket}/${var.cml_pkg_path}"]
-    }
     Version = "2012-10-17"
+    statement {
+      actions   = ["s3:GetObject"]
+      effect    = "Allow"
+      resources = ["arn:aws:s3:::${var.cml_bucket}/cml-2.7.0-debs/*"]
+    }
+    statement {
+       actions = ["s3:ListBucket"]
+       effect = "Allow"
+       resources = ["arn:aws:s3:::${var.cml_bucket}"]
+    }
   }
   
   // Root volume configuration
@@ -164,78 +169,41 @@ build {
     ]
   }
 
-  // Download CML package
+  // Download CML deb files and run setup script
   provisioner "shell" {
     environment_vars = [
       "AWS_REGION=${var.region}",
-      "CML_BUCKET=${var.cml_bucket}",
-      "CML_PKG_PATH=${var.cml_pkg_path}"
+      "CML_BUCKET=${var.cml_bucket}"
     ]
     inline = [
-      "echo 'Downloading CML 2.7.0 package from S3...'",
-      "aws s3 cp s3://${var.cml_bucket}/${var.cml_pkg_path} /tmp/cml-2.7.0.pkg",
+      "echo 'Creating directory for CML deb files...'",
+      "mkdir -p /tmp/cml-debs",
+      "echo 'Downloading CML 2.7.0 deb files from S3 recursively...'",
+      "aws s3 cp s3://${var.cml_bucket}/cml-2.7.0-debs/ /tmp/cml-debs/ --recursive",
       "echo 'Verifying download...'",
-      "ls -la /tmp/cml-2.7.0.pkg",
-      
-      "echo 'Determining the package format...'",
-      "file /tmp/cml-2.7.0.pkg || true",
-      
-      "echo 'Creating secure extraction directory...'",
-      "sudo mkdir -p /opt/cml-installer",
-      "sudo chmod 755 /opt/cml-installer",
-      
-      "echo 'Copying package to secure location...'",
-      "sudo cp /tmp/cml-2.7.0.pkg /opt/cml-installer/",
-      "sudo chmod 644 /opt/cml-installer/cml-2.7.0.pkg",
-      
-      "echo 'Examining package content with file utility...'",
-      "file cml-2.7.0.pkg || true",
-      
-      "echo 'Now that we know it is a tar archive, extracting properly...'",
-      "sudo mkdir -p /opt/cml-installer/extracted",
-      "sudo chmod 777 /opt/cml-installer/extracted",
-      "cd /opt/cml-installer",
-      "sudo tar -xf cml-2.7.0.pkg -C extracted || echo 'Tar extraction failed'",
-      "sudo chmod -R 755 /opt/cml-installer/extracted",
-      "echo 'Extracted contents:'",
-      "ls -la /opt/cml-installer/extracted || true",
-      
-      "echo 'Looking for installation scripts in extracted content...'",
-      "find /opt/cml-installer/extracted -type f -name \"*.sh\" | sudo xargs -I{} chmod +x {} 2>/dev/null || true",
-      "find /opt/cml-installer/extracted -type f -name \"install*\" | sudo xargs -I{} chmod +x {} 2>/dev/null || true",
-      "find /opt/cml-installer/extracted -type f -name \"setup*\" | sudo xargs -I{} chmod +x {} 2>/dev/null || true",
-      
-      "echo 'Attempting to run installation scripts if found...'",
-      "cd /opt/cml-installer/extracted",
-      "if [ -f setup.sh ]; then",
-      "  echo 'Found setup.sh script, executing...'",
-      "  sudo bash -c 'cd /opt/cml-installer/extracted && ./setup.sh' || echo 'Setup script failed'",
-      "elif [ -f install.sh ]; then",
-      "  echo 'Found install.sh script, executing...'",
-      "  sudo bash -c 'cd /opt/cml-installer/extracted && ./install.sh' || echo 'Install script failed'",
+      "ls -la /tmp/cml-debs/",
+      "if [ -f /tmp/cml-debs/setup.sh ]; then",
+      "  echo 'Making setup.sh executable...'",
+      "  chmod +x /tmp/cml-debs/setup.sh",
+      "  echo 'Running setup.sh...'",
+      "  cd /tmp/cml-debs",
+      "  sudo ./setup.sh || echo 'WARNING: setup.sh exited with non-zero status!'",
       "else",
-      "  echo 'No standard installation scripts found. Looking for other candidates...'",
-      "  find . -type f -name \"*.sh\" -o -name \"install*\" -o -name \"setup*\" | sort || true",
-      "fi",
-      
-      "echo 'Checking for Debian packages in extracted files...'",
-      "find /opt/cml-installer/extracted -name \"*.deb\" | sudo xargs -I{} dpkg -i {} 2>/dev/null || echo 'No Debian packages found or installation failed'",
-      
-      "echo 'Fixing package dependencies...'",
-      "sudo apt-get update",
-      "sudo DEBIAN_FRONTEND=noninteractive apt-get -y --fix-broken install",
-      "sudo apt-get -y install $(dpkg -I /opt/cml-installer/extracted/*.deb 2>/dev/null | grep Depends | sed 's/Depends://g' | tr ',' ' ' | tr '|' ' ') || true",
-      
-      "echo 'Retrying installation of any .deb packages that failed due to dependencies...'",
-      "find /opt/cml-installer/extracted -name \"*.deb\" | sudo xargs -I{} dpkg -i {} 2>/dev/null || true", 
-      "sudo DEBIAN_FRONTEND=noninteractive apt-get -y --fix-broken install",
-      
-      "echo 'Looking for any installation files that were created...'",
-      "sudo find /opt/cml-installer -type f -name \"*.sh\" -o -name \"install*\" -o -name \"setup*\" | xargs -I{} chmod +x {} 2>/dev/null || true",
-      "sudo find /opt/cml-installer -type f -name \"*.sh\" -o -name \"install*\" -o -name \"setup*\" | xargs -I{} bash -c 'echo \"Running {}\"; {} || true' 2>/dev/null || true"
+      "  echo 'ERROR: setup.sh not found in downloaded files!'",
+      "  exit 1",
+      "fi"
     ]
   }
-  
+
+  // Clean up installation files (optional but recommended)
+  provisioner "shell" {
+    inline = [
+      "echo 'Cleaning up downloaded CML files...'",
+      "rm -rf /tmp/cml-debs",
+      "rm -f /tmp/bootstrap_cml.sh"
+    ]
+  }
+
   // Attempt to install CML
   provisioner "shell" {
     inline = [

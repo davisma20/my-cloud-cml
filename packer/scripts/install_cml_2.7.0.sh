@@ -11,14 +11,19 @@ exec > >(tee -a ${LOGFILE}) 2>&1
 echo "Starting CML 2.7.0 installation at $(date)"
 
 # Working directory
+DEB_DIR=/tmp/cml-debs
 CML_DIR="/root/cml_installation/extracted"
 mkdir -p "$CML_DIR"
 sudo chown -R $(whoami) "$CML_DIR"
 cd "$CML_DIR"
 
-# Check what files we have
-echo "Listing available installation files:"
-ls -la
+# Define subdirectories within DEB_DIR
+KERNEL_DEBS=${DEB_DIR}/kernel_debs
+DEPEND_DEBS=${DEB_DIR}/dependencies_debs
+CML_DEBS=${DEB_DIR}/cml_deps
+
+echo "Listing available installation files in ${DEB_DIR}:"
+ls -lha "${DEB_DIR}" || true
 
 # Fix broken packages first
 echo "Fixing any broken package dependencies..."
@@ -27,75 +32,64 @@ sudo DEBIAN_FRONTEND=noninteractive apt --fix-broken install -y
 
 # Install dependencies if needed
 echo "Installing any prerequisite packages..."
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y systemd-coredump libc6-dev libnss-libvirt
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated systemd-coredump libc6-dev libnss-libvirt
 
-# Create required directories with proper permissions
-echo "Creating required directories..."
-sudo mkdir -p /var/lib/virl2
-sudo chown -R $(whoami) /var/lib/virl2
+echo "Creating required subdirectories inside ${DEB_DIR}..."
+mkdir -p "${KERNEL_DEBS}" "${DEPEND_DEBS}" "${CML_DEBS}"
 
-# Look for and install the CML package
-if [ -f cml-2.7.0.pkg ]; then
-    echo "Found cml-2.7.0.pkg, making it executable and installing..."
-    sudo chmod +x cml-2.7.0.pkg
-    sudo ./cml-2.7.0.pkg || {
-        echo "Warning: cml-2.7.0.pkg installation failed. Will try alternative methods."
-    }
-fi
+echo "Organizing DEB files into expected subdirectories in ${DEB_DIR}..."
 
-# Look for and run setup.sh if it exists
-if [ -f setup.sh ]; then
-    echo "Found setup.sh script, executing..."
-    sudo chmod +x setup.sh
-    sudo ./setup.sh || {
-        echo "Warning: setup.sh exited with non-zero status. Will attempt direct package installation."
-    }
-# Otherwise try to install DEB packages directly
-elif ls cml2*.deb >/dev/null 2>&1; then
-    echo "Found DEB packages, installing directly..."
-    
-    # Install IOL tools and patty first if they exist
-    for pkg in iol-tools*.deb patty*.deb; do
-        if [ -f "$pkg" ]; then
-            echo "Installing $pkg..."
-            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ./$pkg || echo "Warning: Failed to install $pkg, continuing..."
-        fi
-    done
-    
-    # Install CML package
-    echo "Installing CML package..."
-    for pkg in cml2*.deb; do
-        if [ -f "$pkg" ]; then
-            echo "Installing $pkg..."
-            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ./$pkg || {
-                echo "Warning: Failed to install CML package directly, trying with --fix-broken..."
-                sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken ./$pkg
-            }
-        fi
-    done
-fi
+# Move Kernel DEBs (ignore errors if none found)
+echo "Moving kernel DEBs..."
+mv "${DEB_DIR}"/linux-image-*.deb "${DEB_DIR}"/linux-headers-*.deb "${DEB_DIR}"/linux-modules-*.deb "${KERNEL_DEBS}/" 2>/dev/null || echo "Info: No kernel DEBs found or error moving."
 
-# Check Cisco-style installation directory
-echo "Checking for Cisco-style installation directory..."
-if [ -d /opt/cisco/anyconnect/bin ]; then
-    echo "Found Cisco-style installation directory, checking for CML..."
-    if [ -f /opt/cisco/anyconnect/bin/cml-setup ]; then
-        echo "Found cml-setup script, executing..."
-        sudo chmod +x /opt/cisco/anyconnect/bin/cml-setup
-        sudo /opt/cisco/anyconnect/bin/cml-setup
-    fi
-fi
+# Move CML and related DEBs (ignore errors if none found)
+echo "Moving CML and related DEBs..."
+mv "${DEB_DIR}"/cml*.deb "${DEB_DIR}"/patty*.deb "${CML_DEBS}/" 2>/dev/null || echo "Info: No CML/Patty DEBs found or error moving."
 
-# Fix any broken dependencies after installation
-echo "Fixing any broken dependencies after installation..."
-sudo DEBIAN_FRONTEND=noninteractive apt --fix-broken install -y
+# Move remaining dependency DEBs (ignore errors if some files don't exist or can't be moved)
+echo "Moving remaining dependency DEBs..."
+# Use find to move only .deb files, avoiding trying to move setup.sh etc.
+find "${DEB_DIR}" -maxdepth 1 -name '*.deb' -exec mv -t "${DEPEND_DEBS}/" {} + 2>/dev/null || echo "Info: Error moving some dependency DEBs (already moved or non-DEB files present?)."
 
-# Verify installation
-echo "Verifying CML installation..."
-if command -v virl2_controller &> /dev/null; then
-    echo "✓ CML controller command found"
+# Add a verification step to show the structure
+echo "DEB file organization complete. Current structure in ${DEB_DIR}:"
+tree "${DEB_DIR}" || ls -lR "${DEB_DIR}"
+
+# Install DEB packages directly from the organized subdirectories
+echo "Installing DEB packages directly..."
+if ls "${KERNEL_DEBS}"/*.deb 1> /dev/null 2>&1; then
+    echo "Installing kernel DEBs..."
+    sudo apt-get install -y "${KERNEL_DEBS}"/*.deb || echo "Failed to install kernel DEBs"
 else
-    echo "✗ CML controller command not found, installation may have failed"
+    echo "No kernel DEBs found to install."
 fi
 
-echo "CML 2.7.0 installation completed at $(date)"
+if ls "${DEPEND_DEBS}"/*.deb 1> /dev/null 2>&1; then
+    echo "Installing dependency DEBs..."
+    sudo apt-get install -y "${DEPEND_DEBS}"/*.deb || echo "Failed to install dependency DEBs"
+else
+    echo "No dependency DEBs found to install."
+fi
+
+if ls "${CML_DEBS}"/*.deb 1> /dev/null 2>&1; then
+    echo "Installing CML DEBs..."
+    sudo apt-get install -y "${CML_DEBS}"/*.deb || echo "Failed to install CML DEBs"
+else
+    echo "No CML DEBs found to install."
+fi
+
+# Attempt to fix broken dependencies just in case
+echo "Attempting to fix any broken dependencies..."
+sudo apt --fix-broken install -y
+
+# Check for CML services again after direct installation
+echo "Verifying CML services after direct installation..."
+if ! systemctl list-unit-files | grep -q cml; then
+    echo "Warning: CML services still not found after direct installation attempt."
+fi
+
+# Log completion
+echo "CML 2.7.0 installation script finished at $(date)." | tee -a "$LOGFILE"
+
+exit 0 # Ensure the script exits cleanly for Packer

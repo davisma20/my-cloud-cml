@@ -92,4 +92,12 @@ fi
 # Log completion
 echo "CML 2.7.0 installation script finished at $(date)." | tee -a "$LOGFILE"
 
+echo "--- APT History Log --- $(date) ---"
+cat /var/log/apt/history.log || echo "Could not read /var/log/apt/history.log"
+echo "--- End APT History Log ---"
+
+echo "--- APT Term Log --- $(date) ---"
+cat /var/log/apt/term.log || echo "Could not read /var/log/apt/term.log"
+echo "--- End APT Term Log ---"
+
 exit 0 # Ensure the script exits cleanly for Packer

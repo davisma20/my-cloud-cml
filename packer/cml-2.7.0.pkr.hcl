@@ -160,42 +160,47 @@ build {
     ]
   }
 
-  // Download CML deb files to the expected location
+  // Install and configure MongoDB
+  provisioner "shell" {
+    inline = [
+      "echo 'Installing and configuring MongoDB...'",
+      "sudo apt-get update && sudo apt-get install -y mongodb-server net-tools || true",
+      "sudo systemctl enable mongodb.service || true",
+      "sudo systemctl start mongodb.service || true",
+      "echo 'Waiting for MongoDB to initialize...'",
+      "sleep 20", 
+      "ps aux | grep mongo",
+      "sudo netstat -tulpn | grep 27017 || true",
+      "sudo systemctl status mongodb.service || true"
+    ]
+  }
+
+  // Download CML deb files to a temporary location
   provisioner "shell" {
     environment_vars = [
       "AWS_REGION=${var.region}",
       "CML_BUCKET=${var.cml_bucket}"
     ]
     inline = [
-      "echo 'Creating directory for CML installation files...'",
-      "sudo mkdir -p /root/cml_installation/extracted",
+      "echo 'Creating temporary directory for CML deb files...'",
+      "mkdir -p /tmp/cml-debs",
       "echo 'Downloading CML 2.7.0 deb files from S3 recursively...'",
-      "aws s3 cp s3://${var.cml_bucket}/cml-2.7.0-debs/ /root/cml_installation/extracted/ --recursive",
+      "aws s3 cp s3://${var.cml_bucket}/cml-2.7.0-debs/ /tmp/cml-debs/ --recursive",
       "echo 'Verifying download...'",
-      "ls -la /root/cml_installation/extracted/"
+      "ls -la /tmp/cml-debs/"
     ]
   }
 
   // Upload and run the actual CML installation script
   provisioner "file" {
-    source      = "install_cml_2.7.0.sh"
+    source      = "scripts/install_cml_2.7.0.sh"
     destination = "/tmp/install_cml_2.7.0.sh"
   }
 
   provisioner "shell" {
     inline = [
       "chmod +x /tmp/install_cml_2.7.0.sh",
-      "sudo bash /tmp/install_cml_2.7.0.sh || echo 'CML Installation script failed!'"
-    ]
-  }
-
-  // Clean up installation files (optional but recommended)
-  provisioner "shell" {
-    inline = [
-      "echo 'Cleaning up downloaded CML files and bootstrap script...'",
-      "sudo rm -rf /root/cml_installation",
-      "sudo rm -f /tmp/bootstrap_cml.sh",
-      "sudo rm -f /tmp/install_cml_2.7.0.sh"
+      "sudo bash /tmp/install_cml_2.7.0.sh"
     ]
   }
 
@@ -252,6 +257,33 @@ build {
     ]
   }
   
+  // Install KVM and related packages
+  provisioner "shell" {
+    inline = [
+      "echo 'Installing KVM and related virtualization packages...'",
+      "sudo apt-get update",
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager cpu-checker",
+      "sudo systemctl enable --now libvirtd",
+      "sudo systemctl start libvirtd",
+      "sudo usermod -aG libvirt ubuntu",
+      "sudo usermod -aG kvm ubuntu",
+      "echo 'Checking KVM installation...'",
+      "kvm-ok || echo 'KVM acceleration may not be available or enabled in BIOS/UEFI'",
+      "sudo systemctl status libvirtd || true",
+      
+      "echo 'Dumping recent system logs after CML install attempt...'",
+      "sudo journalctl --no-pager -n 500 || true" # Dump last 500 lines of journal
+    ]
+  }
+
+  // Create marker file after base installation steps
+  provisioner "shell" {
+    inline = [
+      "echo 'Creating marker file after base installation steps...'",
+      "sudo touch /usr/local/etc/cml_base_installed.marker"
+    ]
+  }
+  
   // Check service status before web interface test
   provisioner "shell" {
     inline = [
@@ -263,12 +295,12 @@ build {
       "sudo DEBIAN_FRONTEND=noninteractive apt-get -y --fix-broken install",
       
       "echo 'Looking for CML service files...'",
-      "find /etc/systemd/system -name '*virl*' -o -name '*cml*' || true",
-      "find /lib/systemd/system -name '*virl*' -o -name '*cml*' || true",
+      "sudo find /etc/systemd/system -name '*virl*' -o -name '*cml*' || true",
+      "sudo find /lib/systemd/system -name '*virl*' -o -name '*cml*' || true",
       
       "echo 'Checking for initialization scripts...'",
-      "sudo find /usr/local/bin -name '*virl*' -o -name '*cml*' -o -name 'init*' | xargs ls -la 2>/dev/null || true",
-      "sudo find /opt -name '*virl*' -o -name '*cml*' -o -name 'init*' | xargs ls -la 2>/dev/null || true",
+      "sudo find /usr/local/bin -name '*virl*' -o -name '*cml*' -o -name 'init*' | sudo xargs ls -la 2>/dev/null || true",
+      "sudo find /opt -name '*virl*' -o -name '*cml*' -o -name 'init*' | sudo xargs ls -la 2>/dev/null || true",
       
       "echo 'Checking CML data directories...'",
       "sudo ls -la /var/lib/virl2 2>/dev/null || echo 'virl2 data directory not found'",
@@ -283,102 +315,71 @@ build {
       "echo 'Checking if CML controller database is initialized...'",
       "sudo ls -la /var/lib/virl2/mongo 2>/dev/null || echo 'MongoDB data directory not found'",
       
-      "echo 'Running manual CML controller initialization...'",
-      "mkdir -p /var/log/virl2",
-      "mkdir -p /var/cache/virl2",
-      "mkdir -p /var/lib/virl2",
-      "mkdir -p /etc/virl2",
-      
-      "echo 'Installing and configuring MongoDB...'",
-      "apt-get update && apt-get install -y mongodb-server || true",
-      "systemctl enable mongod.service || true",
-      "systemctl start mongod.service || true",
-      "echo 'Waiting for MongoDB to initialize...'",
-      "sleep 20", 
-      "ps aux | grep mongo",
-      "netstat -tulpn | grep 27017 || true",
-      "systemctl status mongod.service || true",
-      
-      "echo 'Checking if the CML package extracted properly...'",
-      "find /opt/cml-installer -type f -name \"*.deb\" 2>/dev/null || echo 'No CML .deb packages found'",
-      "ls -la /opt/cml-installer/extracted/ || echo 'CML installer extracted directory not found'",
-      
-      "echo 'Installing any missing dependencies...'",
-      "apt-get update && apt-get install -y python-is-python3 python3-pip libvirt-daemon libvirt-daemon-system python3-pymongo || true",
-      "apt --fix-broken install -y || true",
-      
       "echo 'Initializing CML controller and creating admin user...'",
       "if command -v virl2_controller; then",
       "  echo 'Setting up CML controller...'",
       "  # Stop services if running",
-      "  systemctl stop virl2-controller.service || true",
-      "  systemctl stop virl2-ui.service || true",
-      "  systemctl stop nginx.service || true",
+      "  sudo systemctl stop virl2-controller.service || true",
+      "  sudo systemctl stop virl2-ui.service || true",
+      "  sudo systemctl stop nginx.service || true",
       "  sleep 5",
       
       "  # Clean any old mongo data that might cause issues",
-      "  systemctl stop mongod.service || true",
-      "  rm -rf /var/lib/virl2/mongo/* || true",
-      "  systemctl start mongod.service || true",
+      "  sudo systemctl stop mongodb.service || true",
+      "  sudo rm -rf /var/lib/virl2/mongo/* || true",
+      "  sudo systemctl start mongodb.service || true",
       "  sleep 10",
       
       "  # Initialize controller with admin user",
       "  echo 'Running virl2_controller init...'",
-      "  virl2_controller init || true",
+      "  sudo virl2_controller init || true",
       "  echo 'Init completed, checking status...'",
-      "  virl2_controller status || true",
+      "  sudo virl2_controller status || true",
       
       "  # Create admin user if it doesn't exist",
       "  echo 'Creating admin user...'",
-      "  virl2_controller users add admin -p admin --full-name 'System Administrator' --email admin@example.com || true",
-      "  virl2_controller users grant admin admin || true",
-      "  virl2_controller users list || true",
+      "  sudo virl2_controller users add admin -p admin --full-name 'System Administrator' --email admin@example.com || true",
+      "  sudo virl2_controller users grant admin admin || true",
+      "  sudo virl2_controller users list || true",
       
       "  # Configure nginx properly for CML UI",
       "  echo 'Configuring nginx...'",
       "  if [ -f /etc/nginx/sites-enabled/default ]; then",
-      "    rm -f /etc/nginx/sites-enabled/default || true",
+      "    sudo rm -f /etc/nginx/sites-enabled/default || true",
       "  fi",
       
       "  # Enable controller service and start it",
       "  echo 'Starting CML services...'",
-      "  systemctl enable virl2-controller.service || true",
-      "  systemctl start virl2-controller.service || true",
+      "  sudo systemctl enable virl2-controller.service || true",
+      "  sudo systemctl start virl2-controller.service || true",
       "  sleep 20",
-      "  systemctl status virl2-controller.service || true",
+      "  sudo systemctl status virl2-controller.service || true",
       
       "  # Start UI service",
-      "  systemctl enable virl2-ui.service || true", 
-      "  systemctl start virl2-ui.service || true",
+      "  sudo systemctl enable virl2-ui.service || true", 
+      "  sudo systemctl start virl2-ui.service || true",
       "  sleep 10",
-      "  systemctl status virl2-ui.service || true",
+      "  sudo systemctl status virl2-ui.service || true",
       
       "  # Restart nginx with proper configuration",
-      "  systemctl enable nginx.service || true",
-      "  systemctl restart nginx.service || true",
+      "  sudo systemctl enable nginx.service || true",
+      "  sudo systemctl restart nginx.service || true",
       "  sleep 5",
-      "  systemctl status nginx.service || true",
-      "else",
-      "  echo 'virl2_controller command not found. CML installation may be incomplete.'",
-      "  echo 'Searching for virl2_controller binary...'",
-      "  find / -name virl2_controller 2>/dev/null || echo 'virl2_controller not found'",
-      "  echo 'Installation path contents...'",
-      "  ls -la /usr/local/bin/ || true",
-      "fi",
+      "  sudo systemctl status nginx.service || true",
       
       "echo 'Checking services after initialization...'",
-      "systemctl status virl2-controller.service || true",
-      "systemctl status virl2-ui.service || true", 
-      "systemctl status nginx.service || true",
+      "sudo systemctl status virl2-controller.service || true",
+      "sudo systemctl status virl2-ui.service || true", 
+      "sudo systemctl status nginx.service || true",
       
       "echo 'Checking controller logs...'",
-      "find /var/log/virl2 -type f -name '*.log' -ls || true",
-      "tail -n 50 /var/log/virl2/controller.log || true",
+      "sudo find /var/log/virl2 -type f -name '*.log' -ls || true",
+      "sudo tail -n 50 /var/log/virl2/controller.log || true",
       "echo 'Waiting for services to fully initialize...'",
       "sleep 30",
       
       "echo 'Verifying ports are open...'",
-      "ss -tuln | grep -E ':(80|443)' || true",
+      "sudo ss -tuln | grep -E ':(80|443)' || true",
       
       "echo 'Installing Python requests library for test script...'",
       "pip3 install requests || true",
@@ -392,7 +393,8 @@ build {
       
       "echo 'Verifying ports are listening...'",
       "sudo lsof -i :443 || echo 'Nothing listening on port 443'",
-      "sudo lsof -i :80 || echo 'Nothing listening on port 80'"
+      "sudo lsof -i :80 || echo 'Nothing listening on port 80'",
+      "fi"
     ]
   }
   

@@ -3,7 +3,7 @@
 
 # This AMI ID will need to be updated after the Packer build completes
 # Replace "ami-placeholder" with the actual AMI ID from your Packer build
-cml_ami = "ami-placeholder"
+cml_ami = "ami-0aef6f8637c4c6500"
 
 # Specify AWS region (should match the region where Packer built the AMI)
 aws_region = "us-east-2"

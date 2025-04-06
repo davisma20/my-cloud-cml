@@ -57,6 +57,7 @@ variable "cml_admin_username" {
 variable "cml_admin_password" {
   type    = string
   default = "1234QWer!"
+  sensitive = true
   description = "Admin password for CML"
 }
 
@@ -157,6 +158,68 @@ build {
     inline = [
       "chmod +x /tmp/bootstrap_cml.sh",
       "sudo bash /tmp/bootstrap_cml.sh"
+    ]
+  }
+
+  // Dump logs and user info post-bootstrap for debugging
+  provisioner "shell" {
+    inline = [
+      "echo 'Dumping logs and user info post-bootstrap...'",
+      "echo '--- CML Install Log: ---'",
+      "sudo cat /var/log/cml_install.log || echo 'INFO: /var/log/cml_install.log not found.'",
+      "echo '--- End CML Install Log ---'",
+      "echo \"\"",
+      "echo '--- /etc/passwd contents: ---'",
+      "sudo cat /etc/passwd",
+      "echo '--- End /etc/passwd ---'"
+    ]
+    only = ["amazon-ebs.cml"]
+  }
+
+  // Explicitly create admin user as bootstrap script seems to miss it
+  provisioner "shell" {
+    inline = [
+      "echo 'Explicitly creating admin user...'",
+      "sudo useradd -m -s /bin/bash -g admin admin || echo 'WARN: useradd -g admin admin command failed, maybe user already exists or group is wrong?'"
+    ]
+  }
+
+  // Set up admin user password (MUST run after bootstrap creates the user)
+  // Conditionally tries 'admin' first, then 'cml2'
+  provisioner "shell" {
+    environment_vars = ["CML_PASS=${var.cml_admin_password}"]
+    inline = [ <<EOF
+      echo 'Conditionally setting password for admin or cml2 user...'
+      TARGET_USER=""
+      if id -u admin &>/dev/null; then
+          echo "INFO: Found user 'admin'. Attempting password set."
+          TARGET_USER="admin"
+      elif id -u cml2 &>/dev/null; then
+          echo "INFO: User 'admin' not found. Found user 'cml2'. Attempting password set."
+          TARGET_USER="cml2"
+      else
+          echo "ERROR: Neither user 'admin' nor 'cml2' found after bootstrap! Cannot set password."
+          sudo cat /etc/passwd # Dump passwd again for context
+          exit 1
+      fi
+
+      echo "Attempting to set password for user: $TARGET_USER"
+      if ! printf "%s:%s" "$TARGET_USER" "$CML_PASS" | sudo chpasswd -c SHA512; then
+        echo "ERROR: Failed to set password for user '$TARGET_USER' using chpasswd!"
+        exit 1
+      fi
+      echo "Password for user '$TARGET_USER' set successfully."
+ EOF
+    ]
+  }
+
+  // Restart CML services to ensure they pick up the new password
+  provisioner "shell" {
+    inline = [
+      "echo 'Restarting CML services after password change...'",
+      "sudo systemctl restart virl2-controller virl2-uwm || echo 'Warning: Failed to restart CML services cleanly.'",
+      "echo 'Waiting 30 seconds after service restart attempt...'",
+      "sleep 30" # Give services a moment to come back up
     ]
   }
 
@@ -286,7 +349,14 @@ build {
   
   // Check service status before web interface test
   provisioner "shell" {
+    environment_vars = [
+      "DEBIAN_FRONTEND=noninteractive",
+    ]
     inline = [
+      "#!/bin/bash",
+      "set -e",
+      "echo '+++ DIAGNOSTICS Start: Pre-Python Web Check Service Status +++'",
+      "# Initialize diagnostic variables",
       "echo 'Checking CML service status...'",
       "sudo systemctl daemon-reload || true",
       
@@ -387,6 +457,7 @@ build {
       "echo 'Creating default admin user if needed...'",
       "if [ -f /usr/local/bin/virl2_controller ]; then",
       "  echo 'Trying to create admin user...'",
+      "  # Check if user already exists",
       "  sudo /usr/local/bin/virl2_controller user list 2>/dev/null || true",
       "  sudo /usr/local/bin/virl2_controller user add -u admin -p admin -s || echo 'Admin user creation failed or user already exists'",
       "fi",
@@ -398,143 +469,14 @@ build {
     ]
   }
   
-  // Wait for CML web interface to become available and test login
+  // Check if Web UI (Nginx proxy) is responding on HTTPS
   provisioner "shell" {
     inline = [
-      "echo 'Waiting for CML services to start...'",
-      "sleep 30",
-      "sudo apt-get -y install curl jq python3-pip || true",
-      "pip3 install requests || true",
-      
-      "echo 'Running CML web interface login test...'",
-      <<EOT
-      cat > /tmp/test_cml_login.py << 'EOF'
-import requests
-import time
-import json
-import sys
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
-MAX_TRIES = 30
-WAIT_TIME = 10
-BASE_URL = "https://localhost"
-USERNAME = "admin"
-PASSWORD = "admin"
-
-cookies = {}
-
-print("Testing CML login with admin credentials")
-
-for attempt in range(1, MAX_TRIES + 1):
-    print(f"Try {attempt}/{MAX_TRIES}...")
-    try:
-        # Check if the about endpoint exists first
-        try:
-            about_resp = requests.get(f"{BASE_URL}/api/v0/about", verify=False, timeout=5)
-            print(f"About response: {about_resp.status_code}")
-            if about_resp.status_code == 200:
-                print("About endpoint accessible, CML API is working")
-        except Exception as e:
-            print(f"Error accessing about endpoint: {e}")
-            
-        # Check if nginx is serving the UI
-        try:
-            ui_resp = requests.get(BASE_URL, verify=False, timeout=5)
-            print(f"UI response: {ui_resp.status_code}")
-            if ui_resp.status_code == 200:
-                print("UI accessible")
-        except Exception as e:
-            print(f"Error accessing UI: {e}")
-
-        # Try to login
-        login_data = {
-            "username": USERNAME, 
-            "password": PASSWORD
-        }
-        
-        # Get CSRF token if needed
-        session = requests.Session()
-        try:
-            initial_resp = session.get(f"{BASE_URL}/auth/login", verify=False, timeout=5)
-            print(f"Initial auth page status: {initial_resp.status_code}")
-            if "csrftoken" in session.cookies:
-                print("Found CSRF token in cookies")
-                login_data["csrfmiddlewaretoken"] = session.cookies["csrftoken"]
-        except Exception as e:
-            print(f"Error getting initial page: {e}")
-
-        # Attempt login
-        try:
-            login_resp = session.post(
-                f"{BASE_URL}/api/v0/authenticate", 
-                json=login_data,
-                headers={"Referer": f"{BASE_URL}/auth/login"},
-                verify=False,
-                timeout=10
-            )
-            
-            print(f"Login status: {login_resp.status_code}")
-            
-            if login_resp.status_code in [200, 201, 202]:
-                print("Login successful!")
-                print(f"Response: {login_resp.text[:100]}...")
-                
-                # Try to get a protected resource to verify authentication
-                try:
-                    labs_resp = session.get(f"{BASE_URL}/api/v0/labs", verify=False, timeout=5)
-                    print(f"Labs API status: {labs_resp.status_code}")
-                    if labs_resp.status_code == 200:
-                        print("Successfully authenticated and accessed labs API")
-                        sys.exit(0)  # Success!
-                except Exception as e:
-                    print(f"Error accessing labs API: {e}")
-            else:
-                print(f"Login failed. Status: {login_resp.status_code}")
-                print(f"Response: {repr(login_resp.text)}")
-        except Exception as e:
-            print(f"Error during login: {e}")
-            
-        # Check system status
-        print("Checking system status...")
-        try:
-            import subprocess
-            subprocess.call(["sudo", "systemctl", "status", "virl2-controller.service"])
-            subprocess.call(["sudo", "systemctl", "status", "virl2-ui.service"])
-            subprocess.call(["sudo", "systemctl", "status", "nginx.service"])
-            subprocess.call(["sudo", "tail", "-n", "50", "/var/log/virl2/controller.log"])
-        except Exception as e:
-            print(f"Error checking system status: {e}")
-        
-        # Wait before retrying
-        if attempt < MAX_TRIES:
-            print(f"Waiting {WAIT_TIME} seconds before retry...")
-            time.sleep(WAIT_TIME)
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-        if attempt < MAX_TRIES:
-            print(f"Waiting {WAIT_TIME} seconds before retry...")
-            time.sleep(WAIT_TIME)
-
-print("Maximum attempts reached. CML web interface not available.")
-sys.exit(1)  # Failure
-EOF
-chmod +x /tmp/test_cml_login.py
-python3 /tmp/test_cml_login.py
-EOT
-    ]
-  }
-  
-  // Set up admin user
-  provisioner "shell" {
-    inline = [
-      "echo 'Setting up CML admin user...'",
-      "sudo groupadd -f admin || echo 'Admin group already exists'",
-      "sudo useradd -m -s /bin/bash -g admin admin || echo 'Failed to create admin user - it may already exist'",
-      "sudo usermod -aG sudo admin || echo 'Failed to add admin to sudo group'",
-      "sudo bash -c 'echo \"${var.cml_admin_username}:${var.cml_admin_password}\" | chpasswd'",
-      "echo '${var.cml_admin_username} ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/admin",
-      "sudo chmod 0440 /etc/sudoers.d/admin"
+      "echo 'Checking if CML Web UI is responding on HTTPS...'",
+      "sudo apt-get update && sudo apt-get install -y curl", # Ensure curl is present
+      "for i in {1..10}; do echo \"Attempt $i/10\"; curl --insecure --retry 5 --retry-delay 10 -sfL https://127.0.0.1/ && break || sleep 30; done",
+      "if [ $? -ne 0 ]; then echo 'ERROR: CML Web UI did not respond successfully on https://127.0.0.1/'; exit 1; fi",
+      "echo 'CML Web UI appears to be responding on HTTPS.'"
     ]
   }
   

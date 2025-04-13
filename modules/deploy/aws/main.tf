@@ -4,6 +4,14 @@
 # All rights reserved.
 #
 
+# --- Data Sources --- #
+data "aws_region" "current" {}
+
+data "http" "myip" {
+  url = "http://ipv4.icanhazip.com" # Service to get public IP
+}
+
+# --- Locals --- #
 locals {
   workstation_enable = var.options.cfg.aws.workstation.enable
   cml_enable = true  # Enable CML controller
@@ -328,7 +336,7 @@ resource "aws_eip" "nat_eip" {
 }
 
 resource "aws_nat_gateway" "compute_nat_gw" {
-  allocation_id = aws_eip.nat_eip[0].id // Allocate an EIP 
+  allocation_id = aws_eip.nat_eip[0].id # Allocate an EIP 
   subnet_id     = aws_subnet.public_subnet.id
   count         = var.options.cfg.cluster.enable_cluster ? 1 : 0
   tags = {
@@ -480,14 +488,50 @@ resource "aws_instance" "cml_controller" {
     Name = "${var.options.cfg.common.controller_hostname}-${var.options.rand_id}"
   }
 
-  # User data script to apply security hardening measures
-  user_data = data.cloudinit_config.cml_controller.rendered
+  # User data script - MINIMAL version for Packer AMI
+  # Ensure SSM agent is running, do not run CML setup again.
+  user_data_base64 = base64encode(<<-EOF
+#!/bin/bash
+echo "Starting minimal user_data for Packer AMI at $(date)" > /tmp/user_data_packer.log
+# Ensure SSM agent is enabled and running (systemd)
+if command -v systemctl > /dev/null; then
+  systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent || true
+  systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent || systemctl start snap.amazon-ssm-agent.amazon-ssm-agent || true
+  echo "Checked amazon-ssm-agent status via systemctl" >> /tmp/user_data_packer.log
+fi
+# Add check for older init systems if necessary, but Ubuntu 20.04+ uses systemd
+echo "Finished minimal user_data for Packer AMI at $(date)" >> /tmp/user_data_packer.log
+EOF
+  )
+  # user_data = data.cloudinit_config.cml_controller.rendered # <-- Removed complex cloud-init
 
   depends_on = [
     aws_internet_gateway.public_igw,
     aws_subnet.public_subnet
   ]
   count = local.cml_enable ? 1 : 0
+
+  # --- Provisioner for Network Validation --- #
+  provisioner "local-exec" {
+    when    = create # Run after instance creation
+    command = <<EOT
+      echo "Waiting for instance ${self.id} to pass status checks..."
+      aws ec2 wait instance-status-ok --region ${data.aws_region.current.name} --instance-ids ${self.id} && \
+      echo "Instance status checks passed. Running network validator..." && \
+      python3 ${path.module}/../../../aws_validator.py \
+        --instance-id ${self.id} \
+        --region ${data.aws_region.current.name} \
+        --port 443 \
+        --source-ip ${chomp(data.http.myip.response_body)}
+    EOT
+    # Optional: Set environment variables if needed by the script
+    # environment = {
+    #   AWS_PROFILE = "your-profile" # If not using default credentials
+    # }
+
+    # This interpreter setting ensures Terraform knows how to run the command
+    interpreter = ["bash", "-c"]
+  }
 }
 
 resource "aws_instance" "cml_compute" {

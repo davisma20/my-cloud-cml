@@ -1,6 +1,6 @@
 #cloud-config
-package_update: true
-package_upgrade: true
+# package_update: true
+# package_upgrade: true
 
 hostname: ${hostname}
 manage_etc_hosts: true
@@ -77,31 +77,16 @@ write_files:
   %{ endfor }
 
 runcmd:
-  - echo "========== STARTING CML INSTALLATION $(date) ==========" > /var/log/cml-provision.log
-  - echo "Setting up logging redirection to capture all installation steps"
-  - exec > >(tee -a /var/log/cml-provision.log) 2>&1
-  - echo "Cloud-init runcmd starting at $(date)"
-  - echo "Removing previous service file if it exists"
-  - rm -f /etc/systemd/system/cml_install.service
-  - systemctl daemon-reload
-  - echo "Setting up reliable installation script at $(date)"
-  - cp /provision/cml_install_reliable.sh /var/lib/cloud/instance/scripts/
-  - chmod +x /var/lib/cloud/instance/scripts/cml_install_reliable.sh
-  - mkdir -p /var/log/cml
-  - echo "Starting CML installation with reliable script at $(date)"
-  - bash /var/lib/cloud/instance/scripts/cml_install_reliable.sh > >(tee -a /var/log/cml_reliable_install.log) 2>&1 || echo "Reliable script failed, attempting fallback at $(date)" > >(tee -a /var/log/cml-provision.log) 2>&1 
-  - if [ $? -ne 0 ]; then
-  -   echo "Attempting fallback installation with fix script at $(date)" > >(tee -a /var/log/cml-provision.log) 2>&1
-  -   bash /provision/cml_install_fix.sh > >(tee -a /var/log/cml_fix_install.log) 2>&1
-  - fi
-  - echo "Installation process completed at $(date)" > >(tee -a /var/log/cml-provision.log) 2>&1
-  - touch /run/reboot
-  - echo "========== CML INSTALLATION FINISHED $(date) ==========" > >(tee -a /var/log/cml-provision.log) 2>&1
-  - echo "System will now reboot"
+  # Redirect stdout and stderr for the *entire* runcmd block to the log file
+  - exec >> /var/log/cml-provision.log 2>&1
+  - echo "========== STARTING MINIMAL CLOUD-INIT $(date) =========="
+  
+  # Minimal steps needed after Packer build (if any)
+  # Example: Maybe ensure hostname is set correctly if Packer didn't?
+  # (Currently hostname is set earlier in cloud-config)
 
-power_state:
-  mode: reboot
-  condition: test -f /run/reboot
-  delay: "now"
-  timeout: 300
-  message: "Rebooting after CML installation"
+  # Removed hibinit-agent diagnostics
+  # Removed CML installation script execution (cml_install_reliable.sh, cml_install_fix.sh)
+  # Removed touch /run/reboot
+  
+  - echo "========== MINIMAL CLOUD-INIT FINISHED $(date) =========="

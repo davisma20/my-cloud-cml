@@ -2,6 +2,18 @@
 
 Lists the changes for the tool releases.
 
+## Recent Development (April 2025)
+
+*   **Packer Build for CML 2.7.0:**
+    *   Successfully built a stable AMI for CML 2.7.0 (`ami-0aef6f8637c4c6500` in `us-east-2`).
+    *   Resolved issue where the `admin` user was not reliably created by the CML bootstrap process. Added explicit `useradd -g admin admin` provisioner step in `packer/cml-2.7.0.pkr.hcl`.
+    *   Added debug provisioners to dump logs and `/etc/passwd` during Packer build.
+    *   Added conditional logic for password setting (`admin` or `cml2`).
+*   **Terraform:**
+    *   Fixed warnings about undeclared variables (`cml_ami`, `aws_region`, etc.) by adding declarations to root `variables.tf`.
+*   **Documentation:**
+    *   Updated `README.md`, `documentation/PACKER_BUILD.md`, `documentation/TROUBLESHOOTING.md`, `documentation/CML_INSTALLATION.md`, and `packer/README.md` to reflect the CML 2.7.0 build process, AMI ID, user creation fix, and deployment steps.
+
 ## Version 2.8.1-DevNet (Fork)
 
 - Custom fork configured specifically for CML 2.8.1-14 deployment

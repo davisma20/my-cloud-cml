@@ -45,3 +45,30 @@ variable "azure_tenant_id" {
   description = "Azure tenant ID"
   default     = "notset"
 }
+
+# Variables typically set by packer/network_validated_ami.auto.tfvars
+
+variable "cml_ami" {
+  type        = string
+  description = "The AMI ID for the CML controller instance. Set via .tfvars."
+}
+
+variable "aws_region" {
+  type        = string
+  description = "The AWS region where resources will be deployed. Set via .tfvars."
+}
+
+variable "cml_instance_type" {
+  type        = string
+  description = "The EC2 instance type for the CML controller. Set via .tfvars."
+}
+
+variable "enable_enhanced_monitoring" {
+  type        = bool
+  description = "Flag to enable enhanced CloudWatch monitoring for CML instance. Set via .tfvars."
+}
+
+variable "validate_network_on_boot" {
+  type        = bool
+  description = "Flag to run network validation checks on CML instance boot. Set via .tfvars."
+}

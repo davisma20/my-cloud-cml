@@ -30,24 +30,28 @@ cd "$CML_DIR"
 echo "Listing available installation files in ${DEB_DIR}:"
 ls -lha "${DEB_DIR}" || true
 
-# Fix broken packages first
-echo "Fixing any broken package dependencies..."
-sudo DEBIAN_FRONTEND=noninteractive apt-get update
-sudo DEBIAN_FRONTEND=noninteractive apt --fix-broken install -y
+# Remove initial fix attempt - dependencies handled below
+# echo "Fixing any broken package dependencies..."
+# sudo DEBIAN_FRONTEND=noninteractive apt-get update
+# sudo DEBIAN_FRONTEND=noninteractive apt --fix-broken install -y
 
-# Install dependencies if needed
-echo "Installing any prerequisite packages..."
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated systemd-coredump libc6-dev libnss-libvirt
+# Pre-seed debconf answer for wireshark-common to avoid interactive prompt
+echo wireshark-common wireshark-common/install-setuid boolean false | sudo debconf-set-selections
 
-# Install DEB packages directly from the main DEB_DIR
-echo "Installing all DEB packages from ${DEB_DIR}..."
+# Update package lists before installing prerequisites
+echo "Updating package lists..."
+sudo apt-get update || echo "apt-get update failed, continuing..."
+
+# Install minimal base dependencies ONLY
+# Let 'apt install ./*.deb' handle core component dependencies like libvirt
+echo "Installing minimal prerequisite packages..."
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated \
+    systemd-coredump libc6-dev libnss-libvirt
+#   libvirt-daemon-system libvirt-clients qemu-kvm virtinst bridge-utils cpu-checker
+
+# Install DEB packages directly from the main DEB_DIR using apt
+echo "Installing all CML DEB packages from ${DEB_DIR} using dpkg -i and apt --fix-broken..."
 if ls "${DEB_DIR}"/*.deb 1> /dev/null 2>&1; then
-    # Refresh package lists right before installing local debs to avoid hash mismatches
-    echo "Running apt-get update before installing local DEB packages..."
-    if ! sudo apt-get update -y; then
-        echo "Warning: apt-get update failed before DEB install. Proceeding anyway..."
-    fi
-
     # --- BEGIN Libvirt CA Path Fix ---
     LIBVIRT_CONF="/etc/libvirt/libvirtd.conf"
     if [ -f "$LIBVIRT_CONF" ]; then
@@ -64,42 +68,110 @@ if ls "${DEB_DIR}"/*.deb 1> /dev/null 2>&1; then
     fi
     # --- END Libvirt CA Path Fix ---
 
-    log "Attempting to install all DEB packages from ${DEB_DIR} using dpkg --force-depends..."
-    if ls "${DEB_DIR}"/*.deb 1> /dev/null 2>&1; then
-        # Use dpkg --force-depends to install packages despite dependency issues
-        # Follow up immediately with apt -f install to try and fix broken dependencies
-        pushd "${DEB_DIR}" > /dev/null
-        if sudo dpkg -i --force-depends *.deb; then
-            log "dpkg installation phase completed (may have dependency errors)."
-        else
-            log "dpkg installation phase failed."
-            # Even if dpkg fails, attempt apt --fix-broken
-        fi
-        popd > /dev/null
+    log "Ensuring python3-pip is installed..."
+    if ! dpkg -s python3-pip >/dev/null 2>&1; then
+        log "python3-pip not found, installing..."
+        sudo apt-get update && sudo apt-get install -y python3-pip || log "ERROR: Failed to install python3-pip"
+    fi
 
-        log "Attempting to fix any broken dependencies with apt --fix-broken install..."
-        if sudo apt-get install -f -y; then
-            log "Successfully fixed dependencies."
+    log "Attempting to install all DEB packages from ${DEB_DIR} using dpkg -i and apt --fix-broken..."
+    pushd "${DEB_DIR}" > /dev/null
+    log "Running dpkg -i on all .deb files (ignoring initial errors)..."
+    if sudo dpkg -i ./*.deb; then
+        log "dpkg -i completed without errors."
+    else
+        log "Warning: dpkg -i reported errors, attempting apt --fix-broken install..."
+        log "--- Attempting manual trace of cml2-controller.postinst --- START ---"
+        if [ -f /var/lib/dpkg/info/cml2-controller.postinst ]; then
+            log "Executing: sudo bash -x /var/lib/dpkg/info/cml2-controller.postinst configure"
+            sudo bash -x /var/lib/dpkg/info/cml2-controller.postinst configure || log "Warning: Manual postinst execution also failed."
         else
-            INSTALL_ERROR=$?
-            log "ERROR: Failed to fix dependencies after dpkg install (Exit Code: $INSTALL_ERROR). Capturing diagnostic info..."
-            # Attempt to capture diagnostics immediately on failure
-            log "Attempting to capture libvirtd/journald logs after install failure..."
-            sudo systemctl status libvirtd.service --no-pager || true
-            sudo journalctl -u libvirtd --no-pager || true
-            sudo journalctl -n 100 --no-pager || true # Last 100 lines of journal
-            exit ${INSTALL_ERROR}
+            log "Error: /var/lib/dpkg/info/cml2-controller.postinst not found for tracing."
+        fi
+        log "--- Manual trace of cml2-controller.postinst --- END ---"
+    fi
+
+    log "Running apt update and apt --fix-broken install..."
+    if sudo apt-get update && sudo apt-get --fix-broken install -y; then
+        log "CML package installation command finished (exit code 0)."
+
+        log "--- Dumping APT logs --- START ---"
+        log "--- /var/log/apt/history.log --- BEGIN ---"
+        cat /var/log/apt/history.log || echo "Could not read /var/log/apt/history.log"
+        log "--- /var/log/apt/history.log --- END ---"
+        log "--- /var/log/apt/term.log --- BEGIN ---"
+        cat /var/log/apt/term.log || echo "Could not read /var/log/apt/term.log"
+        log "--- /var/log/apt/term.log --- END ---"
+        log "--- Dumping APT logs --- END ---"
+
+        log "Attempting to configure any unpacked packages..."
+        sudo dpkg --configure -a || log "Warning: dpkg --configure -a encountered issues."
+
+        log "Listing installed files for CML packages (if installed)..."
+        # Assuming package names are cml2-controller and cml2-uwm, adjust if needed
+        log "--- Files for cml2-controller ---"
+        sudo dpkg -L cml2-controller || log "Warning: Could not list files for cml2-controller (might not be installed or name is different)."
+        log "--- Files for cml2-uwm ---"
+        sudo dpkg -L cml2-uwm || log "Warning: Could not list files for cml2-uwm (might not be installed or name is different)."
+
+        log "Python sys.path:"
+        sudo python3 -c "import sys, json; print(json.dumps(sys.path, indent=2))" || log "Error getting Python sys.path"
+        log "Listing contents of /usr/local/lib/python3.8/dist-packages/..."
+        sudo ls -la /usr/local/lib/python3.8/dist-packages/ || log "Error listing /usr/local/lib/python3.8/dist-packages/"
+
+        # Force reinstall libvirt-daemon-system to ensure service file is present
+        log "Forcing reinstall of libvirt-daemon-system..."
+        if sudo apt-get install --reinstall -y libvirt-daemon-system; then
+            log "Successfully reinstalled libvirt-daemon-system."
+            log "+++ DIAGNOSTICS Start: Post libvirt reinstall +++"
+            log "Checking for service file existence: /lib/systemd/system/libvirt.service"
+            ls -l /lib/systemd/system/libvirt.service || log "Service file NOT FOUND at /lib/systemd/system/libvirt.service"
+            log "Checking package manifest for service file: dpkg -L libvirt-daemon-system | grep service"
+            dpkg -L libvirt-daemon-system | grep service || log "Service file NOT FOUND in package manifest"
+            log "Checking systemd view of service file: systemctl cat libvirt.service"
+            sudo systemctl cat libvirt.service || log "systemctl cat FAILED for libvirt.service"
+            log "+++ DIAGNOSTICS End: Post libvirt reinstall +++"
+        else
+            log "Warning: Failed to reinstall libvirt-daemon-system. Continuing verification..."
         fi
 
-        # Diagnostics after successful install (might still catch issues from post-install scripts)
-        log "Capturing libvirtd/journald logs after successful install command..."
+        # --- BEGIN Post-CML Install Verification ---
+        log "--- Verifying CML service files existence ---"
+        sudo ls -l /lib/systemd/system/virl2-*.service || log "Warning: Could not list virl2 service files."
+
+        log "--- Attempting to enable and start CML services ---"
+        sudo systemctl daemon-reload
+        # Try enabling first, ignore errors if already enabled
+        sudo systemctl enable virl2-controller.service || log "Warning: Failed to enable virl2-controller.service (maybe already enabled?)"
+        sudo systemctl enable virl2-uwm.service || log "Warning: Failed to enable virl2-uwm.service (maybe already enabled?)"
+        # Try starting
+        sudo systemctl start virl2-controller.service || log "Warning: Failed to start virl2-controller.service"
+        sudo systemctl start virl2-uwm.service || log "Warning: Failed to start virl2-uwm.service"
+        sleep 5 # Give services a moment
+
+        log "--- Checking CML service status immediately after start attempt ---"
+        sudo systemctl status virl2-controller.service --no-pager || log "Error getting virl2-controller status"
+        sudo systemctl status virl2-uwm.service --no-pager || log "Error getting virl2-uwm status"
+
+        log "--- Dumping last 50 journal entries for virl2-controller ---"
+        sudo journalctl -u virl2-controller.service --no-pager -n 50 || log "Error getting virl2-controller journal logs"
+        log "--- Dumping last 50 journal entries for virl2-uwm ---"
+        sudo journalctl -u virl2-uwm.service --no-pager -n 50 || log "Error getting virl2-uwm journal logs"
+
+        log "--- Checking CML install log ---"
+        sudo cat /var/log/cml-install.log || log "Info: /var/log/cml-install.log not found or could not be read."
+        # --- END Post-CML Install Verification ---
+    else
+        INSTALL_ERROR=$?
+        log "ERROR: Failed to install CML DEB packages using dpkg -i and apt --fix-broken (Exit Code: $INSTALL_ERROR). Capturing diagnostic info..."
+        # Capture diagnostics on failure
         sudo systemctl status libvirtd.service --no-pager || true
         sudo journalctl -u libvirtd --no-pager || true
-        sudo journalctl -n 50 --no-pager || true # Last 50 lines of journal
-    else
-        echo "ERROR: CML .deb package directory $DEB_DIR does not exist or contains no .deb files."
-        exit 1 # Exit script on failure
+        sudo journalctl -n 100 --no-pager || true
+        popd > /dev/null # Ensure popd runs even on error
+        exit ${INSTALL_ERROR}
     fi
+    popd > /dev/null
 
     # Reload systemd daemon to recognize new services if any
     log "Reloading systemd daemon..."
@@ -109,9 +181,9 @@ else
     exit 1 # Exit script on failure
 fi
 
-# Attempt to fix broken dependencies just in case
-echo "Attempting to fix any broken dependencies post-install..."
-sudo apt --fix-broken install -y
+# Remove final fix attempt - apt install should handle it
+# echo "Attempting to fix any broken dependencies post-install..."
+# sudo apt --fix-broken install -y
 
 # Check for CML services again after direct installation
 echo "Verifying CML services after direct installation..."

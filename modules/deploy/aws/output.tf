@@ -15,3 +15,8 @@ output "workstation_ip" {
 output "sas_token" {
   value = "undefined"
 }
+
+output "cml_controller_instance_id" {
+  description = "The instance ID of the CML controller"
+  value       = local.cml_enable ? aws_instance.cml_controller[0].id : null
+}

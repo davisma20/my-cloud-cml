@@ -29,6 +29,14 @@ CML instances can run on Azure and AWS cloud infrastructure.  This repository pr
 > [!NOTE]
 > For instructions on deploying only the DevNet Expert workstation (without CML), see [DEVNET_WORKSTATION.md](DEVNET_WORKSTATION.md).
 
+## Current Status
+
+*   **Stable CML Version:** 2.8.1-14
+*   **Latest AMI (us-east-2):** `ami-0aef6f8637c4c6500` (Built 2025-04-06)
+*   **Build Method:** Packer (`packer/cml-2.8.1-14.pkr.hcl`)
+*   **Deployment Method:** Terraform (Root module)
+*   **Detailed Docs:** See the `documentation/` directory, especially `CML_INSTALLATION.md`.
+
 ## Custom AMI Building with Packer
 
 This repository includes support for building custom CML AMIs using Packer. The Packer templates and scripts are located in the `packer` directory and provide the following benefits:

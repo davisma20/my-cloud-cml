@@ -4,67 +4,75 @@
 
 set -e
 set -o pipefail
+set -x # Enable verbose command execution logging
 
 # Setup logging
 LOGFILE="/var/log/cml_install.log"
 exec > >(tee -a ${LOGFILE}) 2>&1
 echo "Starting CML 2.7.0 installation at $(date)"
 
-# Working directory
-CML_DIR="/root/cml_installation/extracted"
-cd $CML_DIR
+# Directory containing the extracted CML .deb files
+DEB_DIR="/tmp/cml-debs"
 
-# Check what files we have
-echo "Listing available installation files:"
-ls -la
+# Log file for installation process
+LOG_FILE="/var/log/cml_install.log"
 
-# Install dependencies if needed
-echo "Installing any prerequisite packages..."
-sudo DEBIAN_FRONTEND=noninteractive apt-get update
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y systemd-coredump
+# Check for the downloaded DEB directory
+DEB_DIR="/tmp/cml-debs"
+if [ ! -d "$DEB_DIR" ]; then
+    echo "Error: CML deb directory $DEB_DIR not found!" | tee -a $LOGFILE
+    exit 1
+fi
+cd "$DEB_DIR"
 
-# Look for and run setup.sh if it exists
+echo "Listing available installation files in $DEB_DIR:" | tee -a $LOGFILE
+ls -lha | tee -a $LOGFILE
+
+# Try running setup.sh first if it exists
 if [ -f setup.sh ]; then
-    echo "Found setup.sh script, executing..."
+    echo "Found setup.sh script, executing..." | tee -a $LOGFILE
     sudo chmod +x setup.sh
-    sudo ./setup.sh || {
-        echo "Warning: setup.sh exited with non-zero status. Will attempt direct package installation."
-    }
-# Otherwise try to install DEB packages directly
+    # Inject set -x into setup.sh for verbose logging within it
+    echo "Injecting set -x into setup.sh..."
+    sudo sed -i '1a set -x' setup.sh || echo "Warning: Failed to inject set -x into setup.sh"
+    sudo ./setup.sh || true # Force continuation even if setup.sh fails
+    echo "setup.sh execution completed (errors ignored)." | tee -a $LOGFILE
+# If setup.sh didn't exist or failed, try installing DEB packages directly
 elif ls cml2*.deb >/dev/null 2>&1; then
-    echo "Found DEB packages, installing directly..."
-    
-    # Install IOL tools and patty first if they exist
-    for pkg in iol-tools*.deb patty*.deb; do
-        if [ -f "$pkg" ]; then
-            echo "Installing $pkg..."
-            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ./$pkg || echo "Warning: Failed to install $pkg, continuing..."
-        fi
-    done
-    
-    # Install CML package
-    echo "Installing CML package..."
-    for pkg in cml2*.deb; do
-        if [ -f "$pkg" ]; then
-            echo "Installing $pkg..."
-            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ./$pkg || echo "Warning: Failed to install CML package, installation may be incomplete"
-        fi
-    done
+    echo "Found DEB packages in $DEB_DIR, installing directly..." | tee -a $LOGFILE
+    # Install supporting packages first
+    if ls iol-tools*.deb >/dev/null 2>&1; then
+        echo "Installing iol-tools*.deb..." | tee -a $LOGFILE
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ./iol-tools*.deb | tee -a $LOGFILE
+    fi
+    if ls patty*.deb >/dev/null 2>&1; then
+        echo "Installing patty*.deb..." | tee -a $LOGFILE
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ./patty*.deb | tee -a $LOGFILE
+    fi
+
+    # Install the main CML package last
+    echo "Installing CML package..." | tee -a $LOGFILE
+    if ls cml2*.deb >/dev/null 2>&1; then
+        echo "Installing cml2*.deb..." | tee -a $LOGFILE
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ./cml2*.deb
+    else
+        echo "Warning: Main cml2*.deb package not found in $DEB_DIR." | tee -a $LOGFILE
+    fi
 else
-    echo "ERROR: No recognizable installation method found!"
+    echo "Error: No setup.sh found and no cml2*.deb package found in $DEB_DIR. Cannot proceed with CML installation." | tee -a $LOGFILE
     exit 1
 fi
 
 # Create necessary directories and files
-echo "Creating required directories and configuration files..."
+echo "Creating required directories and configuration files..." | tee -a $LOGFILE
 sudo mkdir -p /provision
 sudo touch /provision/.cml2_install_initiated
 
 # Check if CML services exist
 if systemctl list-unit-files | grep -q "cml"; then
-    echo "CML services found, installation appears successful"
+    echo "CML services found, installation appears successful" | tee -a $LOGFILE
 else
-    echo "Warning: CML services not found, installation may have issues"
+    echo "Warning: CML services not found, installation may have issues" | tee -a $LOGFILE
 fi
 
-echo "CML 2.7.0 installation completed at $(date)"
+echo "CML 2.7.0 installation completed at $(date)" | tee -a $LOGFILE

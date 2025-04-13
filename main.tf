@@ -48,3 +48,8 @@ module "ready" {
     module.deploy.public_ip
   ]
 }
+
+output "cml_controller_instance_id" {
+  description = "The instance ID of the CML controller (relayed from deploy module)"
+  value       = module.deploy.cml_controller_instance_id
+}

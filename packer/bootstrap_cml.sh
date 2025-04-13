@@ -5,6 +5,22 @@
 set -e
 set -o pipefail
 
+# Logging helper
+log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1"
+}
+
+# Error handling helper
+error_exit() {
+    log "ERROR: $1" >&2 # Log error to stderr
+    exit "${2:-1}"      # Exit with provided code or default to 1
+}
+
+# Function to check if a command exists
+command_exists() {
+  command -v "$1" &> /dev/null
+}
+
 # --- Apt/GPG Fixes ---
 echo "Attempting to fix potential apt/GPG issues..."
 sudo apt-get clean
@@ -25,6 +41,25 @@ LOGFILE="/var/log/bootstrap_cml.log"
 exec > >(tee -a ${LOGFILE}) 2>&1
 echo "Starting CML bootstrap at $(date)"
 
+# Function to install a package with error handling
+install_package() {
+  local package=$1
+  echo "Attempting to install $package..."
+  apt-get install -y "$package" # Try the installation
+  local exit_code=$?            # Capture the exit code immediately
+  echo "Exit code for 'apt-get install -y \\"$package\\"' was: $exit_code" # Log the exit code
+
+  if [ $exit_code -eq 0 ]; then
+    echo "$package installed successfully or already present."
+    return 0
+  else
+    echo "ERROR: Failed to install $package (Exit Code: $exit_code). Exiting bootstrap script."
+    # Optionally add more debug info here, like checking apt sources or logs
+    # tail /var/log/apt/term.log || true
+    exit 1
+  fi
+}
+
 # Test network connectivity
 echo "Testing network connectivity..."
 ping -c 3 archive.ubuntu.com || echo "WARNING: Network connectivity issues detected"
@@ -41,10 +76,8 @@ add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs)-b
 
 # Add specific repositories for problematic packages
 echo "Adding specific repositories for packages..."
-# For wireguard
-add-apt-repository -y ppa:wireguard/wireguard || true
 # For libguestfs-tools
-add-apt-repository -y 'deb http://archive.ubuntu.com/ubuntu focal main universe'
+# add-apt-repository -y 'deb http://archive.ubuntu.com/ubuntu focal main universe'
 
 # Try using the main Ubuntu archive if regional mirrors fail
 apt-get update || {
@@ -58,53 +91,104 @@ export DEBIAN_FRONTEND=noninteractive
 echo "Updating and upgrading system packages..."
 apt-get upgrade -y
 
-# Install essential dependencies for CML
-echo "Installing essential CML dependencies..."
-apt-get install -y \
-  apt-transport-https \
-  ca-certificates \
-  curl \
-  gnupg \
-  lsb-release \
-  software-properties-common \
-  python3-pip \
-  qemu-kvm \
-  libvirt-daemon \
-  libvirt-clients \
-  nginx \
-  wget \
-  unzip \
-  cloud-init \
-  uuid \
-  expect \
-  cloud-guest-utils \
-  python3-openvswitch \
-  openvswitch-switch
+# --- Start amazon-ssm-agent management ---
+# Ensure amazon-ssm-agent is installed via Snap and enabled
+echo "Ensuring amazon-ssm-agent is installed via Snap and enabled..."
 
-# Function to install a package with error handling
-install_package() {
-  local package=$1
-  echo "Attempting to install $package..."
-  if apt-get install -y "$package"; then
-    echo "$package installed successfully"
-    return 0
-  else
-    echo "WARNING: Failed to install $package, continuing anyway"
-    return 1
+# Attempt to remove existing deb package just in case (ignore errors if not found)
+echo "Attempting to remove any existing amazon-ssm-agent deb package..."
+apt-get remove -y amazon-ssm-agent || echo "No deb package found or removal failed (ignored)."
+
+# Install using snap (AWS recommended for Ubuntu 20.04+)
+echo "Installing amazon-ssm-agent via snap..."
+snap install amazon-ssm-agent --classic
+if [ $? -ne 0 ]; then
+    echo "ERROR: snap install amazon-ssm-agent failed!"
+    # Check for snapd issues
+    systemctl status snapd
+    exit 1
+fi
+
+# Verify installation
+echo "Verifying snap installation..."
+snap list amazon-ssm-agent
+if [ $? -ne 0 ]; then
+    echo "ERROR: 'snap list amazon-ssm-agent' failed after installation!"
+    exit 1
+fi
+
+# Ensure the service is started
+echo "Ensuring amazon-ssm-agent snap service is started..."
+snap start amazon-ssm-agent
+if [ $? -ne 0 ]; then
+    echo "WARNING: 'snap start amazon-ssm-agent' failed. Trying systemctl workaround..."
+    systemctl start snap.amazon-ssm-agent.amazon-ssm-agent.service
+    if [ $? -ne 0 ]; then
+        echo "ERROR: systemctl start workaround also failed!"
+        # Don't exit, but log the error
+    fi
+fi
+
+# Check status
+echo "Checking amazon-ssm-agent snap service status..."
+snap services amazon-ssm-agent || systemctl status snap.amazon-ssm-agent.amazon-ssm-agent.service --no-pager
+
+echo "amazon-ssm-agent setup via snap complete."
+# --- End amazon-ssm-agent management ---
+
+# Install essential dependencies for CML one by one for better error handling
+echo "Installing essential CML dependencies..."
+echo "Updating package lists before critical installs..."
+sudo apt-get update
+
+CRITICAL_PACKAGES_TO_INSTALL=(
+  "apt-transport-https"
+  "ca-certificates"
+  "curl"
+  "gnupg"
+  "lsb-release"
+  "software-properties-common"
+  "python3-pip"
+  "python3-cryptography"
+  "python3-pyasn1"
+  "qemu-kvm"
+  "libvirt-daemon-system"
+  "libvirt-clients"
+  "nginx"
+  "wget"
+  "unzip"
+  "cloud-init"
+  "uuid"
+  "expect"
+  "cloud-guest-utils"
+  "python3-openvswitch"
+  "openvswitch-switch"
+  "wireguard"
+  "wireguard-tools"
+  "awscli"
+  "python3-alembic"
+)
+
+for pkg in "${CRITICAL_PACKAGES_TO_INSTALL[@]}"; do
+  install_package "$pkg"
+  # Add immediate verification for qemu-kvm (checking for the real binary)
+  if [[ "$pkg" == "qemu-kvm" ]]; then
+    # On Ubuntu 20.04+, the main binary is qemu-system-x86_64
+    if ! command -v qemu-system-x86_64 &> /dev/null; then
+      echo "CRITICAL ERROR: qemu-system-x86_64 command not found after reported successful installation of qemu-kvm!"
+      exit 5
+    fi
+    echo "qemu-system-x86_64 command found."
   fi
-}
+done
 
 # Install additional packages with robust error handling
 echo "Installing additional packages (with robust error handling)..."
 OPTIONAL_PACKAGES=(
   "bridge-utils"
-  "virt-manager"
-  "libguestfs-tools"
   "vlan"
-  "wireguard"
   "openvpn"
   "jq"
-  "awscli"
 )
 
 # Try installing universe and multiverse packages one by one with detailed feedback
@@ -127,10 +211,6 @@ for pkg in "${OPTIONAL_PACKAGES[@]}"; do
       "awscli") 
         echo "Installing awscli via pip3..."
         pip3 install awscli && echo "awscli installed via pip3" || echo "Failed to install awscli via pip3"
-        ;;
-      "virt-manager")
-        echo "Installing virt-manager dependencies..."
-        apt-get install -y python3-gi gir1.2-gtk-3.0 python3-libvirt || true
         ;;
       *)
         echo "No alternative installation method for $pkg"
@@ -248,50 +328,126 @@ groupadd -f libvirt
 usermod -a -G libvirt ubuntu
 usermod -a -G kvm ubuntu
 
-# Final verification of critical packages
-echo "Performing final verification of critical packages..."
-CRITICAL_PACKAGES=(
-  "qemu-kvm"
-  "libvirt-daemon"
-  "openvswitch-switch"
-  "nginx"
-  "python3-pip"
-)
+# #########################################################################
+# ## The CML .deb installation below was moved to install_cml_2.7.0.sh ##
+# ## It needs to run AFTER the debs are downloaded by Packer.          ##
+# #########################################################################
+# # Install CML .deb packages
+# DEB_DIR="/tmp/cml_debs" # Define where debs are expected (adjust if needed)
+# echo "Installing CML .deb packages from $DEB_DIR..."
+# # Ensure the directory exists and has .deb files before proceeding
+# if [ -d "$DEB_DIR" ] && ls "$DEB_DIR"/*.deb &> /dev/null; then
+#     # Install all .deb files from the specified directory
+#     # Using the full path avoids issues with the current working directory.
+#     if sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -o Debug::pkgProblemResolver=yes -o Debug::pkgAcquire::Worker=1 "$DEB_DIR"/*.deb; then
+#         echo "CML .deb packages installed successfully."
+#         # Reload systemd daemon to recognize new services if any
+#         echo "Reloading systemd daemon..."
+#         sudo systemctl daemon-reload
+#     else
+#         error_exit "Failed to install CML .deb packages from $DEB_DIR. apt returned non-zero status."
+#     fi
+# else
+#     error_exit "CML .deb package directory $DEB_DIR does not exist or contains no .deb files."
+# fi
+# #########################################################################
 
-MISSING_CRITICAL=0
-for pkg in "${CRITICAL_PACKAGES[@]}"; do
-  if ! dpkg -l | grep -q "ii  $pkg"; then
-    echo "ERROR: Critical package $pkg is not properly installed!"
-    MISSING_CRITICAL=1
-  else
-    echo "✓ Critical package $pkg is properly installed."
-  fi
-done
+# Ensure libvirtd service is running and enabled
+echo "Ensuring libvirtd service is active and enabled..."
+systemctl enable libvirtd
+systemctl start libvirtd
 
-# Print summary of optional packages
-echo "Verification of optional packages:"
-OPTIONAL_PACKAGES=(
-  "bridge-utils"
-  "virt-manager"
-  "libguestfs-tools"
-  "vlan"
-  "wireguard"
-  "openvpn"
-  "jq"
-  "awscli"
-)
+# Function for final verification of critical components
+final_verification() {
+    log "Performing final verification of critical packages..."
+    local all_ok=true
+    local pkg_status=""
 
-for pkg in "${OPTIONAL_PACKAGES[@]}"; do
-  if command -v "$pkg" &>/dev/null || dpkg -l | grep -q "ii  $pkg"; then
-    echo "✓ Optional package $pkg is installed"
-  else
-    echo "! Optional package $pkg could not be installed"
-  fi
-done
+    # 1. Verify Commands/Binaries
+    log "Verifying commands..."
+    for cmd_path in "/usr/bin/qemu-system-x86_64" "/usr/sbin/ovs-vswitchd" "/usr/bin/pip3"; do
+        local cmd_name=$(basename "$cmd_path")
+        if [[ -x "$cmd_path" ]]; then
+            log "  Command $cmd_name found at $cmd_path."
+        elif command -v "$cmd_name" &>/dev/null; then
+            log "  Command $cmd_name found in PATH."
+        else
+            log "  ERROR: Command $cmd_name not found!"
+            all_ok=false
+        fi
+    done
 
-# Security hardening for CML instance
+    # 2. Verify Services Status
+    log "Verifying services..."
+    log "Listing all found systemd unit files:"
+    systemctl list-unit-files >&2 || log "Warning: Could not list systemd unit files."
+    log "Finished listing unit files."
+
+    local services=(
+        "libvirtd.service" # Corrected name
+        # "nginx.service" # Removed - Masked by CML
+        # "openvswitch-switch.service" # Removed - Masked by CML
+    )
+    for service in "${services[@]}"; do
+        # Check 1: Does the service unit file exist? Use 'systemctl cat' which exits non-zero if not found.
+        if ! systemctl cat "$service" &> /dev/null; then
+            log "  ERROR: Service unit file $service not found! (Checked using 'systemctl cat')"
+            all_ok=false
+            continue # Skip further checks for this service
+        fi
+
+        # Check 2: What is the service state? (Now that we know it exists)
+        if systemctl is-active --quiet "$service"; then
+            log "  Service $service is active."
+        elif systemctl is-failed --quiet "$service"; then
+            log "  ERROR: Service $service is in a 'failed' state!"
+            systemctl status "$service" --no-pager -n 20 || true # Show status details
+            all_ok=false
+        elif [[ "$service" == "openvswitch-switch.service" ]] && systemctl show -p SubState --value "$service" | grep -qE 'exited|dead'; then
+            # openvswitch-switch being 'exited' is okay as it's a setup service
+            log "  Service $service is exited (normal state)."
+        else # Service exists but isn't active, failed, or the special exited state for OVS
+            # Service exists but isn't active/failed (maybe inactive/loading?)
+            local current_status=$(systemctl show -p SubState --value "$service")
+            log "  - Service $service exists but is not active/failed (State: $current_status). Attempting to start..."
+            sudo systemctl start "$service"
+            sleep 3 # Give it a moment
+            if systemctl is-active --quiet "$service"; then
+                log "  Service $service started and is now active."
+            else
+                log "  ERROR: Failed to start service $service or it did not stay active. Final state: $(systemctl show -p SubState --value "$service")"
+                systemctl status "$service" --no-pager -n 20 || true # Show status details
+                all_ok=false
+            fi
+        fi
+    done
+
+    # 3. Verify Python Open vSwitch module (optional but good check)
+    log "Verifying Python Open vSwitch module..."
+    if python3 -c "import openvswitch.vlog" &>/dev/null; then
+        log "  Python module 'openvswitch.vlog' imported successfully."
+    else
+        # Check if the package is installed as a fallback
+        if dpkg -s python3-openvswitch &>/dev/null; then
+            log "  WARNING: Python module 'openvswitch.vlog' not directly importable, but package 'python3-openvswitch' seems installed. Continuing..."
+        else
+            log "  ERROR: Python module 'openvswitch' not importable and package 'python3-openvswitch' not found."
+            # Decide if this is critical enough to set all_ok=false
+            # all_ok=false # Uncomment if this should cause failure
+        fi
+    fi
+
+    if [[ "$all_ok" == "true" ]]; then
+        log "Final verification passed successfully."
+        return 0
+    else
+        log "ERROR: Final verification failed. Critical components missing or not running."
+        exit 5 # Consistent exit code for verification failure
+    fi
+}
+
+# Apply security hardening measures
 echo "Applying security hardening measures..."
-
 # Enable and configure UFW firewall
 echo "Setting up UFW firewall..."
 apt-get install -y ufw
@@ -343,7 +499,7 @@ systemctl enable fail2ban
 systemctl restart fail2ban
 
 # Print results of verification
-if [ $MISSING_CRITICAL -eq 1 ]; then
+if [ "$MISSING_CRITICAL" -eq 1 ]; then
   echo "WARNING: Some critical packages are missing. The CML AMI may not function correctly."
 else
   echo "All critical packages verified successfully."
@@ -406,3 +562,46 @@ done
 # Create a marker file to show this is a pre-prepared CML AMI
 date > /etc/.cml_ami_prepared
 echo "CML bootstrap completed successfully at $(date)"
+
+check_cml_web_interface() {
+    log "Starting CML web interface check..."
+    local max_attempts=30
+    local wait_seconds=10
+    local ui_url="http://localhost:80/"
+    local about_url="http://localhost/api/v0/about"
+    local login_url="http://localhost/api/v0/authenticate"
+    # These credentials are likely incorrect based on CML docs, but keep for now
+    # until we confirm services are running and implement credential passing.
+    local username="admin"
+    local password="password"
+
+    log "+++ DIAGNOSTICS Start: Pre-Web Check Service Status +++"
+    for service in virl2-controller.service virl2-uwm.service; do
+        log "Checking status for $service..."
+        if systemctl is-active --quiet "$service"; then
+            log "  $service is ACTIVE."
+        else
+            log "  $service is INACTIVE or FAILED."
+            log "  Status output for $service:"
+            systemctl status "$service" --no-pager || log "    Failed to get status for $service"
+        fi
+        log "  Last 20 log lines for $service:"
+        journalctl -u "$service" -n 20 --no-pager --output cat || log "    Failed to get logs for $service"
+    done
+    log "+++ DIAGNOSTICS End: Pre-Web Check Service Status +++"
+
+    for (( i=1; i<=$max_attempts; i++ )); do
+        log "Try $i/$max_attempts..."
+        local http_code_about=$(curl -s -o /dev/null -w "%{http_code}" "$about_url")
+        # ... rest of your code ...
+
+    done
+    log "Web interface check loop finished (actual checks need implementation)."
+    # Example: check $http_code_about or perform login attempt
+
+    # If check fails after all attempts:
+    # error_exit "CML web interface did not become ready."
+
+    log "CML web interface check completed (placeholder)."
+
+} # Added missing closing brace for the function

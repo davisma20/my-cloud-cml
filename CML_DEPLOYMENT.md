@@ -1,102 +1,62 @@
-# CML Deployment with DevNet Workstation
+# CML Deployment (Using Packer AMI)
 
-This document outlines the configuration for deploying Cisco Modeling Labs (CML) in AWS using the AMI created from the CML OVA, along with a DevNet workstation for connectivity verification.
+This document outlines the configuration and steps for deploying Cisco Modeling Labs (CML) in AWS using a pre-built Packer AMI, alongside the standard DevNet workstation.
 
 ## Overview
 
-This feature branch configures both:
-1. A CML instance using a custom AMI that needs to be created by importing the CML OVA
-2. A DevNet workstation using the DevNet Expert AMI (ami-0a0e4ef95325270c9), which comes pre-configured with all necessary tools
+This deployment utilizes:
+1. A CML instance launched from a custom AMI created using Packer (`packer/cml-2.7.0.pkr.hcl`).
+2. A standard DevNet workstation (details in `DEVNET_WORKSTATION.md`).
 
-The deployment includes security hardening measures for both instances and provides tools to verify connectivity between them.
+The deployment uses Terraform to provision the necessary AWS resources (VPC, subnets, security groups, instances).
 
-## Version Information
+## Current Stable Build Information (CML 2.7.0)
 
-This deployment is specifically configured for:
-- CML version: 2.8.1-14
-- Installation package: `cml2_2.8.1-14_amd64.deb`
-- Required key pair for SSH access: `terraform-key` (must exist in the AWS region)
+*   **Packer Template:** `packer/cml-2.7.0.pkr.hcl`
+*   **Latest AMI (us-east-2):** `ami-0aef6f8637c4c6500` (Built 2025-04-06)
+*   **Terraform Variables File:** `packer/network_validated_ami.auto.tfvars` (defines AMI ID, region, instance types etc.)
 
 ## Configuration Details
 
-### Security Features
-
-Both the CML instance and DevNet workstation are configured with:
-- Root volume encryption
-- IMDSv2 requirement (prevents SSRF attacks)
-- Automatic security updates
-- UFW firewall with default deny policy
-- Fail2ban for brute force protection
-- Secure SSH configuration
-- System hardening and password complexity requirements
-
-### CML Configuration
-
-- Requires a custom AMI created from importing the CML OVA file
-- The AMI ID should be set in the `config.yml` file under `aws.cml_ami`
-- Instance type: c5.2xlarge (configurable in config.yml)
-- Deployed with CML Enterprise license
-- Accessible via HTTPS and SSH (port 1122)
-
-### DevNet Workstation
-
-- Uses DevNet Expert AMI: ami-0a0e4ef95325270c9 (Ubuntu 20.04 based)
-- Instance type: t3.large (configurable in config.yml)
-- Accessible via RDP (port 3389)
-- Credentials: admin/1234QWer!
+*   **CML Instance:** Launched from the AMI specified in `packer/network_validated_ami.auto.tfvars`.
+    *   Instance type is also defined in the `.auto.tfvars` file (e.g., `cml_instance_type`).
+    *   Accessible via HTTPS and SSH (port 22, user `ubuntu`). The CML application itself uses `admin` with the password set during the Packer build.
+*   **DevNet Workstation:** Configuration detailed in `DEVNET_WORKSTATION.md`.
+*   **Security:** Resources are deployed within security groups defined in the Terraform configuration (`modules/deploy/aws/main.tf`). Ensure rules allow necessary traffic (HTTPS to CML, SSH/RDP to workstations, etc.).
 
 ## Deployment Steps
 
-1. Check out the feature branch:
-   ```
-   git checkout feature/deploy-cml
-   ```
-
-2. Initialize Terraform:
-   ```
-   terraform init
-   ```
-
-3. Apply the configuration:
-   ```
-   terraform apply -auto-approve
-   ```
-
-4. After deployment, Terraform will output the connection details for both the CML instance and DevNet workstation.
+1.  **Prerequisites:**
+    *   Terraform installed.
+    *   AWS CLI configured with appropriate credentials.
+    *   Ensure the AMI ID specified in `packer/network_validated_ami.auto.tfvars` is correct and exists in the target `aws_region` defined in the same file.
+2.  **Initialize Terraform:** Navigate to the root project directory (`my-cloud-cml`) and run:
+    ```bash
+    terraform init
+    ```
+3.  **Apply Configuration:**
+    ```bash
+    terraform apply -var-file=packer/network_validated_ami.auto.tfvars -auto-approve
+    ```
+    *(The `-auto-approve` flag skips the confirmation prompt)*
+4.  **Output:** After deployment, Terraform will output the public IP addresses and other relevant details for the CML instance and DevNet workstation.
 
 ## Connectivity Verification
 
-To verify connectivity between the DevNet workstation and CML (meeting the requirements for CAD-7):
-
-1. Connect to the DevNet workstation using RDP with the following credentials:
-   - Host: [Terraform output IP address]
-   - Port: 3389
-   - Username: admin
-   - Password: 1234QWer!
-
-2. Once connected, open a terminal and run the verification script:
-   ```
-   wget -O verify.sh https://raw.githubusercontent.com/davisma20/my-cloud-cml/feature/deploy-cml/scripts/verify_connectivity.sh
-   chmod +x verify.sh
-   ./verify.sh [CML IP address]
-   ```
-
-The script will perform:
-- ICMP ping test
-- TCP port connectivity tests for essential ports
-- HTTPS certificate validation
-- Web UI accessibility check
+Standard network troubleshooting applies. Verify:
+*   Security group rules allow traffic between the workstation and CML (HTTPS/443, SSH/22 for the instance, potentially other CML-specific ports if needed).
+*   Instance status in the AWS console.
+*   Basic ping tests.
+*   Ability to access the CML Web UI via HTTPS using the public IP from the Terraform output.
+*   Ability to log in to the CML UI using `admin` and the password set during the Packer build.
 
 ## Troubleshooting
 
-If connectivity verification fails, check:
-1. Security groups in AWS console to ensure all required ports are open
-2. Network ACLs to ensure traffic is allowed between the instances
-3. Instance health status in AWS console
-4. System logs on both instances for any errors
+*   **Terraform Errors:** Check Terraform output for specific errors. Ensure variables in the `.auto.tfvars` file are correct.
+*   **CML Issues:** Refer to `documentation/TROUBLESHOOTING.md` and `documentation/CML_INSTALLATION.md`.
+*   **Packer Build Issues:** Refer to `documentation/PACKER_BUILD.md`.
 
 ## References
 
 - Original CML Cloud repository: https://github.com/CiscoDevNet/cloud-cml
-- Custom fork: https://github.com/davisma20/my-cloud-cml
-- Jira ticket: CAD-7 (Verify reachability between DevNet workstation and CML)
+- This fork: https://github.com/davisma20/my-cloud-cml

@@ -1,88 +1,58 @@
-# CML Packer Build Process
+# Packer Build Process for CML AMI
 
-This document describes the process of building Cisco Modeling Labs (CML) AMIs using Packer.
+This document outlines the steps and configuration for building a custom Cisco Modeling Labs (CML) AMI using HashiCorp Packer.
 
-## Overview
+## Current Build: CML 2.7.0
 
-The Packer build process creates custom Amazon Machine Images (AMIs) with CML pre-installed and properly configured. This approach offers several advantages:
+*   **Packer Configuration:** `packer/cml-2.7.0.pkr.hcl`
+*   **Build Script:** `packer/build_cml_2.7.0.sh` (Recommended way to run the build)
+*   **Latest AMI (us-east-2):** `ami-0a8303fee58aa8f54` (Built 2025-04-13) (Previous: `ami-07d20a2e50f3607e9` Built 2025-04-12 - Verify AMI ID after current build completes)
 
-- **Consistent Deployment**: Every CML instance starts from an identical, properly initialized state
-- **Faster Provisioning**: Much of the installation and configuration is done during AMI creation
-- **Enhanced Security**: Security hardening is applied during image creation
-- **Improved Reliability**: Reduces deployment failures by ensuring proper initialization
+## Build Steps
 
-## Security Features
+1.  **Prerequisites:**
+    *   Packer installed.
+    *   AWS CLI configured with credentials having permissions to create EC2 instances, AMIs, security groups, roles, etc.
+    *   CML 2.7.0 `.pkg` installer file accessible (e.g., in an S3 bucket specified in variables, or modify the script to upload/use a local file).
 
-The CML AMIs built with this process include:
+2.  **Configuration:**
+    *   Review variables within `packer/cml-2.7.0.pkr.hcl`. Key variables include:
+        *   `cml_admin_password`: The desired initial password for the CML `admin` user.
+        *   `aws_region`: The target AWS region for the build.
+        *   `source_ami` / `source_ami_filter`: The base Ubuntu AMI to use.
+        *   `cml_installer_s3_bucket`, `cml_installer_s3_key`: If loading the installer from S3.
+    *   Variables can be overridden using a `.pkrvars.hcl` file or command-line `-var` arguments.
 
-- **Infrastructure Security**:
-  - Root volume encryption
-  - IMDSv2 requirement (prevents SSRF attacks)
-  - Restricted security groups with specific inbound/outbound rules
+3.  **Execute Build:**
+    *   Navigate to the `packer` directory in your terminal.
+    *   Run the build script: `bash build_cml_2.7.0.sh`
+    *   The script handles cache cleaning and logs the Packer output to a timestamped file (e.g., `packer_build_YYYYMMDDHHMMSS.log`) as well as to `packer_build.log`.
+    *   Monitor the output for progress and any errors.
 
-- **Host-based Security**:
-  - Automatic security updates
-  - UFW firewall with default deny policy
-  - Fail2ban for brute force protection on SSH and RDP
-  - Secure SSH configuration (disabled root login, password auth)
-  - System hardening and password complexity requirements
+4.  **Output:**
+    *   Upon successful completion, Packer will output the ID of the newly created AMI.
+    *   Update the `cml_ami` variable in your Terraform configuration (e.g., `packer/network_validated_ami.auto.tfvars`) with this new AMI ID.
 
-## CML Controller Initialization
+## Key Build Logic & Fixes (CML 2.7.0)
 
-The build process includes several steps to ensure proper CML controller initialization:
+The `cml-2.7.0.pkr.hcl` file orchestrates several steps:
 
-1. **Installation Preparation**:
-   - Necessary packages are installed
-   - System is configured for virtualization
-
-2. **CML Package Extraction**:
-   - The CML installation package is downloaded from S3
-   - Package is extracted and prepared for installation
-
-3. **Service Configuration**:
-   - Services are initialized in the proper order (controller → UI → nginx)
-   - MongoDB is properly configured for the CML database
-   - Default admin user is created with proper permissions
-
-4. **Verification Process**:
-   - All services are checked for proper startup
-   - Web interface accessibility is verified
-   - Authentication is tested with the default admin account
-
-## Default Credentials
-
-The default administrator credentials for the AMI are:
-
-- **Username**: admin
-- **Password**: admin
-
-> **Important**: For production deployments, change these default credentials immediately after deployment.
-
-## Building a CML AMI
-
-To build a custom CML AMI:
-
-1. Ensure CML package is uploaded to S3 bucket:
-   ```
-   ./upload-images-to-aws.sh
-   ```
-
-2. Run the build script:
-   ```
-   cd packer
-   ./build_cml_2.7.0.sh
-   ```
-
-3. The AMI ID will be output at the end of the build process
-4. Update the `cml_ami` value in your `config.yml` with the new AMI ID
+1.  **Instance Launch:** Launches a temporary EC2 instance from the specified source Ubuntu AMI.
+2.  **Prerequisites Installation:** Installs necessary packages (`apt-get update`, `unzip`, `python3`, etc.).
+3.  **Bootstrap Script Execution:** Executes `bootstrap_cml.sh`.
+    *   This script installs CML dependencies (KVM, libvirt, Nginx, Python packages, etc.), configures the system (networking, cloud-init), and performs basic hardening. It does **not** install the core CML `.deb` package itself.
+    *   **Known Issue:** It was observed during builds (April 2025) that the `admin` user creation within CML (if attempted by this script or the `.pkg` installer it might trigger) was unreliable.
+4.  **Download and Prepare CML Installation:** Executes `install_cml_2.7.0.sh`.
+    *   This script downloads the CML `.deb` files from S3 to a temporary location.
+5.  **CML .deb Package Installation:** Executes a shell provisioner that runs `apt-get install` on the downloaded `.deb` files.
+    *   **Important Fix (2025-04-12):** Error suppression (`|| true`) was removed from the `apt-get install ./cml*.deb` command within the installation logic triggered by `install_cml_2.7.0.sh`. This ensures that if the core CML package fails to install, the Packer build will now correctly fail instead of potentially producing a broken AMI.
+6.  **Debugging Output (Optional but Recommended):** Dumps `/var/log/cml_install.log` and `/etc/passwd` to the Packer log to aid troubleshooting user/install issues.
+7.  **Explicit Admin User Creation:** A dedicated `shell` provisioner runs *after* bootstrap/install to ensure the CML `admin` user exists within the OS (if needed by CML components outside the main package). It uses `sudo useradd -m -s /bin/bash -g admin admin` to handle cases where the `admin` group might already exist.
+8.  **Password Setting:** Conditionally checks for `admin` or `cml2` user existence and uses `chpasswd` to set the password provided in the `cml_admin_password` variable.
+9.  **Service Restart:** Restarts CML services.
+10. **UI Check:** Performs a basic check to see if the CML web UI responds on HTTPS.
+11. **Cleanup & AMI Creation:** Stops the instance, creates the AMI, and cleans up temporary resources (key pair, security group, instance).
 
 ## Troubleshooting
 
-If you encounter issues with the CML initialization during the Packer build:
-
-1. Check the Packer build logs for any error messages
-2. Look for failed service initializations
-3. Verify that MongoDB started properly
-4. Ensure the CML controller initialization was successful
-
-For more detailed diagnostics, you can enable debug mode in the Packer build by editing the `build_cml_2.7.0.sh` script.
+Refer to the main `documentation/TROUBLESHOOTING.md` and `documentation/CML_INSTALLATION.md` files for common issues and detailed troubleshooting steps, including the user creation problem detailed above.

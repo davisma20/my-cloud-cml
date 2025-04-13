@@ -1,102 +1,69 @@
 # CML Packer Build
 
-This directory contains Packer templates to build Amazon Machine Images (AMIs) with Cisco Modeling Labs (CML) pre-installed.
+This directory contains Packer templates and scripts to build Amazon Machine Images (AMIs) with Cisco Modeling Labs (CML) 2.7.0 pre-installed.
 
 ## Overview
 
-Instead of installing CML during instance startup (which can be error-prone), these Packer templates create ready-to-use AMIs with CML already installed and configured. This approach provides several benefits:
+This directory contains the Packer configuration (`cml-2.7.0.pkr.hcl`) and associated scripts (`bootstrap_cml.sh`, `install_cml_2.7.0.sh`) to build a custom Amazon Machine Image (AMI) pre-configured with Cisco Modeling Labs (CML) version 2.7.0.
 
-- **Reliability**: Installation happens once during AMI creation, not on every instance startup
-- **Speed**: Instances launch faster as they don't need to install software
-- **Consistency**: All instances are identical and pre-tested
-- **Versioning**: Maintain different AMI versions as you update CML
+The goal is to create a stable, ready-to-use AMI for deploying CML controllers via Terraform or other automation, minimizing instance boot time and configuration drift.
 
 ## Prerequisites
 
-1. [Packer](https://www.packer.io/downloads) (version 1.8.0+)
-2. AWS CLI configured with appropriate credentials
-3. CML installation package (`cml2_*.deb`) accessible via S3 or other source
+1. [Packer](https://www.packer.io/downloads) (version 1.8.0+ recommended)
+2. AWS CLI configured with appropriate credentials (permissions to manage EC2, AMIs, SGs, etc.)
+3. CML 2.7.0 installation package (`.pkg` file) accessible (e.g., uploaded to an S3 bucket referenced in the Packer variables, or locally if modifying the build process).
 
-## Directory Structure
+## Directory Structure (CML 2.7.0 Build)
 
 ```
 packer/
-├── README.md                       # This documentation file
-├── cml-controller.pkr.hcl          # Packer template for CML controller
-├── cml-network-validated.pkr.hcl   # Network-validated CML template
-├── variables.pkr.hcl               # Packer variables declaration
-├── scripts/                        # Installation scripts
-│   ├── install_cml.sh              # Main CML installation script
-│   ├── install_cml_prereqs.sh      # CML prerequisites installer
-│   ├── security_hardening.sh       # Security hardening script
-│   ├── post_launch_validation.sh   # Post-launch validation script
-│   └── cleanup.sh                  # Cleanup script to reduce AMI size
-└── files/                          # Files to be copied to the instance
-    └── 99-cml-settings.conf        # CML system settings
+├── README.md                     # This documentation file
+├── cml-2.7.0.pkr.hcl             # Main Packer template for CML 2.7.0
+├── build_cml_2.7.0.sh            # Recommended script to run the build
+├── bootstrap_cml.sh              # Core CML installation script executed by Packer
+├── install_cml_2.7.0.sh          # Script to install CML .deb packages
+├── test_cml_login.py             # Python script to test CML UI availability (run by Packer)
+└── network_validated_ami.auto.tfvars # Example .tfvars file for deploying the built AMI
 ```
 
-## Building the AMI
+## Building the CML 2.7.0 AMI
 
-1. Place your CML package in an S3 bucket or update the template to use your preferred source
-2. Update variables in `variables.pkr.hcl` if needed
-3. Run the build:
+1.  **Review Configuration:** Check the variables within `cml-2.7.0.pkr.hcl`. Key variables include `cml_admin_password`, `aws_region`, `source_ami_filter`, and S3 bucket/key variables if loading the installer from S3.
+2.  **Execute Build:**
+    *   Navigate to this `packer` directory.
+    *   Run the provided build script:
+        ```bash
+        bash build_cml_2.7.0.sh
+        ```
+    *   This script cleans the Packer cache, runs `packer build`, and logs output to timestamped files (`packer_build_YYYYMMDDHHMMSS.log` and `packer_build.log`).
+3.  **Output:** Upon success, Packer will display the new AMI ID.
 
-```bash
-cd packer
-packer build cml-controller.pkr.hcl
-```
+## Build Process
 
-## Building the Network-Validated AMI
+1.  **Instance Setup:** Launches a temporary EC2 instance using a base Ubuntu 20.04 AMI.
+2.  **Prerequisites & System Config:** Runs `bootstrap_cml.sh` to install necessary dependencies (KVM, libvirt, nginx, Python, etc.), configure system settings (networking, cloud-init), and apply basic hardening. This script lays the groundwork for the CML installation by preparing the system environment.
+3.  **CML Package Installation:** Runs `install_cml_2.7.0.sh` which downloads the required CML `.deb` files from S3 and then triggers their installation using `apt-get install`. This script is specifically responsible for installing the CML packages. **Note (2025-04-12):** A fix was applied to ensure that failures during the CML `.deb` package installation step correctly cause the Packer build to fail, improving error detection.
+4.  **User/Password Setup:** Ensures the OS `admin` user exists and sets the CML admin password.
+5.  **Service Check & Cleanup:** Verifies basic UI accessibility, performs cleanup, and creates the final AMI.
 
-The `cml-network-validated.pkr.hcl` template creates an AMI with comprehensive network validation built in:
+Refer to `documentation/PACKER_BUILD.md` for more granular details.
 
-1. Validates basic network connectivity during the build
-2. Tests CML GUI accessibility before finalizing the AMI
-3. Includes post-launch validation scripts to verify proper operation
-4. Applies security hardening measures similar to the DevNet workstation
+## Using the Built AMI in Terraform
 
-To build the network-validated AMI:
-
-```bash
-cd packer
-packer build cml-network-validated.pkr.hcl
-```
-
-## Using the AMI in Terraform
-
-After building, update your Terraform code to use the generated AMI ID instead of installing CML via cloud-init.
-
-## Using the Network-Validated AMI in Terraform
-
-After building, use the provided Terraform variables file to deploy with the new AMI:
-
-1. Update the AMI ID in `network_validated_ami.auto.tfvars`
-2. Run Terraform as usual from the project root
-
-```bash
-# Update AMI ID in the vars file first
-terraform init
-terraform apply
-```
-
-## Network Validation Features
-
-The network-validated AMI includes several important improvements:
-
-- **Build-time Network Testing**: Validates connectivity during Packer build
-- **Mock CML GUI Testing**: Verifies web server functionality works properly
-- **Post-Launch Validation**: Scripts to verify accessibility after deployment
-- **Improved Cloud-Init Scripts**: Fixed syntax issues in user-data scripts
-- **Security Hardening**: Implements best practices for secure deployment
-
-## Security Note
-
-The resulting AMI will have CML pre-installed but not pre-configured with initial passwords. The security hardening applied to the generated AMI follows AWS best practices for public images.
+1.  **Update AMI ID:** Copy the AMI ID generated by the Packer build.
+2.  **Edit `.tfvars`:** Update the `cml_ami` variable in the `network_validated_ami.auto.tfvars` file (or your own Terraform variables file) with the new AMI ID. Also ensure the `aws_region` matches the region where the AMI was built.
+    ```hcl
+    # packer/network_validated_ami.auto.tfvars
+    cml_ami = "ami-xxxxxxxxxxxxxxxxx" # Replace with your new AMI ID
+    aws_region = "us-east-2"         # Ensure this matches
+    # ... other vars
+    ```
+3.  **Deploy:** Run `terraform init` and `terraform apply -var-file=packer/network_validated_ami.auto.tfvars` from the root project directory (`my-cloud-cml`).
 
 ## Troubleshooting
 
-If you encounter issues with the CML deployment:
-
-1. Check the validation logs at `/var/log/cml_validation.log`
-2. Verify security group settings allow necessary ports (80, 443, 1122, etc.)
-3. Run the post-launch validation script manually: `sudo /provision/post_launch_validation.sh`
+Refer to the main documentation files for detailed troubleshooting:
+*   `documentation/TROUBLESHOOTING.md`
+*   `documentation/CML_INSTALLATION.md`
+*   `documentation/PACKER_BUILD.md`

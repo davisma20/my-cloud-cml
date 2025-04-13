@@ -14,3 +14,12 @@ output "public_ip" {
     )
   )
 }
+
+output "cml_controller_instance_id" {
+  description = "The instance ID of the CML controller (relayed from aws module)"
+  value = (
+    (var.cfg.target == "aws") ?
+    module.aws[0].cml_controller_instance_id :
+    null # Or handle other targets appropriately if needed
+  )
+}

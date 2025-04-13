@@ -33,14 +33,30 @@ export DEBIAN_FRONTEND=noninteractive
 export PACKER_LOG=1
 export PACKER_LOG_PATH="packer_build.log"
 
-# Run Packer build with appropriate variables
-echo "Starting Packer build..."
-packer build \
+echo "Starting Packer build... Logs will be saved to packer_build_YYYYMMDDHHMMSS.log"
+LOG_FILE="packer_build_$(date +%Y%m%d%H%M%S).log"
+
+# Execute Packer build and send output to both terminal and log file
+if packer build \
   -var "region=$region" \
   -var "instance_type=c5.2xlarge" \
   -var "volume_size=50" \
   -var "cml_bucket=cml-ova-import" \
-  cml-2.7.0.pkr.hcl
+  cml-2.7.0.pkr.hcl 2>&1 | tee "${LOG_FILE}"; then
+    # Check the exit status of packer, not tee
+    # Bash specific: PIPESTATUS array contains exit statuses of commands in a pipeline
+    if [ ${PIPESTATUS[0]} -eq 0 ]; then
+        echo "Packer build completed successfully. Log saved to ${LOG_FILE}"
+    else
+        echo "Packer build failed. Check the log file: ${LOG_FILE}"
+        exit ${PIPESTATUS[0]}
+    fi
+else
+    # This block might be redundant now due to PIPESTATUS check, but keep for safety
+    BUILD_STATUS=$?
+    echo "Command execution failed (tee or preceding command) with status ${BUILD_STATUS}. Check the log file: ${LOG_FILE}"
+    exit $BUILD_STATUS
+fi
 
 echo "Packer build completed. Check the output above for the AMI ID."
 echo "Full build log available at: $PACKER_LOG_PATH"

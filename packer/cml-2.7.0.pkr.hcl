@@ -147,7 +147,22 @@ build {
       "sudo apt-get update || true"
     ]
   }
-  
+
+  // Check hibinit-agent status (pre-installed, hibernation not enabled)
+  provisioner "shell" {
+    inline = [
+      "echo 'Ensuring software-properties-common is installed (dependency check)..'",
+      "sudo apt-get update -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common",
+      "echo 'Checking status and enabled state of pre-installed hibinit-agent.service...'",
+      "sudo systemctl status hibinit-agent.service --no-pager || echo 'INFO: Service likely inactive as hibernation is not enabled on build instance. Continuing if enabled.'",
+      "if sudo systemctl is-enabled --quiet hibinit-agent.service; then echo 'hibinit-agent service is enabled.'; else echo 'Error: hibinit-agent service is NOT enabled.'; exit 1; fi"
+    ]
+    environment_vars = [
+      "DEBIAN_FRONTEND=noninteractive"
+    ]
+  }
+
   // Upload and run CML bootstrap/optimization script
   provisioner "file" {
     source      = "bootstrap_cml.sh"
@@ -155,9 +170,10 @@ build {
   }
 
   provisioner "shell" {
+    environment_vars = ["PACKER_AWS_REGION=${var.region}"]
     inline = [
       "chmod +x /tmp/bootstrap_cml.sh",
-      "sudo bash /tmp/bootstrap_cml.sh"
+      "sudo -E bash -c 'export PACKER_AWS_REGION=\"$PACKER_AWS_REGION\"; bash /tmp/bootstrap_cml.sh'"
     ]
   }
 

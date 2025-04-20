@@ -29,13 +29,26 @@ CML instances can run on Azure and AWS cloud infrastructure.  This repository pr
 > [!NOTE]
 > For instructions on deploying only the DevNet Expert workstation (without CML), see [DEVNET_WORKSTATION.md](DEVNET_WORKSTATION.md).
 
-## Current Status
+## Current Status (as of 2025-04-16)
 
-*   **Stable CML Version:** 2.8.1-14
-*   **Latest AMI (us-east-2):** `ami-0aef6f8637c4c6500` (Built 2025-04-06)
-*   **Build Method:** Packer (`packer/cml-2.8.1-14.pkr.hcl`)
-*   **Deployment Method:** Terraform (Root module)
-*   **Detailed Docs:** See the `documentation/` directory, especially `CML_INSTALLATION.md`.
+**Troubleshooting Paused - Infrastructure Destroyed**
+
+Deployment is currently blocked by an issue where EC2 instances consistently fail cloud-init during the `package_update_upgrade_install` stage (specifically `apt-get update` hangs/fails). This leads to Terraform timeouts waiting for instance status checks.
+
+**Investigation Summary:**
+*   **Root Cause:** Suspected network connectivity issue preventing `apt-get` from reaching repositories.
+*   **Ruled Out:** Custom Netplan configuration in Packer AMI.
+*   **Security Group:** Verified to allow outbound HTTP/HTTPS.
+*   **NACLs:** Most likely cause. The default NACL is suspected of blocking outbound traffic. `run_validation.py` was enhanced to check NACLs.
+*   **IAM Blocker:** The AWS credentials used (`root`) lack `ec2:DescribeNetworkAcls` permission, preventing the script from verifying NACL rules.
+
+**Update:** The persistent `terraform destroy` error related to `templatefile` evaluation and the `custom_scripts_yaml` variable has been **resolved**. The fix involved modifying `modules/deploy/aws/main.tf` to assign the pre-rendered `local.cloud_config` variable directly to the `aws_instance.cml_controller`'s `user_data`, avoiding a problematic secondary template evaluation during the destroy phase.
+
+The infrastructure is currently **destroyed**.
+
+**Next Steps:**
+1.  Re-run `terraform apply` to provision the infrastructure.
+2.  Resume troubleshooting the original cloud-init boot issues, focusing on potential NACL restrictions or IAM permission problems identified previously using `run_validation.py`.
 
 ## Custom AMI Building with Packer
 
@@ -493,41 +506,63 @@ my-cloud-cml/
 │   └── config/               # Variable configurations
 │
 └── logs/                     # Various log directories
+
 ```
 
-## Key Enhancements
+## Validation Script (`run_validation.py`)
 
-### Security Hardening
+The `run_validation.py` script performs various checks to validate the deployed CML instance environment.
 
-This fork implements comprehensive security best practices:
+### Features
 
-- **Infrastructure Security**:
-  - Root volume encryption
-  - IMDSv2 requirement (prevents SSRF attacks)
-  - Restricted security groups
+*   Checks basic instance details (requires instance ID).
+*   Validates Security Group rules (requires instance ID).
+*   Validates Network ACL rules (requires instance ID).
+*   Checks SSM agent connectivity (requires instance ID).
+*   Retrieves system logs (via Boto3 or AWS CLI).
+*   Checks SSH connectivity (requires instance ID and SSH key path).
+*   **New:** Checks status of critical CML systemd services (`virl2-controller`, `virl2-uwm`, `virl2-lowlevel-driver`) via SSM Run Command using the `--check-cml-services` flag.
 
-- **Host-based Security**:
-  - Automatic security updates
-  - UFW firewall with default deny policy
-  - Fail2ban for brute force protection
-  - Secure SSH configuration
-  - System hardening
+### Usage
 
-For details, see [security/hardening](./security/hardening/README.md).
+```bash
+# Basic validation
+python run_validation.py -i <instance-id>
 
-### Improved CML Deployment
+# Validation with CML service check
+python run_validation.py -i <instance-id> --check-cml-services
 
-The CML deployment process has been significantly enhanced:
+# Specify AWS profile and region
+python run_validation.py -i <instance-id> -p <profile-name> -r <region-name>
 
-- **Proper Controller Initialization**
-  - Fixed MongoDB initialization
-  - Improved nginx configuration
-  - Correct service sequencing
-  - Default admin user creation
+# Enable debug logging
+python run_validation.py -i <instance-id> --log-level DEBUG
+```
 
-- **Diagnostics and Monitoring**
-  - Detailed logging
-  - Service status verification
-  - Web interface validation
+## Recent Updates
 
-For details on the build process, see [documentation/PACKER_BUILD.md](./documentation/PACKER_BUILD.md).
+### CML Service Check Feature (April 20, 2025)
+
+Successfully implemented and debugged the `--check-cml-services` flag in `run_validation.py`. This feature allows direct verification of core CML service status via SSM, crucial for post-deployment validation. The implementation involved adding a new method (`check_cml_services_via_ssm`), updating the argument parser, fixing class initialization (`__init__` method addition), and refining error handling for SSM command execution.
+
+This feature was instrumental in diagnosing that the CML instance `i-0cdb562a0ff8c9206` was missing the `virl2-uwm.service`, confirming an incomplete installation originating from an older AMI build.
+
+## Next Steps (Troubleshooting CML Installation)
+
+The validation script confirmed that the currently deployed CML instance (`i-0cdb562a0ff8c9206`) was built from an AMI where CML services were not installed correctly due to an issue in the Packer build script (`packer/install_cml_2.7.0.sh`) that has since been fixed (problematic `setup.sh` execution was commented out).
+
+To resolve this and get a correctly functioning CML instance, the following steps are required:
+
+1.  **Rebuild AMI:**
+    *   Navigate to the `packer` directory: `cd /Users/miked/Documents/Projects/python_project/my-cloud-cml/packer`
+    *   Run the Packer build: `packer build .`
+    *   Monitor the build process for successful completion.
+2.  **Update AMI Variable:**
+    *   After the Packer build succeeds, verify that the new AMI ID has been automatically written to `/Users/miked/Documents/Projects/python_project/my-cloud-cml/network_validated_ami.auto.tfvars`.
+3.  **Redeploy Instance with Terraform:**
+    *   Navigate to the project root directory: `cd /Users/miked/Documents/Projects/python_project/my-cloud-cml`
+    *   Apply the Terraform configuration to destroy the old instance and create a new one with the updated AMI: `terraform apply -auto-approve`
+4.  **Final Validation:**
+    *   Identify the new instance ID from the Terraform output.
+    *   Run the validation script against the new instance, including the service check: `python run_validation.py -i <new-instance-id> --check-cml-services`
+    *   Confirm that the output shows all CML services as `active (running)`. 

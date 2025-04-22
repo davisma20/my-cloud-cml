@@ -14,26 +14,27 @@ variable "region" {
 }
 
 variable "instance_type" {
-  type    = string
-  default = "c5.2xlarge"
+  type        = string
+  default     = "c5.2xlarge"
+  description = "EC2 instance type for the Packer build instance."
+}
+
+variable "source_ami" {
+  type        = string
+  default     = "ami-014d2a8190b1bdeb4" // Ubuntu 20.04 LTS (Focal) for us-east-2 (fetched via SSM)
+  description = "Base AMI ID for the build."
+}
+
+variable "volume_size" {
+  type        = number
+  default     = 100
+  description = "Size of the root EBS volume in GB."
 }
 
 variable "source_ami_filter" {
   type    = bool
-  default = true
+  default = false
   description = "Whether to use AMI filter or specific AMI ID"
-}
-
-variable "source_ami" {
-  type    = string
-  default = ""
-  description = "Specific source AMI ID (when source_ami_filter is false)"
-}
-
-variable "volume_size" {
-  type    = number
-  default = 50
-  description = "Root volume size in GB"
 }
 
 variable "cml_bucket" {
@@ -71,35 +72,18 @@ source "amazon-ebs" "cml" {
   ami_name        = "cml-2.7.0-ami-${local.timestamp}"
   instance_type   = var.instance_type
   region          = var.region
-  
-  // Use Ubuntu 20.04 AMI as the source - choose between filter or specific ID
-  dynamic "source_ami_filter" {
-    for_each = var.source_ami_filter ? [1] : []
-    content {
-      filters = {
-        name                = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"
-        root-device-type    = "ebs"
-        virtualization-type = "hvm"
-      }
-      most_recent = true
-      owners      = ["099720109477"] // Canonical
-    }
-  }
-  
-  source_ami      = var.source_ami_filter ? null : var.source_ami
-  
-  // Standard SSH access is reliable with Ubuntu AMIs
+  source_ami      = var.source_ami
   communicator    = "ssh"
   ssh_username    = "ubuntu"
   
-  // Use IMDSv2 for enhanced security
+  // Use IMDSv2 for enhanced security, but allow IMDSv1 fallback for SSM compatibility
   metadata_options {
     http_endpoint               = "enabled"
-    http_tokens                 = "required"
+    http_tokens                 = "optional"  // Changed from "required" to "optional" for SSM compatibility
     http_put_response_hop_limit = 2
   }
   
-  // Use a temporary IAM instance profile with S3 access
+  // Use a temporary IAM instance profile with S3 and SSM access
   temporary_iam_instance_profile_policy_document {
     Version = "2012-10-17"
     Statement {
@@ -111,6 +95,23 @@ source "amazon-ebs" "cml" {
          Action = ["s3:ListBucket"]
          Effect = "Allow"
          Resource = ["arn:aws:s3:::${var.cml_bucket}"]
+    }
+    Statement { // Add SSM Core Permissions
+         Action = [
+              "ssm:UpdateInstanceInformation",
+              "ssmmessages:CreateControlChannel",
+              "ssmmessages:CreateDataChannel",
+              "ssmmessages:OpenControlChannel",
+              "ssmmessages:OpenDataChannel",
+              "ec2messages:AcknowledgeMessage",
+              "ec2messages:DeleteMessage",
+              "ec2messages:FailMessage",
+              "ec2messages:GetEndpoint",
+              "ec2messages:GetMessages",
+              "ec2messages:SendReply"
+          ]
+         Effect   = "Allow"
+         Resource = ["*"] // These actions typically require '*' resource
     }
   }
   
@@ -180,6 +181,7 @@ build {
   // Dump logs and user info post-bootstrap for debugging
   provisioner "shell" {
     inline = [
+      "echo '==== DEBUG: Running log dump provisioner ===='",
       "echo 'Dumping logs and user info post-bootstrap...'",
       "echo '--- CML Install Log: ---'",
       "sudo cat /var/log/cml_install.log || echo 'INFO: /var/log/cml_install.log not found.'",
@@ -195,6 +197,7 @@ build {
   // Explicitly create admin user as bootstrap script seems to miss it
   provisioner "shell" {
     inline = [
+      "echo '==== DEBUG: Running explicit user create provisioner ===='",
       "echo 'Explicitly creating admin user...'",
       "sudo useradd -m -s /bin/bash -g admin admin || echo 'WARN: useradd -g admin admin command failed, maybe user already exists or group is wrong?'"
     ]
@@ -205,6 +208,7 @@ build {
   provisioner "shell" {
     environment_vars = ["CML_PASS=${var.cml_admin_password}"]
     inline = [ <<EOF
+      echo '==== DEBUG: Running password set provisioner ===='
       echo 'Conditionally setting password for admin or cml2 user...'
       TARGET_USER=""
       if id -u admin &>/dev/null; then
@@ -229,25 +233,16 @@ build {
     ]
   }
 
-  // Restart CML services to ensure they pick up the new password
-  provisioner "shell" {
-    inline = [
-      "echo 'Restarting CML services after password change...'",
-      "sudo systemctl restart virl2-controller virl2-uwm || echo 'Warning: Failed to restart CML services cleanly.'",
-      "echo 'Waiting 30 seconds after service restart attempt...'",
-      "sleep 30" # Give services a moment to come back up
-    ]
-  }
-
   // Install and configure MongoDB
   provisioner "shell" {
     inline = [
+      "echo '==== DEBUG: Running MongoDB install provisioner ===='",
       "echo 'Installing and configuring MongoDB...'",
       "sudo apt-get update && sudo apt-get install -y mongodb-server net-tools || true",
       "sudo systemctl enable mongodb.service || true",
       "sudo systemctl start mongodb.service || true",
       "echo 'Waiting for MongoDB to initialize...'",
-      "sleep 20", 
+      "sleep 20",
       "ps aux | grep mongo",
       "sudo netstat -tulpn | grep 27017 || true",
       "sudo systemctl status mongodb.service || true"
@@ -261,6 +256,7 @@ build {
       "CML_BUCKET=${var.cml_bucket}"
     ]
     inline = [
+      "echo '==== DEBUG: Running S3 download provisioner ===='",
       "echo 'Creating temporary directory for CML deb files...'",
       "mkdir -p /tmp/cml-debs",
       "echo 'Downloading CML 2.7.0 deb files from S3 recursively...'",
@@ -272,92 +268,22 @@ build {
 
   // Upload and run the actual CML installation script
   provisioner "file" {
-    source      = "scripts/install_cml_2.7.0.sh"
+    source      = "install_cml_2.7.0.sh"
     destination = "/tmp/install_cml_2.7.0.sh"
   }
 
   provisioner "shell" {
     inline = [
+      "echo '==== DEBUG: Running CML install script execution provisioner ===='",
       "chmod +x /tmp/install_cml_2.7.0.sh",
       "sudo bash /tmp/install_cml_2.7.0.sh"
-    ]
-  }
-
-  // Attempt to install CML
-  provisioner "shell" {
-    inline = [
-      "echo 'Attempting CML installation...'",
-      
-      "# Check if we have any installation scripts",
-      "echo 'Looking for installation scripts in multiple locations...'",
-      "find /opt/cml-installer -type f -name \"*.sh\" || true",
-      "find /tmp -name \"*.sh\" | grep -i cml || true",
-      "find /tmp -name \"*.sh\" | grep -i virl || true",
-      
-      "# Check if we can find the installer in various places",
-      "echo 'Searching for CML setup scripts...'",
-      "find /opt/cml-installer -type f -name \"setup*\" || true",
-      "find /opt/cml-installer -type f -name \"install*\" || true",
-      
-      "# Look for distribution packages",
-      "echo 'Checking for .deb packages...'",
-      "find /opt/cml-installer -name \"*.deb\" | sudo xargs -I{} dpkg -i {} 2>/dev/null || true",
-      
-      "# Try direct approach - look for common installation patterns in Cisco software",
-      "echo 'Trying Cisco-style installation approach...'",
-      "if [ -f /opt/cml-installer/cml-2.7.0.pkg ]; then",
-      "  cd /opt/cml-installer",
-      "  sudo bash -c 'DEBIAN_FRONTEND=noninteractive ./cml-2.7.0.pkg --unattendedmodeui none' || true",
-      "fi",
-      
-      "# Look for specific Cisco CML installer patterns",
-      "echo 'Checking for Cisco CML 2.x installation patterns...'",
-      "sudo find / -path \"/tmp\" -prune -o -name \"cml2_*\" -type f -print 2>/dev/null || true",
-      "sudo find / -path \"/tmp\" -prune -o -name \"virl2_*\" -type f -print 2>/dev/null || true",
-      
-      "# Check if the software was installed as a service",
-      "echo 'Checking for CML services...'",
-      "sudo systemctl list-units --all | grep -i cml || true",
-      "sudo systemctl list-units --all | grep -i virl || true",
-      
-      "# Try to install any utilities we might need",
-      "echo 'Installing potential dependencies...'",
-      "sudo apt-get update && sudo apt-get install -y python3-pip || true",
-      
-      "# Check common Cisco CML 2.x installation locations",
-      "echo 'Checking common CML 2.x locations...'",
-      "ls -la /etc/virl2/ 2>/dev/null || true",
-      "ls -la /usr/local/bin/refplat 2>/dev/null || true",
-      "ls -la /usr/local/bin/virl 2>/dev/null || true",
-      
-      "# Create marker to indicate we've attempted installation",
-      "echo 'Creating CML installation marker...'",
-      "sudo touch /usr/local/etc/cml_installed.marker"
-    ]
-  }
-  
-  // Install KVM and related packages
-  provisioner "shell" {
-    inline = [
-      "echo 'Installing KVM and related virtualization packages...'",
-      "sudo apt-get update",
-      "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager cpu-checker",
-      "sudo systemctl enable --now libvirtd",
-      "sudo systemctl start libvirtd",
-      "sudo usermod -aG libvirt ubuntu",
-      "sudo usermod -aG kvm ubuntu",
-      "echo 'Checking KVM installation...'",
-      "kvm-ok || echo 'KVM acceleration may not be available or enabled in BIOS/UEFI'",
-      "sudo systemctl status libvirtd || true",
-      
-      "echo 'Dumping recent system logs after CML install attempt...'",
-      "sudo journalctl --no-pager -n 500 || true" # Dump last 500 lines of journal
     ]
   }
 
   // Create marker file after base installation steps
   provisioner "shell" {
     inline = [
+      "echo '==== DEBUG: Running marker file provisioner ===='",
       "echo 'Creating marker file after base installation steps...'",
       "sudo touch /usr/local/etc/cml_base_installed.marker"
     ]
@@ -370,6 +296,7 @@ build {
     ]
     inline = [
       "#!/bin/bash",
+      "echo '==== DEBUG: Running final diagnostic provisioner ===='",
       "set -e",
       "echo '+++ DIAGNOSTICS Start: Pre-Python Web Check Service Status +++'",
       "# Initialize diagnostic variables",
@@ -401,71 +328,31 @@ build {
       "echo 'Checking if CML controller database is initialized...'",
       "sudo ls -la /var/lib/virl2/mongo 2>/dev/null || echo 'MongoDB data directory not found'",
       
-      "echo 'Initializing CML controller and creating admin user...'",
-      "if command -v virl2_controller; then",
-      "  echo 'Setting up CML controller...'",
-      "  # Stop services if running",
-      "  sudo systemctl stop virl2-controller.service || true",
-      "  sudo systemctl stop virl2-ui.service || true",
-      "  sudo systemctl stop nginx.service || true",
-      "  sleep 5",
-      
-      "  # Clean any old mongo data that might cause issues",
-      "  sudo systemctl stop mongodb.service || true",
-      "  sudo rm -rf /var/lib/virl2/mongo/* || true",
-      "  sudo systemctl start mongodb.service || true",
-      "  sleep 10",
-      
-      "  # Initialize controller with admin user",
-      "  echo 'Running virl2_controller init...'",
-      "  sudo virl2_controller init || true",
-      "  echo 'Init completed, checking status...'",
-      "  sudo virl2_controller status || true",
-      
-      "  # Create admin user if it doesn't exist",
-      "  echo 'Creating admin user...'",
-      "  sudo virl2_controller users add admin -p admin --full-name 'System Administrator' --email admin@example.com || true",
-      "  sudo virl2_controller users grant admin admin || true",
-      "  sudo virl2_controller users list || true",
-      
-      "  # Configure nginx properly for CML UI",
-      "  echo 'Configuring nginx...'",
-      "  if [ -f /etc/nginx/sites-enabled/default ]; then",
-      "    sudo rm -f /etc/nginx/sites-enabled/default || true",
-      "  fi",
-      
-      "  # Enable controller service and start it",
-      "  echo 'Starting CML services...'",
-      "  sudo systemctl enable virl2-controller.service || true",
-      "  sudo systemctl start virl2-controller.service || true",
-      "  sleep 20",
-      "  sudo systemctl status virl2-controller.service || true",
-      
-      "  # Start UI service",
-      "  sudo systemctl enable virl2-ui.service || true", 
-      "  sudo systemctl start virl2-ui.service || true",
-      "  sleep 10",
-      "  sudo systemctl status virl2-ui.service || true",
-      
-      "  # Restart nginx with proper configuration",
-      "  sudo systemctl enable nginx.service || true",
-      "  sudo systemctl restart nginx.service || true",
-      "  sleep 5",
-      "  sudo systemctl status nginx.service || true",
-      
-      "echo 'Checking services after initialization...'",
-      "sudo systemctl status virl2-controller.service || true",
-      "sudo systemctl status virl2-ui.service || true", 
-      "sudo systemctl status nginx.service || true",
-      
-      "echo 'Checking controller logs...'",
-      "sudo find /var/log/virl2 -type f -name '*.log' -ls || true",
-      "sudo tail -n 50 /var/log/virl2/controller.log || true",
-      "echo 'Waiting for services to fully initialize...'",
-      "sleep 30",
-      
-      "echo 'Verifying ports are open...'",
-      "sudo ss -tuln | grep -E ':(80|443)' || true",
+      "# echo 'Initializing CML controller and creating admin user...'",
+      "# if command -v virl2_controller; then",
+      "#   echo 'Setting up CML controller...'",
+      "#   # Stop services if running",
+      "#   sudo systemctl stop virl2-controller.service || true",
+      "#   sudo systemctl stop virl2-ui.service || true",
+      "#   sudo systemctl stop nginx.service || true",
+      "#   sleep 5",
+      "#",
+      "#   # Clean any old mongo data that might cause issues",
+      "#   sudo systemctl stop mongodb.service || true",
+      "#   sudo rm -rf /var/lib/virl2/mongo/* || true",
+      "#   sudo systemctl start mongodb.service || true",
+      "#   sleep 10",
+      "#",
+      "#   # Initialize controller with admin user",
+      "#   echo 'Running virl2_controller init...'",
+      "#   sudo virl2_controller init || true",
+      "#   echo 'Init completed, checking status...'",
+      "#   sudo virl2_controller status || true",
+      "#",
+      "#   # Create admin user if it doesn't exist",
+      "#   echo 'Creating admin user...'",
+      "#   sudo virl2_controller users add admin -p admin --full-name 'System Administrator' --email admin@example.com || true",
+      "# fi",
       
       "echo 'Installing Python requests library for test script...'",
       "pip3 install requests || true",
@@ -481,7 +368,6 @@ build {
       "echo 'Verifying ports are listening...'",
       "sudo lsof -i :443 || echo 'Nothing listening on port 443'",
       "sudo lsof -i :80 || echo 'Nothing listening on port 80'",
-      "fi"
     ]
   }
   
@@ -496,6 +382,85 @@ build {
     ]
   }
   
+  // Create temporary directory for validator scripts before copying
+  provisioner "shell" {
+    inline = [
+      "echo 'Creating temporary directory for validator scripts...'",
+      "mkdir -p /tmp/validators"
+    ]
+  }
+  
+  // Copy internal validator scripts and directory to a temporary location
+  provisioner "file" {
+    source      = "../validators/"
+    destination = "/tmp/validators"
+  }
+  provisioner "file" {
+    source      = "../run_validation.py"
+    destination = "/tmp/run_validation.py"
+  }
+
+  // Move validator scripts/directory to final location and make executable
+  provisioner "shell" {
+    inline = [
+      "echo 'Moving internal validator scripts/directory to /usr/local/bin and making executable...'",
+      "sudo mv /tmp/validators /usr/local/bin/",
+      "sudo mv /tmp/run_validation.py /usr/local/bin/",
+      "sudo chmod +x /usr/local/bin/run_validation.py"
+    ]
+  }
+
+  // Ensure Cloud-Init Final waits for NetworkManager
+  provisioner "shell" {
+    inline = [
+      "echo '[INFO] Modifying cloud-final.service to wait for NetworkManager...'",
+      "sudo mkdir -p /etc/systemd/system/cloud-final.service.d",
+      "echo -e '[Unit]\nAfter=NetworkManager-wait-online.service\nRequires=NetworkManager-wait-online.service' | sudo tee /etc/systemd/system/cloud-final.service.d/wait-for-network.conf > /dev/null",
+      "sudo systemctl daemon-reload"
+    ]
+  }
+
+  // Explicitly install and enable SSM Agent before cleanup
+  provisioner "shell" {
+    inline = [
+      "echo 'Ensuring amazon-ssm-agent is installed and running...'",
+      "sudo apt-get update",
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y amazon-ssm-agent",
+      "sudo systemctl enable --now amazon-ssm-agent",
+      "sleep 5 # Give service a moment to start",
+      "sudo systemctl status amazon-ssm-agent || echo 'Warning: SSM Agent status check failed immediately after start.'",
+      "echo 'SSM Agent installation/activation attempted.'"
+    ]
+  }
+
+  // === BEGIN: Cloud-init and SSH Diagnostics Provisioner ===
+  provisioner "shell" {
+    inline = [
+      "echo '==== DEBUG: Dumping cloud-init and SSH diagnostics ===='",
+      "which cloud-init || (echo 'cloud-init not installed!' && exit 1)",
+      "sudo systemctl status cloud-init || (echo 'cloud-init service not running!' && exit 1)",
+      "sudo systemctl status ssh || (echo 'ssh service not running!' && exit 1)",
+      "sudo cat /etc/passwd",
+      "sudo ls -l /home/ubuntu/.ssh/ || echo '/home/ubuntu/.ssh/ missing'",
+      "sudo cat /home/ubuntu/.ssh/authorized_keys || echo 'No authorized_keys found'",
+      "sudo cat /var/log/cloud-init.log | tail -n 50",
+      "sudo cat /var/log/cloud-init-output.log | tail -n 50"
+    ]
+  }
+  // === END: Cloud-init and SSH Diagnostics Provisioner ===
+
+  // === BEGIN: Network Diagnostics Provisioner ===
+  provisioner "shell" {
+    inline = [
+      "echo '==== DEBUG: Network diagnostics before AMI creation ===='",
+      "ip addr show",
+      "ip route",
+      "ping -c 3 8.8.8.8 || echo 'Ping to 8.8.8.8 failed'",
+      "curl -s http://169.254.169.254/latest/meta-data/ || echo 'Metadata service unavailable'"
+    ]
+  }
+  // === END: Network Diagnostics Provisioner ===
+
   // Clean up
   provisioner "shell" {
     inline = [
@@ -508,5 +473,11 @@ build {
       
       "echo 'CML 2.7.0 AMI preparation complete!'"
     ]
+  }
+
+  // Post-processor to record the AMI ID
+  post-processor "manifest" {
+    output     = "packer-manifest.json"
+    strip_path = true // Optional: Remove paths from artifact file list
   }
 }

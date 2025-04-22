@@ -55,25 +55,32 @@ data "aws_security_group" "selected_security_group" {
   id = var.options.cfg.aws.sg_id
 }
 
-resource "aws_network_interface" "pub_int_cml" {
-  subnet_id       = data.aws_subnet.selected_subnet.id
-  security_groups = [data.aws_security_group.selected_security_group.id]
+resource "aws_iam_role" "cml_ssm_role" {
+  name = "cml-ssm-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+      Action = "sts:AssumeRole"
+    }]
+  })
 }
 
-# If no EIP is needed/wanted, then 
-# - change public_ip to private_ip in output.tf
-# - delete the resource block if no EIP is wanted/needed
-# In this case, the machine that runs Terraform / the provisioning must be able
-# to reach the private IP address and the security group must permit HTTPS to
-# the controller.
-resource "aws_eip" "server_eip" {
-  network_interface = aws_network_interface.pub_int_cml.id
+resource "aws_iam_role_policy_attachment" "cml_ssm_core" {
+  role       = aws_iam_role.cml_ssm_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "cml_ssm_profile" {
+  name = "cml-ssm-profile"
+  role = aws_iam_role.cml_ssm_role.name
 }
 
 resource "aws_instance" "cml_controller" {
   instance_type        = var.options.cfg.aws.flavor
   ami                  = data.aws_ami.ubuntu.id
-  iam_instance_profile = var.options.cfg.aws.profile
+  iam_instance_profile = aws_iam_instance_profile.cml_ssm_profile.name
   key_name             = var.options.cfg.common.key_name
   tags                 = { Name = "CML-controller-${var.options.rand_id}" }
   ebs_optimized        = "true"
@@ -82,10 +89,9 @@ resource "aws_instance" "cml_controller" {
     volume_type = "gp3"
     encrypted   = var.options.cfg.aws.enable_ebs_encryption
   }
-  network_interface {
-    network_interface_id = aws_network_interface.pub_int_cml.id
-    device_index         = 0
-  }
+  subnet_id                  = data.aws_subnet.selected_subnet.id
+  vpc_security_group_ids     = [data.aws_security_group.selected_security_group.id]
+  associate_public_ip_address = true
   user_data = data.cloudinit_config.cml_controller.rendered
 }
 
@@ -115,4 +121,3 @@ data "cloudinit_config" "cml_controller" {
     content      = local.cloud_config
   }
 }
-

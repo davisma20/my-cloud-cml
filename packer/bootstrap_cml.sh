@@ -2,6 +2,7 @@
 # Comprehensive bootstrap script to prepare the CML instance for the AMI
 # This script will be embedded in the Packer configuration
 
+# Re-enable set -e
 set -e
 set -o pipefail
 
@@ -88,55 +89,75 @@ apt-get update || {
 
 # Update system packages
 export DEBIAN_FRONTEND=noninteractive
-echo "Updating and upgrading system packages..."
-apt-get upgrade -y
+echo "Updating system packages..."
+# apt-get upgrade -y
+apt-get update
 
 # --- Start amazon-ssm-agent management ---
-# Ensure amazon-ssm-agent is installed via Snap and enabled
-echo "Ensuring amazon-ssm-agent is installed via Snap and enabled..."
+# Ensure amazon-ssm-agent is installed via the recommended .deb package
+echo "Ensuring amazon-ssm-agent is installed via .deb package..."
 
-# Attempt to remove existing deb package just in case (ignore errors if not found)
-echo "Attempting to remove any existing amazon-ssm-agent deb package..."
-apt-get remove -y amazon-ssm-agent || echo "No deb package found or removal failed (ignored)."
-
-# Install using snap (AWS recommended for Ubuntu 20.04+)
-echo "Installing amazon-ssm-agent via snap..."
-snap install amazon-ssm-agent --classic
-if [ $? -ne 0 ]; then
-    echo "ERROR: snap install amazon-ssm-agent failed!"
-    # Check for snapd issues
-    systemctl status snapd
-    exit 1
+# Check if snap version is installed and remove it if present
+if snap list | grep -q amazon-ssm-agent; then
+    echo "Detected snap version of amazon-ssm-agent. Removing..."
+    snap remove amazon-ssm-agent || echo "Warning: Failed to remove snap amazon-ssm-agent. Continuing..."
 fi
 
-# Verify installation
-echo "Verifying snap installation..."
-snap list amazon-ssm-agent
-if [ $? -ne 0 ]; then
-    echo "ERROR: 'snap list amazon-ssm-agent' failed after installation!"
-    exit 1
+# Ensure curl is installed (needed for region detection)
+if ! command_exists curl; then
+    echo "curl not found, installing..."
+    apt-get update
+    apt-get install -y curl || error_exit "Failed to install curl, cannot proceed with SSM Agent installation."
 fi
 
-# Ensure the service is started
-echo "Ensuring amazon-ssm-agent snap service is started..."
-snap start amazon-ssm-agent
-if [ $? -ne 0 ]; then
-    echo "WARNING: 'snap start amazon-ssm-agent' failed. Trying systemctl workaround..."
-    systemctl start snap.amazon-ssm-agent.amazon-ssm-agent.service
-    if [ $? -ne 0 ]; then
-        echo "ERROR: systemctl start workaround also failed!"
-        # Don't exit, but log the error
+# Determine region (requires IMDSv1 or IMDSv2 token setup if IMDSv1 disabled)
+REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
+if [ -z "$REGION" ]; then
+    # Attempt with IMDSv2 token
+    TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
+    if [ -n "$TOKEN" ]; then
+        REGION=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/region)
     fi
 fi
 
-# Check status
-echo "Checking amazon-ssm-agent snap service status..."
-snap services amazon-ssm-agent || systemctl status snap.amazon-ssm-agent.amazon-ssm-agent.service --no-pager
+if [ -z "$REGION" ]; then
+    error_exit "Could not determine AWS region from metadata service."
+fi
+echo "Detected region: $REGION"
 
-echo "amazon-ssm-agent setup via snap complete."
+# Download and install the agent
+SSM_DEB_URL="https://s3.${REGION}.amazonaws.com/amazon-ssm-${REGION}/latest/debian_amd64/amazon-ssm-agent.deb"
+SSM_DEB_PATH="/tmp/amazon-ssm-agent.deb"
+
+echo "Downloading SSM Agent from $SSM_DEB_URL..."
+curl -s -o "$SSM_DEB_PATH" "$SSM_DEB_URL"
+if [ $? -ne 0 ] || [ ! -s "$SSM_DEB_PATH" ]; then
+    error_exit "Failed to download amazon-ssm-agent.deb from $SSM_DEB_URL"
+fi
+
+dpkg -i "$SSM_DEB_PATH"
+dpkg_exit_code=$? # Capture exit code immediately
+
+if [ $dpkg_exit_code -ne 0 ]; then
+    echo "dpkg install failed (Exit Code: $dpkg_exit_code), attempting apt install to fix dependencies..."
+    apt --fix-broken install -y
+fi
+rm -f "$SSM_DEB_PATH" # Clean up downloaded file
+
+# Ensure service is enabled and started
+echo "Ensuring amazon-ssm-agent service is enabled and started..."
+systemctl enable amazon-ssm-agent || echo "Warning: Failed to enable amazon-ssm-agent service."
+systemctl start amazon-ssm-agent || echo "Warning: Failed to start amazon-ssm-agent service."
+
+# Check status
+echo "Checking amazon-ssm-agent service status..."
+systemctl status amazon-ssm-agent --no-pager || echo "Warning: Failed to get amazon-ssm-agent status."
+echo "Checking if amazon-ssm-agent service is enabled:"
+systemctl is-enabled amazon-ssm-agent || echo "Warning: Failed to check if amazon-ssm-agent is enabled."
+
+echo "amazon-ssm-agent setup via .deb package complete."
 # --- End amazon-ssm-agent management ---
 
-# Install essential dependencies for CML one by one for better error handling
 echo "Installing essential CML dependencies..."
 echo "Updating package lists before critical installs..."
 sudo apt-get update
@@ -514,7 +535,7 @@ mkdir -p /var/log/virl2/
 
 # Ensure cloud-init will not overwrite our network settings on reboot
 echo "Configuring cloud-init..."
-echo 'network: {config: disabled}' > /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+# echo 'network: {config: disabled}' > /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
 
 # Ensure the system is using Grub with BIOS boot
 echo "Configuring boot settings..."
@@ -605,3 +626,5 @@ check_cml_web_interface() {
     log "CML web interface check completed (placeholder)."
 
 } # Added missing closing brace for the function
+
+exit 0

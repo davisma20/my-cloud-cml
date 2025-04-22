@@ -16,7 +16,7 @@ aws:
   flavor_compute: c5.2xlarge
   profile: AmazonSSMRoleForInstancesQuickSetup
   # Custom AMI ID from the CML OVA conversion
-  cml_ami: "ami-0cc91b64d20901f10"  # CML AMI built with Packer
+  # cml_ami: "ami-0289fcac376c29149"  # CML AMI built with Packer (Updated 2025-04-13)
   workstation:
     enable: true   # Deploy the DevNet workstation alongside CML
     instance_type: t3.large

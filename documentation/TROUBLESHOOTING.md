@@ -180,6 +180,13 @@ If you're having trouble accessing your instance via AWS SSM:
    sudo systemctl start amazon-ssm-agent
    ```
 
+### Instance Impaired / SSM Agent Not Running (`InvalidInstanceId`)
+
+*   **Symptom:** EC2 instance shows Status Check `1/2 checks passed` (Instance reachability fails) or `2/2` but SSM Agent is unreachable (e.g., Session Manager fails with `InvalidInstanceId`). System logs (`/var/log/cloud-init-output.log`) might show `snap.amazon-ssm-agent.amazon-ssm-agent.service` being stopped/started repeatedly by cloud-init, sometimes followed by `Too few arguments` errors.
+*   **Cause (Historical):** Conflict between the standard cloud-init process and the `amazon-ssm-agent` installed via `snap` within the Packer AMI (`ami-0a8303fee58aa8f54` and potentially others).
+*   **Resolution:** The Packer build process (`packer/bootstrap_cml.sh`) was updated (as of AMI `ami-02563b1a5ebda27c9` and later, including golden AMI `ami-032d7958a238a2977`) to install the `amazon-ssm-agent` using the official `.deb` package method. This resolves the conflict with cloud-init.
+*   **Verification:** Ensure you are using AMI `ami-032d7958a238a2977` or later. Check `/var/log/amazon/ssm/agent.log` on the instance for errors.
+
 ## CML Authentication Issues
 
 ### Issue: Unknown CML Default or Initial Password
@@ -249,6 +256,20 @@ CML has two separate authentication systems:
    - Default username: `admin` (password as per configuration)
    - Accessed via: `https://<cml-ip>`
 
+## Terraform Deployment Issues
+
+### Issue: Instance Status Checks Failing / Cloud-init Failures
+
+*   **Symptom:** `terraform apply` runs for 10+ minutes trying to create the `cml_controller` instance and eventually fails with a timeout waiting for instance status checks.
+*   **Diagnosis:** The EC2 instance failed to become healthy after launch. Check the instance's **System Log** in the AWS Console (EC2 -> Instances -> Select Instance -> Actions -> Monitor and troubleshoot -> Get system log) or using the AWS CLI: `aws ec2 get-console-output --instance-id i-xxxxxxxxxxxxxxxxx --output text --region your-region`. Look for errors near the end of the log, particularly from `cloud-init`.
+*   **Potential Cause (2025-04-15):** Cloud-init fails during the `package_update_upgrade_install` stage. This might happen if the instance cannot reach package repositories due to network misconfiguration during early boot. A custom Netplan configuration (`packer/50-cml-netplan.yaml`) was suspected of causing this interference.
+*   **Resolution Attempt (2025-04-15):** The custom Netplan configuration was removed from the Packer build process (`packer/cml-2.7.0.pkr.hcl`) to revert to default cloud-init network handling. Rebuilding the AMI is required.
+
+### Issue: Error related to Security Group Rules
+
+*   **Symptom:** Terraform fails with errors about conflicting security group rules or inability to create rules.
+*   **Resolution:** Check the security group configuration in your Terraform files and ensure there are no conflicts with existing rules.
+
 ## Packer Build Issues
 
 ### Issue: `admin` User Not Created During CML 2.7.0 Build
@@ -286,11 +307,100 @@ CML has two separate authentication systems:
     *   With this fix, any failure during the core CML package installation should now cause the Packer build itself to fail immediately, preventing the creation of unusable AMIs.
     *   **Action:** Re-run the Packer build (`bash packer/build_cml_2.7.0.sh`). If the build now fails, the error message from `apt-get`/`dpkg` will indicate the root cause of the installation problem. If it succeeds, the resulting AMI should be functional (pending verification).
 
-### CML Admin User Creation Fails
+### Packer Build Fails with 'Unit not found' for CML Services
 
-*   **Symptom:** The `admin` user for CML is not created during the Packer build, or login fails after deployment.
+*   **Symptom:** During a `packer build`, the log shows errors like `Failed to restart virl2-controller.service: Unit virl2-controller.service not found.`
+*   **Cause (Historical):** The Packer configuration (`packer/cml-2.7.0.pkr.hcl`) incorrectly attempted to restart CML services *before* the `packer/install_cml_2.7.0.sh` script had actually installed them.
+*   **Resolution:** The build sequence was corrected (as of AMI `ami-032d7958a238a2977`). The restart commands were removed from `cml-2.7.0.pkr.hcl` and added to the end of `install_cml_2.7.0.sh` to ensure they run post-installation.
+*   **Verification:** Examine the `packer/cml-2.7.0.pkr.hcl` and `packer/install_cml_2.7.0.sh` files to confirm the fix. Ensure you are using the latest code before running a build.
+
+### CML Web Interface Unresponsive
+
+*   **Symptom:** The CML web interface is unresponsive or shows errors.
 *   **Resolution:**
-    *   Verify that Terraform `user_data` is minimal and not conflicting with configurations baked into the AMI (e.g., avoid running `apt upgrade` or installing conflicting packages in user_data if the AMI is already configured).
+    1. **Check CML service status:**
+       ```bash
+       systemctl status cml
+       ```
+    2. **Verify database integrity:**
+       ```bash
+       sudo sqlite3 /var/local/virl2/config/controller.db "PRAGMA integrity_check;"
+       ```
+    3. **Check for disk space issues:**
+       ```bash
+       df -h
+       ```
+    4. **Restart CML services:**
+       ```bash
+       sudo systemctl restart cml
+       ```
+
+## Forensic Analysis of Failed CML Instance (EBS Log Extraction)
+
+**Scenario:**
+If a CML instance fails to boot, SSM agent fails to register, or logs retrieved via AWS CLI are incomplete/corrupted, you can perform forensic analysis by mounting the instance's root EBS volume on a healthy helper instance (e.g., DevNet Workstation) and using the Pythonic validation tools.
+
+### Step-by-Step Workflow
+
+1. **Stop the failed CML instance.**
+2. **Detach its root EBS volume:**
+   ```sh
+   aws ec2 detach-volume --volume-id <volume-id> --region <region>
+   ```
+3. **Attach the volume to a helper (DevNet Workstation) instance:**
+   ```sh
+   aws ec2 attach-volume --volume-id <volume-id> --instance-id <helper-instance-id> --device /dev/xvdf --region <region>
+   ```
+4. **SSM into the helper instance and mount the volume:**
+   ```sh
+   sudo mkdir -p /mnt/cml-root
+   sudo mount /dev/xvdf1 /mnt/cml-root   # or /dev/xvdf if no partition table
+   ```
+5. **Run the forensic validator:**
+   ```sh
+   python3 run_validation.py --forensic-mount /mnt/cml-root
+   ```
+   - This will scan key logs (cloud-init, ssm-agent, syslog, messages) for errors/warnings and output a summary.
+   - Results are saved to a JSON file for further review.
+
+### Example Output
+```
+=== Forensic EBS Log Analysis Summary ===
+
+--- var/log/cloud-init.log ---
+Line 123: [ERROR] Could not fetch package metadata...
+...
+--- var/log/amazon/ssm/amazon-ssm-agent.log ---
+Line 42: [ERROR] Registration failed: InvalidInstanceId
+...
+```
+
+### Notes
+- This workflow leverages the `ForensicEbsValidator` in `validators/forensic_validator.py` and the `--forensic-mount` option in `run_validation.py`.
+- You can add or customize log paths in the validator as needed for future AMI or OS changes.
+- Always detach the EBS volume before reattaching to the original or another instance to avoid data loss.
+
+## Forensic Analysis: SSM Agent and IMDS Troubleshooting (2025-04-18)
+
+### Scenario
+Automated SSM forensic analysis of a mounted EBS volume (e.g., /dev/nvme1n1p1) revealed the following:
+
+- Mount operation succeeded; log directory contained expected files (cloud-init.log, cloud-init-output.log, amazon-ssm-agent.log, syslog, etc).
+- Log scan:
+    - cloud-init.log & cloud-init-output.log: No errors or warnings in last 100 lines; modules ran with 0 failures.
+    - amazon-ssm-agent.log: Multiple critical errors. SSM agent repeatedly failed to get instance info from IMDS, failed to assume identity, and could not register. Root cause: EC2MetadataError (failed to get IMDSv2 token, fallback to IMDSv1 disabled).
+    - syslog: Repeated SSM agent errors, failed to fetch seelog config, IMDS/identity failures.
+    - messages: Not present (expected on Ubuntu).
+
+### Diagnosis
+- SSM agent unable to communicate with EC2 Instance Metadata Service (IMDS).
+- Likely causes: network misconfiguration (NACLs, SGs, or VPC endpoints), IMDSv2 enforcement, or missing IAM role.
+
+### Remediation Steps
+1. Check NACLs and Security Groups for outbound HTTP to 169.254.169.254.
+2. Confirm IMDS settings (IMDSv2 enabled and accessible, or fallback to IMDSv1 allowed).
+3. Verify the instance IAM role includes SSM permissions.
+4. Review VPC endpoints and route tables if relevant.
 
 ## Debugging Tools
 

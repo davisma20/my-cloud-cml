@@ -479,34 +479,211 @@ The repository is organized as follows:
 ```
 my-cloud-cml/
 │
-├── documentation/            # Documentation for deploying and using CML
-│   ├── AWS.md                # AWS-specific documentation
-│   ├── CML_INSTALLATION.md   # CML installation guide
-│   ├── PACKER_BUILD.md       # Enhanced Packer build documentation
-│   └── TROUBLESHOOTING.md    # Troubleshooting guide
-│
-├── packer/                   # Packer templates and scripts
-│   ├── templates/            # Organized Packer templates
-│   │   ├── cml-2.7.0/        # Enhanced CML 2.7.0 template with security features
-│   │   └── cml-network/      # Network validation templates
-│   ├── scripts/              # Build and installation scripts
-│   └── logs/                 # Build logs
-│
-├── security/                 # Security-related documentation and configuration
-│   └── hardening/            # Details on security hardening measures
-│
-├── scripts/                  # Utility scripts
-│   ├── install/              # Installation and configuration scripts
-│   ├── monitoring/           # Monitoring scripts
-│   └── logs/                 # Log management
-│
-├── terraform/                # Terraform configuration
-│   ├── main/                 # Main Terraform files
-│   ├── modules/              # Terraform modules
-│   └── config/               # Variable configurations
-│
-└── logs/                     # Various log directories
+├── .git/ (Git internal directory)
+├── .gitignore
+├── .terraform/ (Terraform internal directory)
+├── .terraform.lock.hcl
+├── CHANGELOG.md
+├── CML-IMG-REL-CCO_RELEASE.pem
+├── CML_DEPLOYMENT.md
+├── DEVNET_WORKSTATION.md
+├── LICENSE
+├── NEXT_STEPS.md
+├── None_validation.log
+├── README.md
+├── TODO.md
+├── aws_cli_system_log.txt
+├── check_ssm_registration.py
+├── cisco_x509_verify_release.py3
+├── cloud-init-test.yaml
+├── cml-access-key.pem
+├── cml-assets/
+├── cml-cloudinit-test_*.json
+├── cml-controller-*.json
+├── cml-network-fix.tfplan
+├── cml2_2.7.0-4_amd64-20-pkg.zip
+├── cml2_2.7.0-4_amd64-20.pkg.README
+├── cml2_2.7.0-4_amd64-20.pkg.signature
+├── cml2_2.8.1-14_amd64-35_SHA256-disk1.vmdk
+├── cml_controller_screenshot.json
+├── cml_controller_system_log.txt
+├── cml_validator_utils/
+│   └── ... (Utility scripts and modules)
+├── compare_validation_results.py
+├── config.yml
+├── config.yml.example
+├── console_screenshot_*.jpg
+├── decode_screenshot.py
+├── devicecheck_forensic.json
+├── devnet_*.json
+├── documentation/
+│   └── ... (Project documentation files)
+├── forensic_*.log
+├── i-*.log (Instance-specific logs/validation results)
+├── i-*.txt (Instance-specific system logs)
+├── i-*.jpg (Instance-specific screenshots)
+├── images/
+│   └── ... (Image files, e.g., diagrams)
+├── import-cml.json
+├── logs/
+├── main.tf
+├── modules/
+│   └── ... (Terraform modules)
+├── monitor_cml_logs.sh
+├── monitor_logs.sh
+├── network_validated_ami.auto.tfvars
+├── output.tf
+├── packer/
+│   └── ... (Packer templates, scripts, and logs)
+├── prepare.bat
+├── prepare.sh
+├── quicktest_forensic_forensic.json
+├── refplat/
+│   └── ... (Reference platform files)
+├── refplat2.8/
+├── refplat_p-*.zip
+├── requirements.txt
+├── run_validation.py
+├── screenshot_*.jpg
+├── scripts/
+│   └── ... (General utility scripts)
+├── security/
+│   └── ... (Security-related files)
+├── serial_log_*.txt
+├── sessionmanager-bundle/
+├── sessionmanager-bundle.zip
+├── ssh_jump_connect.py
+├── terraform/
+├── terraform-key.pem
+├── terraform.auto.tfvars
+├── terraform.options-cfg.example.tfvars
+├── terraform.tf
+├── terraform.tfstate
+├── terraform.tfstate.backup
+├── terraform.tfvars
+├── tf_apply_with_logs.sh
+├── tfplan
+├── ubuntu-cloudinit-test_*.json
+├── upload-images-to-aws.sh
+├── validation_results_*.json
+├── validator.log
+├── validators/
+│   └── ... (Validation scripts and helpers)
+└── variables.tf
+```
 
+## Current Status & Debugging Notes (2025-04-21)
+
+Debugging the Packer build process for the CML 2.7.0 AMI revealed an issue with the CML package installation.
+
+**Findings:**
+*   Log analysis (`/var/log/cml_deb_install_detail.log` on the build instance) confirmed that the `apt-get install ./cml2*.deb` command completes.
+*   However, the `virl2-uwm.service` (CML Web Interface) systemd service file is missing after the installation.
+*   Other `virl2-*` services appear to be linked correctly in systemd.
+*   The CML `.deb` files are sourced correctly from `s3://cml-ova-import/cml-2.7.0-debs/` during the Packer build, as defined in `packer/cml-2.7.0.pkr.hcl`.
+
+**Conclusion:**
+The root cause is likely within the `cml2*.deb` package obtained from S3. It either lacks the `virl2-uwm.service` file entirely or fails during its internal post-installation scripts before creating/linking the service file.
+
+**Next Steps:**
+1.  Download the specific `cml2*.deb` file used in the build from the S3 bucket (`s3://cml-ova-import/cml-2.7.0-debs/`).
+2.  Inspect its contents locally using tools like `dpkg -c`, `ar x`, and `tar tf` to verify the presence of `virl2-uwm.service` and check the `postinst` script.
+
+## Project Root File Map
+
+```
+/
+├── .git/ (Git internal directory)
+├── .gitignore
+├── .terraform/ (Terraform internal directory)
+├── .terraform.lock.hcl
+├── CHANGELOG.md
+├── CML-IMG-REL-CCO_RELEASE.pem
+├── CML_DEPLOYMENT.md
+├── DEVNET_WORKSTATION.md
+├── LICENSE
+├── NEXT_STEPS.md
+├── None_validation.log
+├── README.md
+├── TODO.md
+├── aws_cli_system_log.txt
+├── check_ssm_registration.py
+├── cisco_x509_verify_release.py3
+├── cloud-init-test.yaml
+├── cml-access-key.pem
+├── cml-assets/
+├── cml-cloudinit-test_*.json
+├── cml-controller-*.json
+├── cml-network-fix.tfplan
+├── cml2_2.7.0-4_amd64-20-pkg.zip
+├── cml2_2.7.0-4_amd64-20.pkg.README
+├── cml2_2.7.0-4_amd64-20.pkg.signature
+├── cml2_2.8.1-14_amd64-35_SHA256-disk1.vmdk
+├── cml_controller_screenshot.json
+├── cml_controller_system_log.txt
+├── cml_validator_utils/
+│   └── ... (Utility scripts and modules)
+├── compare_validation_results.py
+├── config.yml
+├── config.yml.example
+├── console_screenshot_*.jpg
+├── decode_screenshot.py
+├── devicecheck_forensic.json
+├── devnet_*.json
+├── documentation/
+│   └── ... (Project documentation files)
+├── forensic_*.log
+├── i-*.log (Instance-specific logs/validation results)
+├── i-*.txt (Instance-specific system logs)
+├── i-*.jpg (Instance-specific screenshots)
+├── images/
+│   └── ... (Image files, e.g., diagrams)
+├── import-cml.json
+├── logs/
+├── main.tf
+├── modules/
+│   └── ... (Terraform modules)
+├── monitor_cml_logs.sh
+├── monitor_logs.sh
+├── network_validated_ami.auto.tfvars
+├── output.tf
+├── packer/
+│   └── ... (Packer templates, scripts, and logs)
+├── prepare.bat
+├── prepare.sh
+├── quicktest_forensic_forensic.json
+├── refplat/
+│   └── ... (Reference platform files)
+├── refplat2.8/
+├── refplat_p-*.zip
+├── requirements.txt
+├── run_validation.py
+├── screenshot_*.jpg
+├── scripts/
+│   └── ... (General utility scripts)
+├── security/
+│   └── ... (Security-related files)
+├── serial_log_*.txt
+├── sessionmanager-bundle/
+├── sessionmanager-bundle.zip
+├── ssh_jump_connect.py
+├── terraform/
+├── terraform-key.pem
+├── terraform.auto.tfvars
+├── terraform.options-cfg.example.tfvars
+├── terraform.tf
+├── terraform.tfstate
+├── terraform.tfstate.backup
+├── terraform.tfvars
+├── tf_apply_with_logs.sh
+├── tfplan
+├── ubuntu-cloudinit-test_*.json
+├── upload-images-to-aws.sh
+├── validation_results_*.json
+├── validator.log
+├── validators/
+│   └── ... (Validation scripts and helpers)
+└── variables.tf
 ```
 
 ## Validation Script (`run_validation.py`)

@@ -1,0 +1,310 @@
+{
+    "instance_status": {
+        "status": "Details Found",
+        "state": "running",
+        "details": {}
+    },
+    "iam_permissions": {
+        "status": "Checked (Assumed for Root)",
+        "details": {
+            "ec2:DescribeInstances": "Allowed (Assumed for Root)",
+            "ec2:DescribeInstanceStatus": "Allowed (Assumed for Root)",
+            "ec2:DescribeSecurityGroups": "Allowed (Assumed for Root)",
+            "ec2:DescribeNetworkAcls": "Allowed (Assumed for Root)",
+            "ec2:DescribeSubnets": "Allowed (Assumed for Root)",
+            "ec2:GetConsoleOutput": "Allowed (Assumed for Root)",
+            "iam:SimulatePrincipalPolicy": "Allowed (Assumed for Root)",
+            "sts:GetCallerIdentity": "Allowed (Assumed for Root)",
+            "ssm:SendCommand": "Allowed (Assumed for Root)",
+            "ssm:GetCommandInvocation": "Allowed (Assumed for Root)"
+        },
+        "all_required_met": true
+    },
+    "security_groups": {
+        "status": "Checked",
+        "details": {
+            "outbound_http": "Allowed",
+            "outbound_https": "Allowed",
+            "inbound_ssh": "Denied/Missing"
+        },
+        "ids_found": [
+            "sg-0bb61809fb022d4bf"
+        ]
+    },
+    "nacls": {
+        "finding_status": "Found (Explicit)",
+        "nacl_id": "acl-0402ec2b87f1b595d",
+        "rule_check_status": "Checked",
+        "rule_details": {
+            "nacl_id": "acl-0402ec2b87f1b595d",
+            "outbound_http": "Allowed",
+            "outbound_https": "Allowed",
+            "inbound_ephemeral": "Allowed"
+        },
+        "raw_nacl_details": {
+            "Associations": [
+                {
+                    "NetworkAclAssociationId": "aclassoc-0aef9a24b7d1a9991",
+                    "NetworkAclId": "acl-0402ec2b87f1b595d",
+                    "SubnetId": "subnet-0322e7b71fe21f498"
+                }
+            ],
+            "Entries": [
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                }
+            ],
+            "IsDefault": true,
+            "NetworkAclId": "acl-0402ec2b87f1b595d",
+            "Tags": [],
+            "VpcId": "vpc-0a52a1719287724c6",
+            "OwnerId": "450339903191"
+        }
+    },
+    "raw_security_group_rules": [
+        {
+            "GroupId": "sg-0bb61809fb022d4bf",
+            "IpPermissionsEgress": [
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 80,
+                    "ToPort": 80,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow HTTP outbound",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                },
+                {
+                    "IpProtocol": "-1",
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 443,
+                    "ToPort": 443,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow HTTPS outbound",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "devnet-workstation-sg-31144d84"
+                }
+            ],
+            "VpcId": "vpc-0a52a1719287724c6",
+            "SecurityGroupArn": "arn:aws:ec2:us-east-2:450339903191:security-group/sg-0bb61809fb022d4bf",
+            "OwnerId": "450339903191",
+            "GroupName": "tf-sg-workstation-31144d84",
+            "Description": "Devnet workstation security group",
+            "IpPermissions": [
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 3389,
+                    "ToPort": 3389,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow RDP",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                }
+            ]
+        }
+    ],
+    "raw_nacl_rules": [
+        {
+            "Associations": [
+                {
+                    "NetworkAclAssociationId": "aclassoc-0aef9a24b7d1a9991",
+                    "NetworkAclId": "acl-0402ec2b87f1b595d",
+                    "SubnetId": "subnet-0322e7b71fe21f498"
+                }
+            ],
+            "Entries": [
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                }
+            ],
+            "IsDefault": true,
+            "NetworkAclId": "acl-0402ec2b87f1b595d",
+            "Tags": [],
+            "VpcId": "vpc-0a52a1719287724c6",
+            "OwnerId": "450339903191"
+        }
+    ],
+    "nat_gateway": {
+        "subnet_id": "subnet-0322e7b71fe21f498",
+        "nat_gateway_ids": [],
+        "details": {}
+    },
+    "ssm_check": {
+        "status": "Failed (InvalidInstanceId)",
+        "details": {
+            "error": "An error occurred (InvalidInstanceId) when calling the SendCommand operation: Instances [[i-0bca583144498884e]] not in a valid state for account 450339903191"
+        }
+    },
+    "ssh_check": {
+        "status": "Failed (Timeout)",
+        "details": {
+            "error": "Connection timed out (10s)."
+        }
+    },
+    "system_log": {
+        "status": "Retrieved",
+        "details": {
+            "log_content": ",\u07b3\u04fd6Mq\u07e6l^z\u07b5n1\u05adz\u0233z\u03b9m;ot\u001f:nZ\u001f~\u01ed^w\u001b-j\u05ec7]6N5\u03bf~\u05adz\u07f1}\u06deZ\"=N5\u03bf~yl^}\u6b7a\u001d}'m,\u078a\u0379.)ri^u+tMQky\u89c1#\u000fj[^v\u9a2f.8+N5'fk\u0017^}}\u0262)}5\u04fd6MKH\u011er!kjg\"+bjXx4MYZhrE)jwky\r;ot\u0546ihhu\u04fd6M@+++bjXy;ot.\u001ar\u0017jmi^z{k7\u06fe^^8o+^XyMS({i)q!z\u0016\u059b\u79f6}+u\u06ed%wN5j[D\u0626j\u05ddb\u06bd\u0681\u07aas&m\u001e~\u0626zt\u06cdvm;ot\u0269n-\b4\"{^\u0015\u07a2tOb\u06feB,#M\u0006\u001f7\u069a)r\u001e\u05e5\u001ey\u05e9)\u001eMC\u07ad+xK\u079e.\u02e9yz\b&\u05e5<\u001d+\u07ae\u001f\u0006y\u079e(\\N\u06fb\"vl\u0007jg7}Oy\u0738x\u0706'\u001a$BR)\u979e\u05ad]vCL#\u0006r\u0017h|\b\\ jw\\\u019bt^9&\u001a\bly'u\b,\u04fdymh\u0627#\u000fr\u07ca\u000bj\u0628Nz^#\u0533]9_7KrZ\u001cnk+\u07fd]8\u01dcwZ')hrM;<K\u7b36^j[b)Yvs4M;}4m9_7KrZ\u001cnk+\u07fd]<\u01dcwZ')hrM;~K\u7b36^j[b)ivq4M;]4}9_7KrZ\u001cnk+\u07fd]\u001c\u01dcwZ')hrM;^K\u7b36^j[b)yvq4M;49_7KrZ\u001cnk+\u07fd]t\u01dcwZ')hrM;K\u7b36^j[b)vw~4M;oz\b\u001b\nkz\u01e7H\u05adjW,&y'i\t\u001ew?v?\u0665Vz\u007fi\u0662\u000bu\u001bf+uZ[4\uf3bd\u04d3\f jWj\u0582=F\ue09a\u07b1jwR1:'uZ\u6926,^I\u7876l0Gh\u000f\u0761i\u007f^vh{pgq,-jWj\u05a1i_^NMvN}$r~4^5(\u05abnrZ\u001cN\u05ee;-\u05da\u0626ynk+]<NM|N}$r~4_5(\u05abnrZ\u001cN-\u05da\u0626ynk+]o<NM4N}$r~4W5(\u05abnrZ\u001cN\u07fd-\u05da\u0626ynk+]\u007f<N\u077bjA\u06e9z\u001d{R;~u\u0269n-1e\bjZZrFzt=\u04cb&(:-jZ\u001fq,\u001ar\u062fj\u05dd}\u0001\n\f y^\u0669~\u0227\u061a,wNo|\u03bfc\u001enZ\u001c\u0233{]0\u001d;~hrK(\u001e'\u07c9&j4}~fs'%z1}}\u07d9bvWN5uM4{4\u03bdGajmi^z{k6\u04cf(\u05eb]\u04fd\u05ec)j;N8rr\u078axbiw-[.n\u032ctE0gw\u05ad{m6N6NO64Dz\btM\u001124\u0015\u0013LJk\u001cW\u069a)r\u04ffy\u07ed0\nkye\u01ady\u0774\u00a2\u0004aO(DM\u0010hW\u8b6bh'\u001aZ\u001cj\u0628;\u077c3\u0000Z\u001cj\u05ddN<* F\u0014D\u000b\u0018S0\nhW\u8b6bh'\u001aZ\u001cj\u0628<}3\u0000Z\u001cj\u05ddN<* F\u0014D\u000b\u0018S0\r%~\u06b6qe\u01ad:]Z\u062dxb)ey,2\u062ci^wO4wjb\u0729{m4\u046b{wO=5\u05adz)&7jbnW\u04b7O4w\u0017l^+-z\u0017`j*\uc16atN-j[2\u0017^mjX(\u78b6\u069e\u0006\u069e\r<\u05cdv^f+\u0011z\bv^f\u07aez+\u05e9+\u001exMj[2\u0017^mjX(\u78bbz)i\u01f4_4az\u032cE\"\u05ebyaz\n/z\u8b9a0z\u001a_=\u04f1\bH\u0006\uecb7^tmG)'ez\"\b(\u78b9Zu\u05eb\u0379]\\\u8755\ubb0ax z{n\u0002<\u0729x\"\u05eby<y\u0567)i\u0000#\u001eO\u000f\bW\u000ez\u07ae\u0228Nt}t\u04c3!K\"\u0007(\u0297~j\u01daq\u01ecO7\u737dm$\u001bz;mhj\u0628+\u001ey%Jkj\u06267h\u021b<v{y2\"\u05ebyth\u001e,\u07a6Z\u001cj\u05dd\u0496z<m{y2\"\u05eby\u0774\u0201\u001e,\u07a6Z\u001cj\u05dd\u0496z<oz\u0000 \u0007]y\u04d2 \u001dWz{O8v\u0000#\u0001^t>\u001cz(7\u01f4z\u07f0\u0002<\u001duNHH#\u05e7*'O98\u0000#\u0001^t>\u001cz(\b \u001az{O96\u0000#\u0001^t.)7Xz<t\u0000 \u0007]y\u04d2 \u0012\u079e5Q0.v*4\u0002<\u001duNHG<n\u001a',\u03b4}\u0000\b7\u0000#\u0000i^\u02dcq,~e\u0267**u\u0756y<\u007f4\u0000 zkz\u05ebzvt\u0002<\u0332ilKDK<t\u0000!K\"\u0002\u000e\u0000\u0002~\u05ebmx4{s!K\"\bh\u001e)\u0763\u000b\u001f\b\"~wz\u001a+z\"+\u076dh\u059b\r<OtR\u0227O6\u04b7z\u06b6*'+-n\"0O;ot\u0000#\u0012vuc\u0132)\u06d6$Kh]<5\u0000 F-\u0006#GhM4n4=\u019c#?@4M\u000eH#il\u0001#\nZ\u001c\u0012z\t\fH\u0003DsO*^O<tib<\u0003M\u001au\f\bE h~j\u0628\u01a7\u001cz\u001e\u05e7uO\b(\uc967\u001ew^bv\u0007\u3d9c*a)hz\u0782+-z=~\u001ar+z\bwO=zib\u001aRy\"\u05eby<~9)iJZ-\uade0^t=\u05d6*a)h\u0782+-z{\u001ar+z\bwO=zib\u001aR}\"\u05eby=^:)iJZ-J\u0782+-z6^\u001aru\"\u05eby=\u04de;\u0467)iJZ-j\u0782+-z:^Zrw\"\u05eby=t\u0767)iJZ-\u05ca\u0782+-zt]ry\"\u05eby=~:)iJZ-\u05ea\u0782+-zx^\u001ar{\"\u05eby=\u05fe;)iJZ-\u0782+-z|^r}\"\u05eby=^y)iJZ-J\u0782+-z\u0776^Zr\u0775\"\u05eby=\u06dew\u0767)iJZ-j\u0782+-z\u077a^\u001ar\u0777\"\u05eby=y\u0767)iJZ-\u06ca\u0782+-z^\u001ar\u0779\"\u05eby=~y)iJZ-\u06ea\u0782+-z^\u001ar\u077b\"\u05eby=\u07fev)iJZ-\u0782+-z^Zr\u077d\"\u05eby=^w\u0667)iJZ-J\u0782+-z6^\u001ar\"\u05eby=t-nhn4M4Ox8\u021b4M4-n+z.\u01db4}=M4\u0597\"n4M4\u04ba((\u001e1M4\u001d\u001c\u007f\"0tMr&M4M+[\u07b2q\u001d\u001dM1})\u0763\r=\"n4M4\u04ba((\u001eM4kM4LtF}whOy8\u021b4M4-n+z.\u01e6zm1sM4M4\u0017m}\"0|)r-4M4M<\u03b5~\u0297Z1\u04ed4M=n\u0597\"M4M5<4\u0729{M\u001c,\u001d:]4\u07b7\uf769r-4M4]\u03bb]\u0297Z1M4M=v\"M4M5\u07abH\u0016M1oMrV[\b_\u0002<=Ou\"M4M5\u07abH\u0016M1o]\u001frV[\b_\u0007O{;\u0234M4Mw<\u0017\u05ef\u0004<\u007fO{y\u0234M4Mw<\u0017\u05ef\u00050\u000ejsM4G}}=\u037b\"M4M5\b_^\u0018\u000ej\u007fG}=u\"M4M5\b_^\u001c\b9_}4M\u001f}}\u0376\\M4M4s!~\u001dz\u07b09_}\u001f}\u037d\u05da\\M4M4s!~\u001dz\u07b09_}\u001f}\u03b4\\M4M4z),xibLtLuKhMynn,;mir-4M4}5wG]m\u0297Z1}4M=]v\"M4M7\u04b7\u001dtM4L_{}\u07b6Z\\M4M4J\u0783Lwg\u0017m4M1}}\u07e6|)r-4M4}\u0015\u05e8uq\"\u001b!i0yN1fzm1M\u001cM4\u001d4}t}\"M4M8Wt\u007f:\u0729{M\u001c,\u001d56M;Mr-4M4\u04cd+z\r1IL_yM4\u007fw\u007f]5^\u0234M4Nt\u001fy\u0374*^G%j4MM5_=\u04da\\M4M4J\u0783Lug\u0017m4M1}M])r-4M4\u04dd+z\r1\u025eL_{4M4}~\u007f]6y\u0234M4Nt4m&zm1}M4\u0017m}t\u0378\u0000 \"{^XJ\u0001'~(._\u0011C]5\u007f=\u0002< zbB(\u0017(~E\rtN6n\u0000\b\u000f\b'\ube9bey\u000b4wu+!\u00145]8;\u0000#<\"\b\u05ebm),\u0483r\u07ca\u000by\u8b04P]t\u0000 \"{^XJI'~(._\u0011Ct*&}&j)\u0297\uc56b^w]8<3\u0000vt\u0006)jXj\u0628%\u0325k<\u05f5\u04ddt\u3502H.n\u032c\u989e+bjXyt~y\"M4M7\u001ajzb\u0006n-T`\u001dz{]9]\u0234M4M\u0006F\u0001\u05ef\u01dau\u05ddu(u"
+        }
+    },
+    "cloudinit_logs": {
+        "error": "An error occurred (InvalidInstanceId) when calling the SendCommand operation: Instances [[i-0bca583144498884e]] not in a valid state for account 450339903191"
+    },
+    "iam_role_and_policy": {
+        "profile_arn": "arn:aws:iam::450339903191:instance-profile/cml-ssm-profile",
+        "role_name": "cml-ssm-role",
+        "attached_policies": [
+            "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        ],
+        "inline_policies": [],
+        "error": null,
+        "ssm_policy_attached": true
+    },
+    "launch_metadata": {
+        "ami_id": "ami-0b4f0beb6d7710db2",
+        "instance_type": "c5.2xlarge",
+        "key_name": "terraform-key",
+        "user_data_present": false,
+        "launch_time": "2025-04-20 08:51:10+00:00"
+    },
+    "network_diagnostics": {
+        "error": "An error occurred (InvalidInstanceId) when calling the SendCommand operation: Instances [[i-0bca583144498884e]] not in a valid state for account 450339903191"
+    }
+}

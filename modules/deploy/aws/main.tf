@@ -96,6 +96,7 @@ locals {
     extras        = var.options.extras
     hostname      = var.options.cfg.common.controller_hostname
     path          = path.module
+    custom_scripts_yaml = "" # Add default empty value to prevent destroy error
   })
 
   cloud_config_compute = [for i in range(0, local.num_computes) : templatefile("${path.module}/../data/cloud-config.txt", {
@@ -199,6 +200,44 @@ locals {
       "self" : false,
     }
   ]
+
+  custom_scripts_yaml = yamlencode([
+    for script in var.cfg.app.customize : {
+      path        = "/provision/${script}"
+      owner       = "root:root"
+      permissions = "0644"
+      content     = file("${path.module}/../data/${script}")
+    }
+  ])
+
+  cml_config_yaml = try(yamlencode(var.options.cml), yamlencode({})) # Add try for destroy phase
+
+  # Extract custom AMI from extras if provided
+  custom_ami_regex = "export AWS_CUSTOM_AMI=\"([^\"]+)\""
+  custom_ami = length(regexall(local.custom_ami_regex, var.options.extras)) > 0 ? regex(local.custom_ami_regex, var.options.extras)[0] : ""
+}
+
+# --- SSM IAM Resources --- #
+resource "aws_iam_role" "cml_ssm_role" {
+  name = "cml-ssm-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "cml_ssm_core" {
+  role       = aws_iam_role.cml_ssm_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "cml_ssm_profile" {
+  name = "cml-ssm-profile"
+  role = aws_iam_role.cml_ssm_role.name
 }
 
 resource "aws_security_group" "sg_tf" {
@@ -304,18 +343,6 @@ resource "aws_route_table" "for_public_subnet" {
 resource "aws_route_table_association" "public_subnet" {
   subnet_id      = aws_subnet.public_subnet.id
   route_table_id = aws_route_table.for_public_subnet.id
-}
-
-resource "aws_network_interface" "pub_int_cml" {
-  subnet_id       = aws_subnet.public_subnet.id
-  security_groups = [aws_security_group.sg_tf.id]
-  tags            = { Name = "CML-controller-pub-int-${var.options.rand_id}" }
-}
-
-resource "aws_eip" "server_eip" {
-  network_interface = aws_network_interface.pub_int_cml.id
-  tags              = { "Name" = "CML-controller-eip-${var.options.rand_id}", "device" = "server" }
-  depends_on        = [aws_instance.cml_controller]
 }
 
 #------------- compute subnet, NAT GW, routing and interfaces -----------------
@@ -459,9 +486,10 @@ resource "aws_ec2_transit_gateway_multicast_group_member" "cml_compute_int" {
 }
 
 resource "aws_instance" "cml_controller" {
-  instance_type        = var.options.cfg.aws.flavor
-  ami                  = var.options.cfg.aws.cml_ami != null ? var.options.cfg.aws.cml_ami : data.aws_ami.ubuntu.id
-  iam_instance_profile = var.options.cfg.aws.profile
+  count               = local.cml_enable ? 1 : 0
+  instance_type        = var.cfg.aws.flavor
+  ami                  = local.custom_ami != "" ? local.custom_ami : var.cfg.aws.ami_id
+  iam_instance_profile = aws_iam_instance_profile.cml_ssm_profile.name
   key_name             = var.options.cfg.common.key_name
   subnet_id            = aws_subnet.public_subnet.id
   
@@ -473,75 +501,116 @@ resource "aws_instance" "cml_controller" {
   }
 
   root_block_device {
-    volume_size           = var.options.cfg.common.disk_size
-    volume_type           = "gp3"
-    encrypted             = var.options.cfg.aws.enable_ebs_encryption
+    volume_size = var.cfg.aws.storage_size
+    volume_type = "gp3"
+    encrypted   = var.options.cfg.aws.enable_ebs_encryption
     delete_on_termination = true
   }
 
-  vpc_security_group_ids = concat(
-    [aws_security_group.sg_tf.id],
-    var.options.cfg.common.enable_patty ? [] : []
-  )
+  vpc_security_group_ids = [aws_security_group.sg_tf.id]
 
   tags = {
-    Name = "${var.options.cfg.common.controller_hostname}-${var.options.rand_id}"
+    Name = "cml-controller-${var.options.rand_id}"
   }
 
-  # User data script - MINIMAL version for Packer AMI
-  # Ensure SSM agent is running, do not run CML setup again.
-  user_data_base64 = base64encode(<<-EOF
+  # Use a shell-based user_data script, just like the devnet workstation
+  user_data = <<-EOF
 #!/bin/bash
-echo "Starting minimal user_data for Packer AMI at $(date)" > /tmp/user_data_packer.log
-# Ensure SSM agent is enabled and running (systemd)
-if command -v systemctl > /dev/null; then
-  systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent || true
-  systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent || systemctl start snap.amazon-ssm-agent.amazon-ssm-agent || true
-  echo "Checked amazon-ssm-agent status via systemctl" >> /tmp/user_data_packer.log
+# Log startup
+ echo "CML Controller started at $(date)" > /var/log/cml-controller-setup.log
+
+# Ensure SSM agent is running
+if command -v systemctl > /dev/null && systemctl list-unit-files | grep -q amazon-ssm-agent; then
+  systemctl enable amazon-ssm-agent
+  systemctl start amazon-ssm-agent
+  echo "SSM agent started" >> /var/log/cml-controller-setup.log
 fi
-# Add check for older init systems if necessary, but Ubuntu 20.04+ uses systemd
-echo "Finished minimal user_data for Packer AMI at $(date)" >> /tmp/user_data_packer.log
+
+# (Optional) Add any CML controller-specific setup here
+
+# Apply security hardening measures (if enabled)
+if [ "${var.options.cfg.common.security.setup_ufw_firewall}" = "true" ]; then
+  echo "Configuring UFW firewall..." >> /var/log/cml-controller-setup.log
+  apt-get update && apt-get install -y ufw
+  ufw default deny incoming
+  ufw default allow outgoing
+  ufw allow 22/tcp    # SSH
+  ufw allow 80/tcp    # HTTP
+  ufw allow 443/tcp   # HTTPS
+  echo "y" | ufw enable
+fi
+
+if [ "${var.options.cfg.common.security.configure_fail2ban}" = "true" ]; then
+  echo "Configuring fail2ban..." >> /var/log/cml-controller-setup.log
+  apt-get update && apt-get install -y fail2ban
+  cat <<FAILCONF > /etc/fail2ban/jail.local
+[sshd]
+enabled = true
+port = ssh
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 5
+findtime = 600
+bantime = 3600
+FAILCONF
+  systemctl enable fail2ban
+  systemctl start fail2ban
+fi
+
+if [ "${var.options.cfg.common.security.enable_auto_updates}" = "true" ]; then
+  echo "Configuring automatic security updates..." >> /var/log/cml-controller-setup.log
+  apt-get update && apt-get install -y unattended-upgrades
+  cat <<AUTOCONF > /etc/apt/apt.conf.d/20auto-upgrades
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::AutocleanInterval "7";
+AUTOCONF
+fi
+
+echo "CML controller security hardening completed at $(date)" >> /var/log/cml-controller-setup.log
 EOF
-  )
-  # user_data = data.cloudinit_config.cml_controller.rendered # <-- Removed complex cloud-init
 
   depends_on = [
     aws_internet_gateway.public_igw,
     aws_subnet.public_subnet
   ]
+}
+
+resource "aws_eip" "cml_controller_eip" {
   count = local.cml_enable ? 1 : 0
-
-  # --- Provisioner for Network Validation --- #
-  provisioner "local-exec" {
-    when    = create # Run after instance creation
-    command = <<EOT
-      echo "Waiting for instance ${self.id} to pass status checks..."
-      aws ec2 wait instance-status-ok --region ${data.aws_region.current.name} --instance-ids ${self.id} && \
-      echo "Instance status checks passed. Running network validator..." && \
-      python3 ${path.module}/../../../aws_validator.py \
-        --instance-id ${self.id} \
-        --region ${data.aws_region.current.name} \
-        --port 443 \
-        --source-ip ${chomp(data.http.myip.response_body)}
-    EOT
-    # Optional: Set environment variables if needed by the script
-    # environment = {
-    #   AWS_PROFILE = "your-profile" # If not using default credentials
-    # }
-
-    # This interpreter setting ensures Terraform knows how to run the command
-    interpreter = ["bash", "-c"]
+  domain = "vpc"
+  tags = {
+    Name = "CML-controller-eip-${var.options.rand_id}"
   }
 }
 
+resource "aws_eip_association" "cml_controller_eip_assoc" {
+  count                = local.cml_enable ? 1 : 0
+  instance_id          = aws_instance.cml_controller[0].id
+  allocation_id        = aws_eip.cml_controller_eip[0].id
+  depends_on           = [aws_instance.cml_controller]
+}
+
 resource "aws_instance" "cml_compute" {
+  count               = local.num_computes
   instance_type        = var.options.cfg.aws.flavor_compute
   ami                  = data.aws_ami.ubuntu.id
-  iam_instance_profile = var.options.cfg.aws.profile
+  iam_instance_profile = aws_iam_instance_profile.cml_ssm_profile.name
   key_name             = var.options.cfg.common.key_name
-  tags                 = { Name = "CML-compute-${count.index + 1}-${var.options.rand_id}" }
+  subnet_id            = aws_subnet.public_subnet.id
+  
+  # Security enhancements
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "optional" # Forcing optional for SSM compatibility
+    http_put_response_hop_limit = 1
+  }
+
+  vpc_security_group_ids = [aws_security_group.sg_tf.id]
+  tags = {
+    Name = "CML-compute-${count.index + 1}-${var.options.rand_id}"
+  }
   ebs_optimized        = "true"
-  count                = local.cml_enable ? local.num_computes : 0
   depends_on           = [aws_instance.cml_controller, aws_route_table_association.compute_subnet_assoc]
   dynamic "instance_market_options" {
     for_each = var.options.cfg.aws.spot_instances.use_spot_for_computes ? [1] : []
@@ -587,18 +656,63 @@ data "aws_ami" "ubuntu" {
 
 data "cloudinit_config" "cml_controller" {
   gzip          = true
-  base64_encode = true # always true if gzip is true
+  base64_encode = true
 
+  # Part 1: Base cloud-config from file
   part {
-    filename     = "cloud-config.yaml"
     content_type = "text/cloud-config"
-    content      = local.cloud_config
+    content      = local.cloud_config # Rendered template from cloud-config.txt
+    filename     = "cloud-config.txt"
+  }
+
+  # Part 2: CML base config generated from template
+  part {
+    content_type = "text/plain" # Treated as a file to be written by cloud-init
+    content      = local.cml_config_controller
+    filename     = "/etc/virl2-base-config.yml"
+  }
+
+  # Part 3: Optional user extras
+  part {
+    content_type = "text/cloud-config"
+    content      = var.options.extras
+    merge_type   = "list(append)+dict(recurse_array)+str()"
+  }
+
+  # Part 4: Write the internal validator script
+  part {
+    content_type = "text/cloud-config"
+    content = yamlencode({
+      write_files = [
+        {
+          path        = "/usr/local/bin/run_validation.py"
+          permissions = "0644"
+          owner       = "root:root"
+          content     = file("${path.module}/../../../run_validation.py")
+        }
+      ]
+    })
+    filename = "write-validator.yaml"
+  }
+
+  # Part 5: Make validator executable and run it
+  part {
+    content_type = "text/cloud-config"
+    content = yamlencode({
+      runcmd = [
+        "echo 'Making internal validator script executable...'",
+        "chmod +x /usr/local/bin/run_validation.py",
+        "echo 'Running internal validator script...'",
+        "(/usr/bin/python3 /usr/local/bin/run_validation.py >> /var/log/cloud-init-validator.log 2>&1) || echo 'Validator script failed, check /var/log/cloud-init-validator.log'"
+      ]
+    })
+    filename = "run-validator.yaml"
   }
 }
 
 data "cloudinit_config" "cml_compute" {
   gzip          = true
-  base64_encode = true # always true if gzip is true
+  base64_encode = true
   count         = local.num_computes
 
   part {
@@ -616,14 +730,30 @@ resource "aws_security_group" "sg_workstation" {
   description = "Devnet workstation security group"
   vpc_id      = local.main_vpc.id
 
-  # Allow SSH
-  ingress {
-    from_port   = 22
-    to_port     = 22
+  # Allow HTTP/HTTPS outbound for internet access
+  egress {
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
-    description = "allow SSH"
-    cidr_blocks = var.options.cfg.common.allowed_ipv4_subnets
+    description = "allow HTTP outbound"
+    cidr_blocks = ["0.0.0.0/0"]
   }
+  egress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    description = "allow HTTPS outbound"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Remove SSH ingress for security (optional, comment out if SSH is not needed)
+  # ingress {
+  #   from_port   = 22
+  #   to_port     = 22
+  #   protocol    = "tcp"
+  #   description = "allow SSH"
+  #   cidr_blocks = var.options.cfg.common.allowed_ipv4_subnets
+  # }
 
   # Allow RDP
   ingress {
@@ -664,7 +794,7 @@ resource "aws_instance" "devnet_workstation" {
   count               = local.workstation_enable ? 1 : 0
   instance_type        = var.options.cfg.aws.workstation.instance_type
   ami                  = var.options.cfg.aws.workstation.ami
-  iam_instance_profile = var.options.cfg.aws.profile
+  iam_instance_profile = aws_iam_instance_profile.cml_ssm_profile.name
   key_name             = var.options.cfg.common.key_name
   subnet_id            = aws_subnet.public_subnet.id
   
@@ -681,7 +811,6 @@ resource "aws_instance" "devnet_workstation" {
     encrypted             = var.options.cfg.aws.enable_ebs_encryption
     delete_on_termination = true
   }
-
   vpc_security_group_ids = [
     aws_security_group.sg_workstation[0].id
   ]

@@ -555,3 +555,9 @@ Packer addresses the identified issues in several ways:
 - [Cloud-init Documentation](https://cloudinit.readthedocs.io/en/latest/)
 - [Cisco CML Documentation](https://developer.cisco.com/docs/modeling-labs/)
 - [AWS Systems Manager Documentation](https://docs.aws.amazon.com/systems-manager/latest/userguide/what-is-systems-manager.html)
+
+## Next Steps
+
+- [ ] Complete current Packer build (removed Netplan config).
+- [ ] Verify Terraform deployment with the newly built AMI.
+- [ ] Test CML functionality on the deployed instance.

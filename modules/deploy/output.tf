@@ -23,3 +23,47 @@ output "cml_controller_instance_id" {
     null # Or handle other targets appropriately if needed
   )
 }
+
+output "public_subnet_id" {
+  value = (
+    (var.cfg.target == "aws") ?
+    module.aws[0].public_subnet_id :
+    null
+  )
+}
+
+output "sg_tf_id" {
+  value = (
+    (var.cfg.target == "aws") ?
+    module.aws[0].sg_tf_id :
+    null
+  )
+}
+
+output "key_name" {
+  value = (
+    (var.cfg.target == "aws") ?
+    module.aws[0].key_name :
+    null
+  )
+}
+
+output "ami_id" {
+  value = (
+    (var.cfg.target == "aws") ?
+    module.aws[0].ami_id :
+    null
+  )
+}
+
+output "instance_type" {
+  value = (
+    (var.cfg.target == "aws") ?
+    module.aws[0].instance_type :
+    null
+  )
+}
+
+output "cml_ssm_profile" {
+  value = module.aws[0].cml_ssm_profile
+}

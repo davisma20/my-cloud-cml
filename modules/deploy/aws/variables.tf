@@ -9,3 +9,7 @@ variable "options" {
   description = "module options of the CML deployment as an object"
 }
 
+variable "cfg" {
+  type        = any
+  description = "Processed configuration object for the CML deployment"
+}

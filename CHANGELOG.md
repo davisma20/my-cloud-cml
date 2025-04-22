@@ -14,6 +14,30 @@ Lists the changes for the tool releases.
 *   **Documentation:**
     *   Updated `README.md`, `documentation/PACKER_BUILD.md`, `documentation/TROUBLESHOOTING.md`, `documentation/CML_INSTALLATION.md`, and `packer/README.md` to reflect the CML 2.7.0 build process, AMI ID, user creation fix, and deployment steps.
 
+## [Unreleased]
+
+## [2025-04-15]
+### Fixed
+- **Packer Build / Terraform Deployment:** Removed custom Netplan configuration (`packer/50-cml-netplan.yaml`) from the Packer build process (`packer/cml-2.7.0.pkr.hcl`). This custom config was suspected of causing cloud-init failures during the `package_update_upgrade_install` stage in Terraform deployments, likely due to interference with early boot network setup. Reverted to default cloud-init network handling.
+
+## [2025-04-13]
+### Fixed
+- **Packer Build:** Resolved persistent instance impairment and SSM agent failures (InvalidInstanceId errors) by changing the `amazon-ssm-agent` installation method in `packer/bootstrap_cml.sh` from `snap` (which conflicted with cloud-init) to the recommended `.deb` package method.
+- **Packer Build:** Corrected the build sequence in `packer/cml-2.7.0.pkr.hcl` and `packer/install_cml_2.7.0.sh` to ensure CML services (`virl2-controller`, `virl2-uwm`) are restarted *after* installation, fixing 'Unit not found' errors during the build.
+- **AMI:** Created new golden AMI `ami-032d7958a238a2977` (us-east-2) incorporating these fixes.
+
+## [2025-04-12]
+### Added
+*   **Packer Build for CML 2.7.0:**
+    *   Successfully built a stable AMI for CML 2.7.0 (`ami-0aef6f8637c4c6500` in `us-east-2`).
+    *   Resolved issue where the `admin` user was not reliably created by the CML bootstrap process. Added explicit `useradd -g admin admin` provisioner step in `packer/cml-2.7.0.pkr.hcl`.
+    *   Added debug provisioners to dump logs and `/etc/passwd` during Packer build.
+    *   Added conditional logic for password setting (`admin` or `cml2`).
+*   **Terraform:**
+    *   Fixed warnings about undeclared variables (`cml_ami`, `aws_region`, etc.) by adding declarations to root `variables.tf`.
+*   **Documentation:**
+    *   Updated `README.md`, `documentation/PACKER_BUILD.md`, `documentation/TROUBLESHOOTING.md`, `documentation/CML_INSTALLATION.md`, and `packer/README.md` to reflect the CML 2.7.0 build process, AMI ID, user creation fix, and deployment steps.
+
 ## Version 2.8.1-DevNet (Fork)
 
 - Custom fork configured specifically for CML 2.8.1-14 deployment

@@ -1,0 +1,352 @@
+{
+    "instance_status": {
+        "status": "Details Found",
+        "state": "running",
+        "details": {}
+    },
+    "iam_permissions": {
+        "status": "Checked (Assumed for Root)",
+        "details": {
+            "ec2:DescribeInstances": "Allowed (Assumed for Root)",
+            "ec2:DescribeInstanceStatus": "Allowed (Assumed for Root)",
+            "ec2:DescribeSecurityGroups": "Allowed (Assumed for Root)",
+            "ec2:DescribeNetworkAcls": "Allowed (Assumed for Root)",
+            "ec2:DescribeSubnets": "Allowed (Assumed for Root)",
+            "ec2:GetConsoleOutput": "Allowed (Assumed for Root)",
+            "iam:SimulatePrincipalPolicy": "Allowed (Assumed for Root)",
+            "sts:GetCallerIdentity": "Allowed (Assumed for Root)",
+            "ssm:SendCommand": "Allowed (Assumed for Root)",
+            "ssm:GetCommandInvocation": "Allowed (Assumed for Root)"
+        },
+        "all_required_met": true
+    },
+    "security_groups": {
+        "status": "Checked",
+        "details": {
+            "outbound_http": "Allowed",
+            "outbound_https": "Allowed",
+            "inbound_ssh": "Allowed"
+        },
+        "ids_found": [
+            "sg-0f2e0febc53e28c59"
+        ]
+    },
+    "nacls": {
+        "finding_status": "Found (Explicit)",
+        "nacl_id": "acl-09ef5b85fbb383460",
+        "rule_check_status": "Checked",
+        "rule_details": {
+            "nacl_id": "acl-09ef5b85fbb383460",
+            "outbound_http": "Allowed",
+            "outbound_https": "Allowed",
+            "inbound_ephemeral": "Allowed"
+        },
+        "raw_nacl_details": {
+            "Associations": [
+                {
+                    "NetworkAclAssociationId": "aclassoc-0f6033c267fcf41a3",
+                    "NetworkAclId": "acl-09ef5b85fbb383460",
+                    "SubnetId": "subnet-0c5c8679017a95d6a"
+                }
+            ],
+            "Entries": [
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                }
+            ],
+            "IsDefault": true,
+            "NetworkAclId": "acl-09ef5b85fbb383460",
+            "Tags": [],
+            "VpcId": "vpc-02fccae6f469ea828",
+            "OwnerId": "450339903191"
+        }
+    },
+    "raw_security_group_rules": [
+        {
+            "GroupId": "sg-0f2e0febc53e28c59",
+            "IpPermissionsEgress": [
+                {
+                    "IpProtocol": "-1",
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "any",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "tf-sg-cml-290d0cb0"
+                }
+            ],
+            "VpcId": "vpc-02fccae6f469ea828",
+            "SecurityGroupArn": "arn:aws:ec2:us-east-2:450339903191:security-group/sg-0f2e0febc53e28c59",
+            "OwnerId": "450339903191",
+            "GroupName": "tf-sg-cml-290d0cb0",
+            "Description": "CML required ports inbound/outbound",
+            "IpPermissions": [
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 80,
+                    "ToPort": 80,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow HTTP",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 1122,
+                    "ToPort": 1122,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow SSH",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                },
+                {
+                    "IpProtocol": "-1",
+                    "UserIdGroupPairs": [
+                        {
+                            "Description": "Allow all traffic from devnet workstation",
+                            "UserId": "450339903191",
+                            "GroupId": "sg-0b91ff28d96705fff"
+                        }
+                    ],
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 22,
+                    "ToPort": 22,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow CML termserver",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                },
+                {
+                    "IpProtocol": "udp",
+                    "FromPort": 2000,
+                    "ToPort": 7999,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow PATty UDP",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 9090,
+                    "ToPort": 9090,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow Cockpit",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 2000,
+                    "ToPort": 7999,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow PATty TCP",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 443,
+                    "ToPort": 443,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow HTTPS",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                }
+            ]
+        }
+    ],
+    "raw_nacl_rules": [
+        {
+            "Associations": [
+                {
+                    "NetworkAclAssociationId": "aclassoc-0f6033c267fcf41a3",
+                    "NetworkAclId": "acl-09ef5b85fbb383460",
+                    "SubnetId": "subnet-0c5c8679017a95d6a"
+                }
+            ],
+            "Entries": [
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                }
+            ],
+            "IsDefault": true,
+            "NetworkAclId": "acl-09ef5b85fbb383460",
+            "Tags": [],
+            "VpcId": "vpc-02fccae6f469ea828",
+            "OwnerId": "450339903191"
+        }
+    ],
+    "ssm_check": {
+        "status": "Failed (InvalidInstanceId)",
+        "details": {
+            "error": "An error occurred (InvalidInstanceId) when calling the SendCommand operation: Instances [[i-00f849f1b937453b4]] not in a valid state for account 450339903191"
+        }
+    },
+    "ssh_check": {
+        "status": "Passed",
+        "details": {
+            "message": "Connection successful."
+        }
+    },
+    "system_log": {
+        "status": "Retrieved",
+        "details": {
+            "log_content": "t\u000133@\u000f -1shu4N\u000133@\u000f -1\u04c3hu4N\u000133@\u000f -1\u04d3hu4N\u0111\u000133@\u000f -1\u04e3hu4ND\u000133@\u000f -1\u04f3hu4Np\u0002<\u00013hu\u000f\\&zm1M4M4\u0016}}4\u04ef}\u0000!$@L\u001d{C3ILuM4M4\u001e7}}N\u05c3T0\u0003hu&zm1M4M4\u0016}}zm1M4M4Lx_}\u07d9M4M4Lx_}M;m81\u0003\u000104jYhq^vg\u001e6xM4\u01cd}4\u04fd'z4N\u04e0\u0002g\u001d4M4M4MtM1M4M4G}M;N0\rM4M4MtM4LtM4M\u001f}}NhfM4M4M4M4LtM4N6}N@\u07be'\u001ezjmM4mu2nWw~ig\u05f4Nq\u001a\\zj+z\u001dz4N\u05c9u&zm1M4M4M4M4\u001d4M4M4}4\u04fdz\u001d{ILtM4M4]4M4M4M4\u0476q\u007fM4mz^g\u001d4M4F}\u05f4M1M4M4mmM;^\u05f4M4M4M4M4LtM4N6}N'\u065e\u01edu&zm1M4M4M4M4\u001d4M4\u04cd}4\u04fd\u05f4\u0389\f5\u001e)\ue76b\u068aV\u069e\u0007M;\u06de\u000ez\u001d{L\u0003\u07a9j\u0007{jz4]\u06d3^:'x3\u0000n\u25a0z\u0227vj)ZnWjx\u001eM7:yu3w]\u001e)\ue76b\u068aV\u069e\u0007M\u05de\u039ez\u001d{LhfMz\u0227vj)ZnWjx\u001eM7\u07cd\u0000#<8+L[O4}@\u0002<<0(\u0017u]~Yb1M7\u07cfz \u000f -\u001a'\"wK\u07ae\u0228}u\u07b21}4M4\u0019\"4}4~=\u0000 SI\u0010U\u0016F*\thmba\bezMM@\b\b54\bQn4n\"`\u0696*\u0018Wz]4~t\u0000 SI\u0010U\u0016F*H%\u0018Wz]4~t\u0000 SI\u0010U\u0016F*X%\u0018Wz]4~t\u0000!K\"\u0000\u0002<\u0000\r7#\u000fr\u07ca\u000bj\u0628)\u07e2*'MO@\b\u0007<DwL|\u039aM[j\u01f4M4M7\u07ddM yewgj{M7\u07ddj[@Z0x<\b,\u001a-[\b,M$h.z@<*\u07a6Vy\"\u0019/\u000b\u05a9\u01e8\n4~y!bt^+-z\u001a\u979aM4M4LtM4}}S\u0306&\u07aevz\bvz,jzj+g\u001d4\u046d4M1M\u001f}M\u7b4f2\u0018z\u06b6*'E\"\u05eby\u8c6b\u0799\u9a2f)L[\u001dM4\u017f^\u007fM7\u07de<bmj\u0628\u0017^g\u01afzgzm1o\u05fdM4\u0016{_}4~z!bt^+-z\u001a\u979a\u017f_4L[}}\u0306&\u07aevz\bvz,jzj+g\u0016q\u01f4M1muM\u000f2\u0018z\u06b6*'E\"\u05eby\u8c6b\u0799\u9a2f)L[m\u001eM4\u0176\u007fM7\u07de<bmj\u0628\u0017^g\u01afzgzm1m{M4\u0016}_}4~{!bt^+-z\u001a\u979a\u01774L[}}}S\u0306&\u07aevz\bvz,jzj+g\u00174M4M1}}M\u7f66zm1sM4M4\u0017}}j)ZnW!\u05ef\u01ecM\u0001b\nZ\u06da,vGhLM\\$q~)v8~'$\u0017}}\u031c4}~f^}Oz4xM\u036cz\u06e9\u0726Q\b\u0012_v)frv'z\u001dz'lM7^\u0726&m]y9\u001e)\u0376o4}u<4~9i/\u000b\u0572$\u062ci^vz!lh4\u07cex\u0727\\ibN92\f\u0000a"
+        }
+    }
+}

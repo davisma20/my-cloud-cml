@@ -13,8 +13,8 @@ The deployment uses Terraform to provision the necessary AWS resources (VPC, sub
 ## Current Stable Build Information (CML 2.7.0)
 
 *   **Packer Template:** `packer/cml-2.7.0.pkr.hcl`
-*   **Latest AMI (us-east-2):** `ami-0aef6f8637c4c6500` (Built 2025-04-06)
-*   **Terraform Variables File:** `packer/network_validated_ami.auto.tfvars` (defines AMI ID, region, instance types etc.)
+*   **Latest AMI (us-east-2):** `Build in progress (2025-04-15)`. Previous build (`ami-032d7958a238a2977`) encountered cloud-init issues during Terraform deployment.
+*   **Terraform Variables File:** `packer/network_validated_ami.auto.tfvars` (defines target AMI ID, region, instance types etc.)
 
 ## Configuration Details
 

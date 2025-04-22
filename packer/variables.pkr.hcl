@@ -13,8 +13,11 @@ variable "instance_type" {
 
 variable "source_ami" {
   type        = string
-  default     = "ami-0a0e4ef95325270c9" // Ubuntu 20.04 DevNet Expert AMI
-  description = "Source AMI ID to use as base"
+  description = "The source AMI ID for the Ubuntu base image (ensure region matches)"
+  # Ubuntu Server 22.04 LTS (HVM), SSD Volume Type - Hardened
+  # default = "ami-08c18c49bdb7f38f7"
+  # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type - Via SSM Parameter 2025-04-16
+  default = "ami-014d2a8190b1bdeb4"
 }
 
 variable "ssh_username" {
@@ -57,18 +60,20 @@ variable "ami_name_prefix" {
 
 variable "ami_description" {
   type        = string
-  default     = "Cisco Modeling Labs Controller"
-  description = "Description for the AMI"
+  description = "Description for the created AMI"
+  # default     = "Cisco CML 2.7.0 on Ubuntu 22.04 LTS - Built with Packer"
+  default = "Cisco CML 2.7.0 on Ubuntu 20.04 LTS - Built with Packer"
 }
 
 variable "ami_tags" {
   type        = map(string)
-  default     = {
-    OS_Version    = "Ubuntu 20.04"
-    Release       = "Latest"
-    Base_AMI_Name = "DevNet-Expert-Ubuntu-20.04"
+  description = "Tags to apply to the created AMI"
+  default = {
+    "Name"        = "CML 2.7.0 AMI (Packer)"
+    "OS"          = "Ubuntu"
+    "OS_Version"  = "20.04 LTS"
+    "Base_AMI_ID" = "ami-014d2a8190b1bdeb4"
   }
-  description = "Tags to apply to the AMI"
 }
 
 variable "volume_size" {

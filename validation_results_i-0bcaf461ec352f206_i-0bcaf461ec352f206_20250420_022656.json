@@ -1,0 +1,380 @@
+{
+    "instance_status": {
+        "status": "Details Found",
+        "state": "running",
+        "details": {}
+    },
+    "iam_permissions": {
+        "status": "Checked (Assumed for Root)",
+        "details": {
+            "ec2:DescribeInstances": "Allowed (Assumed for Root)",
+            "ec2:DescribeInstanceStatus": "Allowed (Assumed for Root)",
+            "ec2:DescribeSecurityGroups": "Allowed (Assumed for Root)",
+            "ec2:DescribeNetworkAcls": "Allowed (Assumed for Root)",
+            "ec2:DescribeSubnets": "Allowed (Assumed for Root)",
+            "ec2:GetConsoleOutput": "Allowed (Assumed for Root)",
+            "iam:SimulatePrincipalPolicy": "Allowed (Assumed for Root)",
+            "sts:GetCallerIdentity": "Allowed (Assumed for Root)",
+            "ssm:SendCommand": "Allowed (Assumed for Root)",
+            "ssm:GetCommandInvocation": "Allowed (Assumed for Root)"
+        },
+        "all_required_met": true
+    },
+    "security_groups": {
+        "status": "Checked",
+        "details": {
+            "outbound_http": "Allowed",
+            "outbound_https": "Allowed",
+            "inbound_ssh": "Allowed"
+        },
+        "ids_found": [
+            "sg-0b67d0699966fd83d"
+        ]
+    },
+    "nacls": {
+        "finding_status": "Found (Explicit)",
+        "nacl_id": "acl-01592d704981aefee",
+        "rule_check_status": "Checked",
+        "rule_details": {
+            "nacl_id": "acl-01592d704981aefee",
+            "outbound_http": "Allowed",
+            "outbound_https": "Allowed",
+            "inbound_ephemeral": "Allowed"
+        },
+        "raw_nacl_details": {
+            "Associations": [
+                {
+                    "NetworkAclAssociationId": "aclassoc-04af2ac4aa1b9cf7d",
+                    "NetworkAclId": "acl-01592d704981aefee",
+                    "SubnetId": "subnet-0e4840f20f7beb55d"
+                }
+            ],
+            "Entries": [
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                }
+            ],
+            "IsDefault": true,
+            "NetworkAclId": "acl-01592d704981aefee",
+            "Tags": [],
+            "VpcId": "vpc-00e2475b078c8f1bb",
+            "OwnerId": "450339903191"
+        }
+    },
+    "raw_security_group_rules": [
+        {
+            "GroupId": "sg-0b67d0699966fd83d",
+            "IpPermissionsEgress": [
+                {
+                    "IpProtocol": "-1",
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "any",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "tf-sg-cml-7f767e19"
+                }
+            ],
+            "VpcId": "vpc-00e2475b078c8f1bb",
+            "SecurityGroupArn": "arn:aws:ec2:us-east-2:450339903191:security-group/sg-0b67d0699966fd83d",
+            "OwnerId": "450339903191",
+            "GroupName": "tf-sg-cml-7f767e19",
+            "Description": "CML required ports inbound/outbound",
+            "IpPermissions": [
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 80,
+                    "ToPort": 80,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow HTTP",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 1122,
+                    "ToPort": 1122,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow SSH",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                },
+                {
+                    "IpProtocol": "-1",
+                    "UserIdGroupPairs": [
+                        {
+                            "Description": "Allow all traffic from devnet workstation",
+                            "UserId": "450339903191",
+                            "GroupId": "sg-04f32dc696d422bbc"
+                        }
+                    ],
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 22,
+                    "ToPort": 22,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow CML termserver",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                },
+                {
+                    "IpProtocol": "udp",
+                    "FromPort": 2000,
+                    "ToPort": 7999,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow PATty UDP",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 9090,
+                    "ToPort": 9090,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow Cockpit",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 2000,
+                    "ToPort": 7999,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow PATty TCP",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 443,
+                    "ToPort": 443,
+                    "UserIdGroupPairs": [],
+                    "IpRanges": [
+                        {
+                            "Description": "allow HTTPS",
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": []
+                }
+            ]
+        }
+    ],
+    "raw_nacl_rules": [
+        {
+            "Associations": [
+                {
+                    "NetworkAclAssociationId": "aclassoc-04af2ac4aa1b9cf7d",
+                    "NetworkAclId": "acl-01592d704981aefee",
+                    "SubnetId": "subnet-0e4840f20f7beb55d"
+                }
+            ],
+            "Entries": [
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                }
+            ],
+            "IsDefault": true,
+            "NetworkAclId": "acl-01592d704981aefee",
+            "Tags": [],
+            "VpcId": "vpc-00e2475b078c8f1bb",
+            "OwnerId": "450339903191"
+        }
+    ],
+    "nat_gateway": {
+        "subnet_id": "subnet-0e4840f20f7beb55d",
+        "nat_gateway_ids": [],
+        "details": {}
+    },
+    "ssm_check": {
+        "status": "Failed (InvalidInstanceId)",
+        "details": {
+            "error": "An error occurred (InvalidInstanceId) when calling the SendCommand operation: Instances [[i-0bcaf461ec352f206]] not in a valid state for account 450339903191"
+        }
+    },
+    "ssh_check": {
+        "status": "Failed (Timeout)",
+        "details": {
+            "error": "Connection timed out (10s)."
+        }
+    },
+    "system_log": {
+        "status": "Retrieved",
+        "details": {
+            "log_content": "nW]<\u036brBQ\u01a5rZoj[\u001cn\u079eXg\u05e5k(\u06d8}Mt7\u02c0v;)&z~r\u069e\u05e9rv4]Q!\u0014\u0012n9\ub2ba)\u6956\u001ab5Mun\u0762g+\bh6\u06ffu*'^rhF\u00034nt7k{drW-^y:\u079a\u001c{(m-\u001ey:=\u0000 *+z\u0228m6NN4rZ\u001c.\u01e1fj4}~fs'%z1}}\u07d9bvW}9Mz^8:|\u0003\t,\"m\u0326k?:j\u001dz\u01ed:y\u001d'\u001ey;N,\"^t\u0003\n.)\u0d8aa\u021cj\\vj\u04fd8o\\$qlq\u6ad7)M1}}}}\u07d9\\^Lvowuum'ez{8Nm\u04cd'N\u04dez\tbnx\u001dzV)Hi\u001e}|\u0006(0\u0496"
+        }
+    },
+    "cloudinit_logs": {
+        "error": "An error occurred (InvalidInstanceId) when calling the SendCommand operation: Instances [[i-0bcaf461ec352f206]] not in a valid state for account 450339903191"
+    },
+    "iam_role_and_policy": {
+        "profile_arn": "arn:aws:iam::450339903191:instance-profile/cml-ssm-profile",
+        "role_name": "cml-ssm-role",
+        "attached_policies": [
+            "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        ],
+        "inline_policies": [],
+        "error": null,
+        "ssm_policy_attached": true
+    },
+    "launch_metadata": {
+        "ami_id": "ami-0b4f0beb6d7710db2",
+        "instance_type": "c5.2xlarge",
+        "key_name": "terraform-key",
+        "user_data_present": false,
+        "launch_time": "2025-04-20 07:04:59+00:00"
+    },
+    "network_diagnostics": {
+        "error": "An error occurred (InvalidInstanceId) when calling the SendCommand operation: Instances [[i-0bcaf461ec352f206]] not in a valid state for account 450339903191"
+    }
+}

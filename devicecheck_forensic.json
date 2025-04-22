@@ -1,0 +1,28 @@
+{
+  "device_info": [],
+  "var/log/cloud-init.log": {
+    "matches": [],
+    "path": "/mnt/cml-root/var/log/cloud-init.log",
+    "exists": false
+  },
+  "var/log/cloud-init-output.log": {
+    "matches": [],
+    "path": "/mnt/cml-root/var/log/cloud-init-output.log",
+    "exists": false
+  },
+  "var/log/amazon/ssm/amazon-ssm-agent.log": {
+    "matches": [],
+    "path": "/mnt/cml-root/var/log/amazon/ssm/amazon-ssm-agent.log",
+    "exists": false
+  },
+  "var/log/syslog": {
+    "matches": [],
+    "path": "/mnt/cml-root/var/log/syslog",
+    "exists": false
+  },
+  "var/log/messages": {
+    "matches": [],
+    "path": "/mnt/cml-root/var/log/messages",
+    "exists": false
+  }
+}

@@ -14,8 +14,15 @@ variable "cfg_file" {
 
 variable "cfg_extra_vars" {
   type        = string
-  description = "extra variable definitions, typically empty"
+  description = "Optional path or string containing extra config data"
   default     = null
+}
+
+# Declare the variable automatically set by network_validated_ami.auto.tfvars
+variable "cml_ami_id" {
+  description = "AMI ID for the CML controller, typically set by the Packer build process via an .auto.tfvars file."
+  type        = string
+  default     = "" # Default to empty string if not set by auto.tfvars
 }
 
 # AWS related vars
@@ -48,11 +55,6 @@ variable "azure_tenant_id" {
 
 # Variables typically set by packer/network_validated_ami.auto.tfvars
 
-variable "cml_ami" {
-  type        = string
-  description = "The AMI ID for the CML controller instance. Set via .tfvars."
-}
-
 variable "aws_region" {
   type        = string
   description = "The AWS region where resources will be deployed. Set via .tfvars."
@@ -71,4 +73,10 @@ variable "enable_enhanced_monitoring" {
 variable "validate_network_on_boot" {
   type        = bool
   description = "Flag to run network validation checks on CML instance boot. Set via .tfvars."
+}
+
+variable "ami_id_override" {
+  description = "Optional: Specify a custom AMI ID to override the default lookup within the deploy module. Leave empty to use the module's default."
+  type        = string
+  default     = ""
 }

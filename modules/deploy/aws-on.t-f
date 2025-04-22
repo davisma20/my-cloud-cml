@@ -30,5 +30,5 @@ module "aws" {
   source  = "./aws"
   count   = var.cfg.target == "aws" ? 1 : 0
   options = local.options
+  cfg     = var.cfg
 }
-

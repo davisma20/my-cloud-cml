@@ -400,194 +400,40 @@ The deployment creates:
 4. Security groups for CML and workstation
 5. Optional compute nodes for clustering
 
-## Configuration Guide
+## Documentation Map
 
-### AWS Configuration
-- `region`: AWS region for deployment
-- `availability_zone`: Specific AZ for instances
-- `bucket`: S3 bucket for CML files
-- `flavor`: Instance type for CML controller
-- `profile`: IAM instance profile
+All project documentation is now centralized in the `documentation/` folder. Below is a map of the most important documents and their purposes:
 
-### Network Configuration
-- `public_vpc_ipv4_cidr`: VPC CIDR range
-- `allowed_ipv4_subnets`: IP ranges allowed to access CML
-- Optional: Use existing VPC/Gateway with `vpc_id` and `gw_id`
+### Core Documentation
+- [README.md](documentation/README.md): Overview of the documentation structure and getting started.
+- [CHANGELOG.md](documentation/CHANGELOG.md): Full project changelog and release history.
+- [TODO.md](documentation/TODO.md): Project TODOs and planned features.
+- [NEXT_STEPS.md](documentation/NEXT_STEPS.md): Immediate next actions and recommendations.
 
-### CML Configuration
-- `disk_size`: Root volume size
-- `controller_hostname`: CML hostname
-- `key_name`: SSH key pair name
-- `enable_patty`: Enable terminal access
-- `software`: Exact name of CML package file
-- `refplat.iso`: Exact name of reference platform ISO
+### Specialized Documentation Subfolders
+- [documentation/packer/README.md](documentation/packer/README.md): Packer-specific usage, troubleshooting, and build notes.
+- [documentation/packer/NEXT_STEPS_README.md](documentation/packer/NEXT_STEPS_README.md): Next steps for Packer-based builds.
+- [documentation/packer/NETWORK_DIAGNOSTICS_README.md](documentation/packer/NETWORK_DIAGNOSTICS_README.md): Network diagnostics and troubleshooting for Packer builds.
+- [documentation/security/hardening/README.md](documentation/security/hardening/README.md): Security hardening documentation and best practices.
 
-### Security Best Practices
-1. Use environment variables for AWS credentials
-2. Restrict `allowed_ipv4_subnets` in production
-3. Enable EBS encryption if required
-4. Use secrets management in production
-5. Verify package signatures before deployment
-6. Keep sensitive files out of version control
+### Cloud and Deployment Guides
+- [AWS.md](documentation/AWS.md): AWS-specific deployment instructions.
+- [CML_DEPLOYMENT.md](documentation/CML_DEPLOYMENT.md): General CML deployment overview.
+- [CML_INSTALLATION.md](documentation/CML_INSTALLATION.md): Step-by-step CML installation guide.
+- [PACKER_BUILD.md](documentation/PACKER_BUILD.md): Building custom AMIs with Packer.
 
-## Accessing CML
+### Troubleshooting & Forensics
+- [TROUBLESHOOTING.md](documentation/TROUBLESHOOTING.md): Troubleshooting common issues.
+- [CML_Forensic_Troubleshooting.md](documentation/CML_Forensic_Troubleshooting.md): Forensic analysis and advanced troubleshooting.
+- [SERVICE_MONITORING.md](documentation/SERVICE_MONITORING.md): Monitoring CML services and health.
 
-1. Connect to DevNet workstation:
-   ```bash
-   ssh -i your-key.pem ubuntu@workstation-ip
-   ```
+### Connectivity & Workstation
+- [CML_DEVNET_CONNECTIVITY.md](documentation/CML_DEVNET_CONNECTIVITY.md): CML and DevNet connectivity setup.
+- [DEVNET_WORKSTATION.md](documentation/DEVNET_WORKSTATION.md): DevNet Expert workstation setup and usage.
 
-2. Access CML GUI:
-   - Open browser on workstation
-   - Navigate to https://cml-controller
-   - Default credentials in documentation
-   - Change passwords on first login
+---
 
-## Troubleshooting
-
-If you encounter issues during deployment or with the CML instance, please check:
-
-1. [Troubleshooting Guide](documentation/TROUBLESHOOTING.md) - For common issues and their solutions
-2. [CML Installation Guide](documentation/CML_INSTALLATION.md) - For installation-specific issues and improvements
-3. Check the cloud-init logs on the instance: `/var/log/cloud-init-output.log`
-4. Check the CML provisioning log: `/var/log/cml-provision.log`
-5. Check the CML installation log: `/var/log/cml_install.log`
-
-## Support
-
-For issues with:
-- Deployment: Open an issue in this repository
-- CML software: Contact Cisco support
-- AWS services: Contact AWS support
-
-## Contributing
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
-
-## License
-
-This project is licensed under the terms of the LICENSE file included in this repository.
-
-# my-cloud-cml
-
-This is an enhanced fork of the Cisco DevNet cloud-cml repository with improved security features, enhanced CML deployment capabilities, and better repository organization.
-
-## Repository Structure
-
-The repository is organized as follows:
-
-```
-my-cloud-cml/
-│
-├── .git/ (Git internal directory)
-├── .gitignore
-├── .terraform/ (Terraform internal directory)
-├── .terraform.lock.hcl
-├── CHANGELOG.md
-├── CML-IMG-REL-CCO_RELEASE.pem
-├── CML_DEPLOYMENT.md
-├── DEVNET_WORKSTATION.md
-├── LICENSE
-├── NEXT_STEPS.md
-├── None_validation.log
-├── README.md
-├── TODO.md
-├── aws_cli_system_log.txt
-├── check_ssm_registration.py
-├── cisco_x509_verify_release.py3
-├── cloud-init-test.yaml
-├── cml-access-key.pem
-├── cml-assets/
-├── cml-cloudinit-test_*.json
-├── cml-controller-*.json
-├── cml-network-fix.tfplan
-├── cml2_2.7.0-4_amd64-20-pkg.zip
-├── cml2_2.7.0-4_amd64-20.pkg.README
-├── cml2_2.7.0-4_amd64-20.pkg.signature
-├── cml2_2.8.1-14_amd64-35_SHA256-disk1.vmdk
-├── cml_controller_screenshot.json
-├── cml_controller_system_log.txt
-├── cml_validator_utils/
-│   └── ... (Utility scripts and modules)
-├── compare_validation_results.py
-├── config.yml
-├── config.yml.example
-├── console_screenshot_*.jpg
-├── decode_screenshot.py
-├── devicecheck_forensic.json
-├── devnet_*.json
-├── documentation/
-│   └── ... (Project documentation files)
-├── forensic_*.log
-├── i-*.log (Instance-specific logs/validation results)
-├── i-*.txt (Instance-specific system logs)
-├── i-*.jpg (Instance-specific screenshots)
-├── images/
-│   └── ... (Image files, e.g., diagrams)
-├── import-cml.json
-├── logs/
-├── main.tf
-├── modules/
-│   └── ... (Terraform modules)
-├── monitor_cml_logs.sh
-├── monitor_logs.sh
-├── network_validated_ami.auto.tfvars
-├── output.tf
-├── packer/
-│   └── ... (Packer templates, scripts, and logs)
-├── prepare.bat
-├── prepare.sh
-├── quicktest_forensic_forensic.json
-├── refplat/
-│   └── ... (Reference platform files)
-├── refplat2.8/
-├── refplat_p-*.zip
-├── requirements.txt
-├── run_validation.py
-├── screenshot_*.jpg
-├── scripts/
-│   └── ... (General utility scripts)
-├── security/
-│   └── ... (Security-related files)
-├── serial_log_*.txt
-├── sessionmanager-bundle/
-├── sessionmanager-bundle.zip
-├── ssh_jump_connect.py
-├── terraform/
-├── terraform-key.pem
-├── terraform.auto.tfvars
-├── terraform.options-cfg.example.tfvars
-├── terraform.tf
-├── terraform.tfstate
-├── terraform.tfstate.backup
-├── terraform.tfvars
-├── tf_apply_with_logs.sh
-├── tfplan
-├── ubuntu-cloudinit-test_*.json
-├── upload-images-to-aws.sh
-├── validation_results_*.json
-├── validator.log
-├── validators/
-│   └── ... (Validation scripts and helpers)
-└── variables.tf
-```
-
-## Current Status & Debugging Notes (2025-04-21)
-
-Debugging the Packer build process for the CML 2.7.0 AMI revealed an issue with the CML package installation.
-
-**Findings:**
-*   Log analysis (`/var/log/cml_deb_install_detail.log` on the build instance) confirmed that the `apt-get install ./cml2*.deb` command completes.
-*   However, the `virl2-uwm.service` (CML Web Interface) systemd service file is missing after the installation.
-*   Other `virl2-*` services appear to be linked correctly in systemd.
-*   The CML `.deb` files are sourced correctly from `s3://cml-ova-import/cml-2.7.0-debs/` during the Packer build, as defined in `packer/cml-2.7.0.pkr.hcl`.
-
-**Conclusion:**
-The root cause is likely within the `cml2*.deb` package obtained from S3. It either lacks the `virl2-uwm.service` file entirely or fails during its internal post-installation scripts before creating/linking the service file.
-
-**Next Steps:**
-1.  Download the specific `cml2*.deb` file used in the build from the S3 bucket (`s3://cml-ova-import/cml-2.7.0-debs/`).
-2.  Inspect its contents locally using tools like `dpkg -c`, `ar x`, and `tar tf` to verify the presence of `virl2-uwm.service` and check the `postinst` script.
+All new documentation should be added to the `documentation/` folder and referenced here for consistency and discoverability.
 
 ## Project Root File Map
 

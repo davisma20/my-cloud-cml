@@ -1,40 +1,95 @@
-# AWS Secrets Manager Integration Guide
+# AWS Secrets Manager Integration
 
-This guide explains how to set up and use AWS Secrets Manager with your CML deployment.
+This document describes how to work with AWS Secrets Manager integration for the CML deployment.
 
-## Prerequisites
+## Overview
 
-1. An AWS account with appropriate permissions
-2. AWS CLI installed and configured
-3. Terraform installed (version 1.1.0 or higher)
+AWS Secrets Manager provides a secure way to store and manage sensitive information such as passwords, API keys, and other secrets needed for CML deployment. The integration in this project uses AWS Secrets Manager as the primary secret storage mechanism, retrieving secrets during deployment and avoiding the need to store sensitive information in configuration files or repositories.
 
-## Setup Steps
+## Configuration
 
-### 1. Configure AWS Credentials
+### Prerequisites
 
-Ensure your AWS credentials are properly configured. You can use one of the following methods:
+1. **AWS Account**: You need an AWS account with necessary permissions to create and manage secrets in AWS Secrets Manager.
+2. **IAM Permissions**: The IAM user or role used by Terraform should have the following permissions:
+   ```
+   secretsmanager:GetSecretValue
+   secretsmanager:DescribeSecret
+   ```
 
-#### Environment Variables
+### Setup
 
-```bash
-export AWS_ACCESS_KEY_ID="your-access-key"
-export AWS_SECRET_ACCESS_KEY="your-secret-key"
-export AWS_REGION="us-east-2"  # Same as your CML deployment region
+1. **Configure AWS Credentials**: Ensure your AWS credentials are configured locally using one of these methods:
+   - AWS CLI configuration (`aws configure`)
+   - Environment variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`)
+   - AWS credentials file (`~/.aws/credentials`)
+
+2. **Update config.yml**: Set AWS Secrets Manager as the active secret manager:
+   ```yaml
+   secret:
+     manager: aws
+     aws:
+       project_name: cml-devnet
+       environment: production
+     
+     # Define your secrets in this section
+     secrets:
+       app:
+         username: admin
+       sys:
+         username: sysadmin
+       cluster:
+         # Empty placeholder, actual value will come from AWS Secrets Manager
+       smartlicense_token:
+         # Empty placeholder, actual value will come from AWS Secrets Manager
+   ```
+
+## Secret Naming Convention
+
+The AWS Secrets Manager integration uses the following naming convention for secrets:
+
+```
+cml/<project_name>/<secret_name>
 ```
 
-#### AWS CLI Configuration
+Where:
+- `project_name` is defined in the `config.yml` (default: `cml-devnet`)
+- `secret_name` is one of:
+  - `app` - Application admin password
+  - `sys` - System admin password
+  - `cluster` - Cluster secret for CML clustering
+  - `smartlicense_token` - Smart licensing token for CML
+
+## Using the Migration Tool
+
+A migration tool is provided to help migrate secrets to AWS Secrets Manager:
 
 ```bash
-aws configure
+python scripts/aws_secrets_migration.py --project-name cml-devnet --region us-east-2
 ```
 
-#### IAM Role (if running on EC2)
+The tool will:
+1. Connect to AWS Secrets Manager
+2. Prompt for secret values
+3. Create or update secrets in AWS Secrets Manager
+4. Display a summary of the migration
 
-If your deployment is running on an EC2 instance, you can attach an IAM role with the appropriate permissions.
+## Verification
 
-### 2. IAM Permissions
+To verify that the AWS Secrets Manager integration is working correctly:
 
-Ensure your AWS user or role has the following permissions:
+```bash
+python verify_aws_secrets.py
+```
+
+This script will:
+1. Check that AWS Secrets Manager is the active secret manager in the configuration
+2. Verify that all required secrets can be retrieved
+3. Output a summary of the verification results
+
+## IAM Policy
+
+The following IAM policy can be used to grant the necessary permissions:
 
 ```json
 {
@@ -43,13 +98,8 @@ Ensure your AWS user or role has the following permissions:
     {
       "Effect": "Allow",
       "Action": [
-        "secretsmanager:CreateSecret",
         "secretsmanager:GetSecretValue",
-        "secretsmanager:PutSecretValue",
-        "secretsmanager:UpdateSecret",
-        "secretsmanager:DeleteSecret",
-        "secretsmanager:ListSecrets",
-        "secretsmanager:TagResource"
+        "secretsmanager:DescribeSecret"
       ],
       "Resource": "arn:aws:secretsmanager:*:*:secret:cml/*"
     }
@@ -57,103 +107,26 @@ Ensure your AWS user or role has the following permissions:
 }
 ```
 
-You can create a dedicated IAM policy with these permissions and attach it to your user or role.
-
-### 3. Migrate Existing Secrets (Optional)
-
-If you have existing secrets in Terraform state (using the dummy provider), you can migrate them to AWS Secrets Manager using the provided script:
-
-```bash
-cd /Users/miked/Documents/Projects/python_project/my-cloud-cml
-./scripts/migrate_to_aws_secrets.sh
-```
-
-### 4. Configure CML to Use AWS Secrets Manager
-
-Update your `config.yml` file to use AWS Secrets Manager:
-
-```yaml
-secret:
-  manager: aws
-  
-  aws:
-    project_name: "cml-devnet"  # Used as a prefix for secret names
-    environment: "production"   # Used for tagging secrets
-    
-  # Your existing secrets configuration
-  secrets:
-    app:
-      username: admin
-      # raw_secret: "your-password"  # Optional, will be generated if not specified
-      
-    sys:
-      username: sysadmin
-      # raw_secret: "your-password"  # Optional, will be generated if not specified
-      
-    smartlicense_token:
-      raw_secret: "your-smart-licensing-token"  # Required
-      
-    cluster:
-      # Will be auto-generated if clustering is enabled
-```
-
-### 5. Apply the Terraform Configuration
-
-You can use the provided helper script to apply the Terraform configuration:
-
-```bash
-cd /Users/miked/Documents/Projects/python_project/my-cloud-cml
-./scripts/apply_with_aws_secrets.sh
-```
-
-Or manually apply the configuration:
-
-```bash
-cd /Users/miked/Documents/Projects/python_project/my-cloud-cml
-terraform init
-terraform apply
-```
-
-## Secret Naming Convention
-
-By default, secrets will be created with the following naming pattern:
-
-```
-cml/<project_name>/<secret_name>
-```
-
-For example, with the default configuration:
-- `cml/cml-devnet/app`
-- `cml/cml-devnet/sys`
-- `cml/cml-devnet/smartlicense_token`
-- `cml/cml-devnet/cluster`
-
-You can override this naming convention by specifying a custom `path` for each secret in your configuration.
-
-For more detailed information about the AWS Secrets Manager module implementation, see [AWS Secrets Manager Module Documentation](AWS_SECRETS_MODULE.md).
-
 ## Troubleshooting
 
-### Cannot Access AWS Secrets Manager
+### Common Issues
 
-If you encounter errors accessing AWS Secrets Manager, check the following:
+1. **Secret Not Found**: Ensure that the secret exists in AWS Secrets Manager with the correct naming convention.
+2. **Permission Denied**: Verify that your IAM user or role has the necessary permissions to access the secrets.
+3. **Region Mismatch**: Ensure that you're using the same AWS region for both creating and accessing secrets.
 
-1. Verify AWS credentials are correctly configured
-2. Confirm the AWS region is set correctly (should match your CML deployment region)
-3. Ensure the IAM user or role has the necessary permissions
+### Debugging
 
-### Terraform Apply Fails
+To debug issues with AWS Secrets Manager integration:
 
-If `terraform apply` fails with errors related to AWS Secrets Manager:
+1. **Check AWS Secrets Manager Console**: Verify that the secrets exist in the correct region.
+2. **Run the Verification Script**: Use `verify_aws_secrets.py` to diagnose specific issues.
+3. **Check AWS Credentials**: Ensure your AWS credentials are valid and have not expired.
+4. **Enable AWS SDK Logging**: Set the environment variable `AWS_SDK_LOAD_CONFIG=1` to enable more detailed logging.
 
-1. Run `terraform init` to ensure all providers are properly initialized
-2. Verify the AWS provider configuration in the `provider_aws.tf` file
-3. Check the AWS credentials being used by Terraform
+## Best Practices
 
-### Secret Not Found
-
-If Terraform complains about not finding a secret:
-
-1. Verify the secret exists in AWS Secrets Manager with the expected name
-2. Check if the path specified in your configuration matches the actual path in AWS Secrets Manager
-3. Confirm the AWS region being used matches where the secrets are stored
+1. **Rotate Secrets Regularly**: Implement a process for regular rotation of secrets in AWS Secrets Manager.
+2. **Use Encryption**: AWS Secrets Manager encrypts secrets by default, but consider using customer-managed KMS keys for additional control.
+3. **Limit Access**: Use IAM policies with the principle of least privilege to limit who can access the secrets.
+4. **Monitor Access**: Enable AWS CloudTrail to monitor access to your secrets.

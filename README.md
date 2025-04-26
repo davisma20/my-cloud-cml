@@ -203,6 +203,7 @@ CML cloud supports these storage methods for the required platform and applicati
 - Random secrets by not specifiying any secrets
 - [Hashicorp Vault](https://www.vaultproject.io/)
 - [CyberArk Conjur](https://www.conjur.org/)
+- [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/)
 
 See the sections below for additional details how to use and manage secrets.
 
@@ -263,21 +264,76 @@ These steps are only required if using CyberArk Conjur as an external secrets ma
    $
    ```
 
-3. Create a `.terraformrc` file in the user's home:
+3. Copy the custom provider to `~/.terraform.d/plugins/localhost/cyberark/conjur/<version>/<architecture>/terraform-provider-conjur_v<version>`
 
-   ```hcl
+   ```console
+   $ mkdir -vp ~/.terraform.d/plugins/localhost/cyberark/conjur/0.6.7/darwin_arm64/
+   $ unzip ~/terraform-provider-conjur_0.6.7-4_darwin_arm64.zip -d ~/.terraform.d/plugins/localhost/cyberark/conjur/0.6.7/darwin_arm64/
+   ```
+
+4. Create or modify `~/.terraformrc` file to include:
+
+   ```terraform
    provider_installation {
-     filesystem_mirror {
-       path    = "/Users/example/.terraform.d/plugins"
-       include = ["localhost/cyberark/conjur"]
+     dev_overrides {
+       "localhost/cyberark/conjur" = "<Path to your custom provider dir>"
      }
+    
+     # For all other providers, install them directly from their origin provider
+     # registries as normal. Omitting this block entirely will default back to the
+     # normal Terraform behavior of downloading providers, which is what we want for
+     # providers other than Conjur.
      direct {
        exclude = ["localhost/cyberark/conjur"]
      }
    }
    ```
 
+<<<<<<< HEAD
 ## CML Password Management
+=======
+#### Using AWS Secrets Manager
+
+To use AWS Secrets Manager for storing your CML secrets:
+
+1. Ensure you have AWS credentials configured, either via environment variables, AWS credentials file, or IAM roles.
+
+2. Update your `config.yml` to use AWS Secrets Manager:
+
+   ```yaml
+   secret:
+     manager: aws
+     aws:
+       project_name: cml-devnet
+       environment: production
+     
+     # Define your secrets in this section
+     secrets:
+       app:
+         username: admin
+       sys:
+         username: sysadmin
+       cluster:
+         # Empty placeholder, actual value will come from AWS Secrets Manager
+       smartlicense_token:
+         # Empty placeholder, actual value will come from AWS Secrets Manager
+   ```
+
+3. The AWS Secrets Manager integration:
+   - Uses existing secrets stored in AWS Secrets Manager at the path `cml/<project_name>/<secret_name>`
+   - Default project name is `cml-devnet` but can be customized
+   - Expects the following secrets to be present:
+     - `cml/cml-devnet/app` - Application admin password
+     - `cml/cml-devnet/sys` - System admin password
+     - `cml/cml-devnet/cluster` - Cluster secret for CML clustering
+     - `cml/cml-devnet/smartlicense_token` - Smart licensing token for CML
+
+4. Required IAM permissions for AWS Secrets Manager (see `iam_policy_aws_secrets_manager.json`):
+
+For more detailed information, see the [AWS Secrets Manager documentation](AWS_SECRETS_MANAGER.md).
+
+### Terraform installation
+>>>>>>> origin/main
 
 > [!IMPORTANT]
 > **Understanding CML Credentials**
@@ -311,6 +367,7 @@ See the documentation directory for cloud specific instructions:
 
 - [Amazon Web Services (AWS)](documentation/AWS.md)
 - [Microsoft Azure](documentation/Azure.md)
+- [AWS Secrets Manager Integration](documentation/AWS_SECRETS_MANAGER.md)
 
 ## Customization
 

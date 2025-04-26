@@ -73,8 +73,11 @@ license:
 
 # Secrets management (use environment variables in production)
 secrets:
-  backend: "dummy"  # Use "vault" or other backends in production
+  backend: "dummy"  # Use "vault", "aws", or other backends in production
   vault:
     address: ""
     token: ""
     path: ""
+  aws:
+    project_name: "cml-devnet"  # Used as a prefix for secret names
+    environment: "production"   # Used for tagging secrets

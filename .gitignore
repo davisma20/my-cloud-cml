@@ -53,3 +53,7 @@ Thumbs.db
 # Terraform state files
 terraform.tfstate
 terraform.tfstate.backup
+
+# Ignore SSH private keys used for validation
+keys/
+cml-validation-key.pem

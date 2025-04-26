@@ -541,35 +541,18 @@ All new documentation should be added to the `documentation/` folder and referen
 └── variables.tf
 ```
 
-## Validation Script (`run_validation.py`)
+## Validation Scripts
 
-The `run_validation.py` script performs various checks to validate the deployed CML instance environment.
+All validation scripts are now located in the top-level `validations/` directory. To validate your CML deployment, use:
 
-### Features
-
-*   Checks basic instance details (requires instance ID).
-*   Validates Security Group rules (requires instance ID).
-*   Validates Network ACL rules (requires instance ID).
-*   Checks SSM agent connectivity (requires instance ID).
-*   Retrieves system logs (via Boto3 or AWS CLI).
-*   Checks SSH connectivity (requires instance ID and SSH key path).
-*   **New:** Checks status of critical CML systemd services (`virl2-controller`, `virl2-uwm`, `virl2-lowlevel-driver`) via SSM Run Command using the `--check-cml-services` flag.
-
-### Usage
-
-```bash
-# Basic validation
-python run_validation.py -i <instance-id>
-
-# Validation with CML service check
-python run_validation.py -i <instance-id> --check-cml-services
-
-# Specify AWS profile and region
-python run_validation.py -i <instance-id> -p <profile-name> -r <region-name>
-
-# Enable debug logging
-python run_validation.py -i <instance-id> --log-level DEBUG
+```sh
+cd validations
+python3 run_validation.py --instance-id <INSTANCE_ID> --check-cml-services
 ```
+
+Replace `<INSTANCE_ID>` with your actual AWS EC2 instance ID (e.g., `i-0e0bc211293ebad69`).
+
+This structure allows you to reuse validation scripts across all CML versions (e.g., `cml.2.7.0`, `cml.2.8.1`).
 
 ## Recent Updates
 

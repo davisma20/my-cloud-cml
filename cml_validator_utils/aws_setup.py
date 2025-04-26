@@ -29,40 +29,25 @@ def setup_logging(log_file, debug=False):
 
     # Console Handler (if not already configured by basicConfig, or to customize)
     console_handler = logging.StreamHandler()
-    console_formatter = logging.Formatter('%(levelname)s: %(message)s') # Simpler format for console
+    console_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     console_handler.setFormatter(console_formatter)
     console_handler.setLevel(log_level)
     logger.addHandler(console_handler)
 
-    # Prevent logging from propagating to the root logger if basicConfig was used
-    logger.propagate = False 
-    
     return logger
 
-def initialize_aws_session(region, profile, endpoint_url=None):
-    """Initializes and returns a Boto3 session."""
-    logger = logging.getLogger('AwsCmlValidator')
-    logger.info(f"Initializing Boto3 session in region '{region}' using profile '{profile}'.")
+def initialize_aws_session(region_name=None, profile_name=None):
+    """Initializes and returns a boto3 session."""
     try:
-        session = boto3.Session(profile_name=profile, region_name=region)
-        # Verify credentials
-        sts_client = session.client('sts', endpoint_url=endpoint_url)
-        sts_client.get_caller_identity()
-        logger.info("AWS session and credentials verified successfully.")
-        return session
-    except PartialCredentialsError:
-        logger.error("Incomplete AWS credentials found. Ensure AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and potentially AWS_SESSION_TOKEN are configured.")
-    except NoCredentialsError:
-        logger.error(f"AWS credentials not found for profile '{profile}' or environment variables.")
-    except ClientError as e:
-        if 'InvalidClientTokenId' in str(e) or 'SignatureDoesNotMatch' in str(e):
-            logger.error(f"Invalid AWS credentials provided for profile '{profile}'. Please check keys and token.")
-        elif 'ExpiredToken' in str(e):
-             logger.error(f"AWS session token for profile '{profile}' has expired.")
+        if profile_name:
+            session = boto3.Session(profile_name=profile_name, region_name=region_name)
         else:
-            logger.error(f"AWS ClientError during session initialization: {e}")
+            session = boto3.Session(region_name=region_name)
+        return session
+    except (NoCredentialsError, PartialCredentialsError) as e:
+        logging.error(f"AWS credentials error: {e}")
     except Exception as e:
-        logger.error(f"An unexpected error occurred during AWS session initialization: {e}")
+        logging.error(f"Failed to initialize AWS session: {e}")
     return None
 
 def get_ec2_client(session, endpoint_url=None):
@@ -72,15 +57,15 @@ def get_ec2_client(session, endpoint_url=None):
         logger.error("Cannot create EC2 client: Boto3 session is not available.")
         return None
     logger.debug(f"Creating EC2 client with endpoint URL: {endpoint_url if endpoint_url else 'Default'}")
-    return session.client('ec2', endpoint_url=endpoint_url)
+    try:
+        return session.client('ec2', endpoint_url=endpoint_url)
+    except ClientError as e:
+        logger.error(f"Failed to create EC2 client: {e}")
+        return None
 
 def get_instance_details(ec2_client, instance_id):
-    """Fetches and returns details for the specified EC2 instance."""
+    """Retrieves the details of the specified EC2 instance."""
     logger = logging.getLogger('AwsCmlValidator')
-    if not ec2_client:
-        logger.error("Cannot get instance details: EC2 client is not available.")
-        return None, None, None, None, None
-    
     logger.info(f"Fetching details for instance: {instance_id}")
     try:
         response = ec2_client.describe_instances(InstanceIds=[instance_id])

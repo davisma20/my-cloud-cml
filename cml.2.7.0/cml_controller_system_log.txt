@@ -1,0 +1,768 @@
+i-090ade0d33ada3804	7158] TCP established hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    0.559180] TCP bind hash table entries: 65536 (order: 9, 2097152 bytes, linear)
+[    0.560779] TCP: Hash tables configured (established 131072 bind 65536)
+[    0.562144] MPTCP token hash table entries: 16384 (order: 6, 393216 bytes, linear)
+[    0.563635] UDP hash table entries: 8192 (order: 6, 262144 bytes, linear)
+[    0.564993] UDP-Lite hash table entries: 8192 (order: 6, 262144 bytes, linear)
+[    0.566403] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.567469] NET: Registered PF_XDP protocol family
+[    0.568400] pci_bus 0000:00: resource 4 [io  0x0000-0x0cf7 window]
+[    0.569543] pci_bus 0000:00: resource 5 [io  0x0d00-0xffff window]
+[    0.570702] pci_bus 0000:00: resource 6 [mem 0x000a0000-0x000bffff window]
+[    0.572012] pci_bus 0000:00: resource 7 [mem 0xc0000000-0xfebfffff window]
+[    0.573310] pci_bus 0000:00: resource 8 [mem 0x440000000-0x20043fffffff window]
+[    0.574736] pci 0000:00:00.0: Limiting direct PCI/PCI transfers
+[    0.575956] PCI: CLS 0 bytes, default 64
+[    0.576754] PCI-DMA: Using software bounce buffering for IO (SWIOTLB)
+[    0.576817] Trying to unpack rootfs image as initramfs...
+[    0.577961] software IO TLB: mapped [mem 0x00000000b4eec000-0x00000000b8eec000] (64MB)
+[    0.578013] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x2b3e4180184, max_idle_ns: 440795270742 ns
+[    0.582370] clocksource: Switched to clocksource tsc
+[    0.583693] Initialise system trusted keyrings
+[    0.584580] Key type blacklist registered
+[    0.585417] workingset: timestamp_bits=36 max_order=22 bucket_order=0
+[    0.586468] Freeing initrd memory: 9376K
+[    0.586655] zbud: loaded
+[    0.588125] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.589364] fuse: init (API version 7.39)
+[    0.590287] integrity: Platform Keyring initialized
+[    0.591221] integrity: Machine keyring initialized
+[    0.602942] Key type asymmetric registered
+[    0.603721] Asymmetric key parser 'x509' registered
+[    0.604674] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 243)
+[    0.606125] io scheduler mq-deadline registered
+[    0.607230] shpchp: Standard Hot Plug PCI Controller Driver version: 0.4
+[    0.608594] input: Power Button as /devices/LNXSYSTM:00/LNXPWRBN:00/input/input0
+[    0.610061] ACPI: button: Power Button [PWRF]
+[    0.610906] input: Sleep Button as /devices/LNXSYSTM:00/LNXSLPBN:00/input/input1
+[    0.612347] ACPI: button: Sleep Button [SLPF]
+[    0.613696] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    0.641930] 00:04: ttyS0 at I/O 0x3f8 (irq = 4, base_baud = 115200) is a 16550A
+[    0.644019] Linux agpgart interface v0.103
+[    0.646736] loop: module loaded
+[    0.647506] Key type psk registered
+[    0.648475] ACPI: bus type drm_connector registered
+[    0.648564] nvme nvme0: pci function 0000:00:04.0
+[    0.649587] tun: Universal TUN/TAP device driver, 1.6
+[    0.650655] ACPI: \_SB_.LNKD: Enabled at IRQ 11
+[    0.651326] PPP generic driver version 2.4.2
+[    0.653103] i8042: PNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12
+[    0.654786] i8042: Warning: Keylock active
+[    0.656758] serio: i8042 KBD port at 0x60,0x64 irq 1
+[    0.657733] serio: i8042 AUX port at 0x60,0x64 irq 12
+[    0.658802] mousedev: PS/2 mouse device common for all mice
+[    0.660015] rtc_cmos 00:00: RTC can wake from S4
+[    0.673018] rtc_cmos 00:00: registered as rtc0
+[    0.673432] nvme nvme0: 2/0/0 default/read/poll queues
+[    0.674056] rtc_cmos 00:00: setting system clock to 2025-04-18T23:02:59 UTC (1745017379)
+[    0.676522] rtc_cmos 00:00: alarms up to one day, 114 bytes nvram
+[    0.677689] i2c_dev: i2c /dev entries driver
+[    0.678539] device-mapper: core: CONFIG_IMA_DISABLE_HTABLE is disabled. Duplicate IMA measurements will not be recorded in the IMA log.
+[    0.680809] device-mapper: uevent: version 1.0.3
+[    0.681768] device-mapper: ioctl: 4.48.0-ioctl (2023-03-01) initialised: dm-devel@redhat.com
+[    0.683363] platform eisa.0: Probing EISA bus 0
+[    0.684260] platform eisa.0: EISA: Cannot allocate resource for mainboard
+[    0.685553] platform eisa.0: Cannot allocate resource for EISA slot 1
+[    0.686762] platform eisa.0: Cannot allocate resource for EISA slot 2
+[    0.688006] platform eisa.0: Cannot allocate resource for EISA slot 3
+[    0.688022]  nvme0n1: p1 p14 p15
+[    0.689224] platform eisa.0: Cannot allocate resource for EISA slot 4
+[    0.689225] platform eisa.0: Cannot allocate resource for EISA slot 5
+[    0.689226] platform eisa.0: Cannot allocate resource for EISA slot 6
+[    0.689227] platform eisa.0: Cannot allocate resource for EISA slot 7
+[    0.689228] platform eisa.0: Cannot allocate resource for EISA slot 8
+[    0.695879] platform eisa.0: EISA: Detected 0 cards
+[    0.696858] intel_pstate: P-states controlled by the platform
+[    0.698071] ledtrig-cpu: registered to indicate activity on CPUs
+[    0.699499] [drm] Initialized simpledrm 1.0.0 20200625 for simple-framebuffer.0 on minor 0
+[    0.702697] Console: switching to colour frame buffer device 100x37
+[    0.704511] simple-framebuffer simple-framebuffer.0: [drm] fb0: simpledrmdrmfb frame buffer device
+[    0.706695] drop_monitor: Initializing network drop monitor service
+[    0.708071] NET: Registered PF_INET6 protocol family
+[    0.709701] Segment Routing with IPv6
+[    0.710419] In-situ OAM (IOAM) with IPv6
+[    0.711231] NET: Registered PF_PACKET protocol family
+[    0.712282] Key type dns_resolver registered
+[    0.713884] No MBM correction factor available
+[    0.714771] IPI shorthand broadcast: enabled
+[    0.717154] sched_clock: Marking stable (514004449, 202918258)->(815819290, -98896583)
+[    0.718790] registered taskstats version 1
+[    0.720588] Loading compiled-in X.509 certificates
+[    0.722308] Loaded X.509 cert 'Build time autogenerated kernel key: e72f517b0fb7de4d63f0f48a3edcbc845f3eb492'
+[    0.725485] Loaded X.509 cert 'Canonical Ltd. Live Patch Signing: 14df34d1a87cf37625abec039ef2bf521249b969'
+[    0.728437] Loaded X.509 cert 'Canonical Ltd. Kernel Module Signing: 88f752e560a1e0737e31163a466ad7b70a850c19'
+[    0.730709] blacklist: Loading compiled-in revocation X.509 certificates
+[    0.732645] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing: 61482aa2830d0ab2ad5af10b7250da9033ddcef0'
+[    0.735322] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2017): 242ade75ac4a15e50d50c84b0d45ff3eae707a03'
+[    0.738031] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (ESM 2018): 365188c1d374d6b07c3c8f240f8ef722433d6a8b'
+[    0.740624] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2019): c0746fd6c5da3ae827864651ad66ae47fe24b3e8'
+[    0.743497] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v1): a8d54bbb3825cfb94fa13c9f8a594a195c107b8d'
+[    0.746449] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v2): 4cf046892d6fd3c9a5b03f98d845f90851dc6a8c'
+[    0.749431] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v3): 100437bb6de6e469b581e61cd66bce3ef4ed53af'
+[    0.752449] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (Ubuntu Core 2019): c1d57b8f6b743f23ee41f4f7ee292f06eecadfb9'
+[    0.758903] Key type .fscrypt registered
+[    0.760373] Key type fscrypt-provisioning registered
+[    0.762592] Key type encrypted registered
+[    0.763671] AppArmor: AppArmor sha256 policy hashing enabled
+[    0.765511] ima: No TPM chip found, activating TPM-bypass!
+[    0.766904] Loading compiled-in module X.509 certificates
+[    0.768800] Loaded X.509 cert 'Build time autogenerated kernel key: e72f517b0fb7de4d63f0f48a3edcbc845f3eb492'
+[    0.771768] ima: Allocated hash algorithm: sha256
+[    0.773437] ima: No architecture policies found
+[    0.775020] evm: Initialising EVM extended attributes:
+[    0.776331] evm: security.selinux
+[    0.777286] evm: security.SMACK64
+[    0.778249] evm: security.SMACK64EXEC
+[    0.779266] evm: security.SMACK64TRANSMUTE
+[    0.780359] evm: security.SMACK64MMAP
+[    0.781355] evm: security.apparmor
+[    0.782293] evm: security.ima
+[    0.783152] evm: security.capability
+[    0.784131] evm: HMAC attrs: 0x1
+[    0.785667] PM:   Magic number: 5:742:49
+[    0.787016] memory memory81: hash matches
+[    0.792179] RAS: Correctable Errors collector initialized.
+[    0.793562] clk: Disabling unused clocks
+[    1.176397] input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input2
+[    1.178559] md: Waiting for all devices to be available before autodetect
+[    1.179516] md: If you don't use raid, use raid=noautodetect
+[    1.180365] md: Autodetecting RAID arrays.
+[    1.181038] md: autorun ...
+[    1.181558] md: ... autorun DONE.
+[    1.284010] EXT4-fs (nvme0n1p1): mounted filesystem 1704c5c0-f1f1-4418-b861-7e80cddeb8e5 ro with ordered data mode. Quota mode: none.
+[    1.285731] VFS: Mounted root (ext4 filesystem) readonly on device 259:1.
+[    1.287139] devtmpfs: mounted
+[    1.289447] Freeing unused decrypted memory: 2028K
+[    1.291744] Freeing unused kernel image (initmem) memory: 5096K
+[    1.292997] Write protecting the kernel read-only data: 36864k
+[    1.294088] Freeing unused kernel image (rodata/data gap) memory: 344K
+[    1.341555] x86/mm: Checked W+X mappings: passed, no W+X pages found.
+[    1.342470] x86/mm: Checking user space page tables
+[    1.388428] x86/mm: Checked W+X mappings: passed, no W+X pages found.
+[    1.389333] Run /sbin/init as init process
+[    9.749134] systemd[1]: Inserted module 'autofs4'
+[   10.294708] systemd[1]: systemd 249.11-0ubuntu3.15 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT +GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY -P11KIT -QRENCODE +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified)
+[   10.299155] systemd[1]: Detected virtualization amazon.
+[   10.300103] systemd[1]: Detected architecture x86-64.
+
+Welcome to [1mUbuntu 22.04.5 LTS[0m!
+
+[   10.660042] systemd[1]: Hostname set to <ip-172-31-29-59>.
+[   11.715263] block nvme0n1: the capability attribute has been deprecated.
+[   14.453323] systemd[1]: Configuration file /run/systemd/system/netplan-ovs-cleanup.service is marked world-inaccessible. This has no effect as configuration data is accessible via APIs without restrictions. Proceeding anyway.
+[   14.939014] systemd[1]: /lib/systemd/system/snapd.service:23: Unknown key name 'RestartMode' in section 'Service', ignoring.
+[   16.355007] systemd[1]: /etc/systemd/system/cloud-final.service.d/wait-for-network.conf:1: Assignment outside of section. Ignoring.
+[   16.356843] systemd[1]: /etc/systemd/system/cloud-final.service.d/wait-for-network.conf:2: Assignment outside of section. Ignoring.
+[   16.359272] systemd[1]: /etc/systemd/system/cloud-final.service.d/wait-for-network.conf:3: Assignment outside of section. Ignoring.
+[   16.769483] systemd[1]: Queued start job for default target Graphical Interface.
+[   16.780593] systemd[1]: Created slice Virtual Machine and Container Slice.
+[[0;32m  OK  [0m] Created slice [0;1;39mVirtual Machine and Container Slice[0m.
+[   16.783357] systemd[1]: Created slice Slice /system/modprobe.
+[[0;32m  OK  [0m] Created slice [0;1;39mSlice /system/modprobe[0m.
+[   16.785512] systemd[1]: Created slice Slice /system/serial-getty.
+[[0;32m  OK  [0m] Created slice [0;1;39mSlice /system/serial-getty[0m.
+[   16.788169] systemd[1]: Created slice Slice /system/systemd-fsck.
+[[0;32m  OK  [0m] Created slice [0;1;39mSlice /system/systemd-fsck[0m.
+[   16.790614] systemd[1]: Created slice User and Session Slice.
+[[0;32m  OK  [0m] Created slice [0;1;39mUser and Session Slice[0m.
+[   16.792818] systemd[1]: Started Forward Password Requests to Wall Directory Watch.
+[[0;32m  OK  [0m] Started [0;1;39mForward Password R…uests to Wall Directory Watch[0m.
+[   16.795432] systemd[1]: Set up automount Arbitrary Executable File Formats File System Automount Point.
+[[0;32m  OK  [0m] Set up automount [0;1;39mArbitrary…s File System Automount Point[0m.
+[   16.798441] systemd[1]: Reached target Slice Units.
+[[0;32m  OK  [0m] Reached target [0;1;39mSlice Units[0m.
+[   16.800366] systemd[1]: Reached target Mounting snaps.
+[[0;32m  OK  [0m] Reached target [0;1;39mMounting snaps[0m.
+[   16.802315] systemd[1]: Reached target Swaps.
+[[0;32m  OK  [0m] Reached target [0;1;39mSwaps[0m.
+[   16.804108] systemd[1]: Reached target System Time Set.
+[[0;32m  OK  [0m] Reached target [0;1;39mSystem Time Set[0m.
+[   16.806100] systemd[1]: Reached target Local Verity Protected Volumes.
+[[0;32m  OK  [0m] Reached target [0;1;39mLocal Verity Protected Volumes[0m.
+[   16.808342] systemd[1]: Reached target Libvirt guests shutdown.
+[[0;32m  OK  [0m] Reached target [0;1;39mLibvirt guests shutdown[0m.
+[   16.810533] systemd[1]: Listening on Device-mapper event daemon FIFOs.
+[[0;32m  OK  [0m] Listening on [0;1;39mDevice-mapper event daemon FIFOs[0m.
+[   16.812731] systemd[1]: Listening on LVM2 poll daemon socket.
+[[0;32m  OK  [0m] Listening on [0;1;39mLVM2 poll daemon socket[0m.
+[   16.814749] systemd[1]: Listening on multipathd control socket.
+[[0;32m  OK  [0m] Listening on [0;1;39mmultipathd control socket[0m.
+[   16.816579] systemd[1]: Listening on Syslog Socket.
+[[0;32m  OK  [0m] Listening on [0;1;39mSyslog Socket[0m.
+[   16.818546] systemd[1]: Listening on fsck to fsckd communication Socket.
+[[0;32m  OK  [0m] Listening on [0;1;39mfsck to fsckd communication Socket[0m.
+[   16.820860] systemd[1]: Listening on initctl Compatibility Named Pipe.
+[[0;32m  OK  [0m] Listening on [0;1;39minitctl Compatibility Named Pipe[0m.
+[   16.823173] systemd[1]: Listening on Journal Audit Socket.
+[[0;32m  OK  [0m] Listening on [0;1;39mJournal Audit Socket[0m.
+[   16.825064] systemd[1]: Listening on Journal Socket (/dev/log).
+[[0;32m  OK  [0m] Listening on [0;1;39mJournal Socket (/dev/log)[0m.
+[   16.826892] systemd[1]: Listening on Journal Socket.
+[[0;32m  OK  [0m] Listening on [0;1;39mJournal Socket[0m.
+[   16.828978] systemd[1]: Listening on Network Service Netlink Socket.
+[[0;32m  OK  [0m] Listening on [0;1;39mNetwork Service Netlink Socket[0m.
+[   16.831039] systemd[1]: Listening on udev Control Socket.
+[[0;32m  OK  [0m] Listening on [0;1;39mudev Control Socket[0m.
+[   16.832751] systemd[1]: Listening on udev Kernel Socket.
+[[0;32m  OK  [0m] Listening on [0;1;39mudev Kernel Socket[0m.
+[   16.844010] systemd[1]: Mounting Huge Pages File System...
+         Mounting [0;1;39mHuge Pages File System[0m...
+[   16.846653] systemd[1]: Mounting POSIX Message Queue File System...
+         Mounting [0;1;39mPOSIX Message Queue File System[0m...
+[   16.849427] systemd[1]: Mounting Kernel Debug File System...
+         Mounting [0;1;39mKernel Debug File System[0m...
+[   16.851768] systemd[1]: Mounting Kernel Trace File System...
+         Mounting [0;1;39mKernel Trace File System[0m...
+[   16.855285] systemd[1]: Starting Journal Service...
+         Starting [0;1;39mJournal Service[0m...
+[   16.858331] systemd[1]: Starting Set the console keyboard layout...
+         Starting [0;1;39mSet the console keyboard layout[0m...
+[   16.860941] systemd[1]: Starting Create List of Static Device Nodes...
+         Starting [0;1;39mCreate List of Static Device Nodes[0m...
+[   16.863799] systemd[1]: Starting Monitoring of LVM2 mirrors, snapshots etc. using dmeventd or progress polling...
+         Starting [0;1;39mMonitoring of LVM…meventd or progress polling[0m...
+[   16.866413] systemd[1]: Condition check resulted in LXD - agent being skipped.
+[   16.868694] systemd[1]: Starting Load Kernel Module configfs...
+         Starting [0;1;39mLoad Kernel Module configfs[0m...
+[   16.872108] systemd[1]: Starting Load Kernel Module drm...
+         Starting [0;1;39mLoad Kernel Module drm[0m...
+[   16.874709] systemd[1]: Starting Load Kernel Module efi_pstore...
+         Starting [0;1;39mLoad Kernel Module efi_pstore[0m...
+[   16.877675] systemd[1]: Starting Load Kernel Module fuse...
+         Starting [0;1;39mLoad Kernel Module fuse[0m...
+[   16.880194] systemd[1]: Starting File System Check on Root Device...
+         Starting [0;1;39mFile System Check on Root Device[0m...
+[   16.883738] systemd[1]: Starting Load Kernel Modules...
+         Starting [0;1;39mLoad Kernel Modules[0m...
+[   16.886167] systemd[1]: Starting Coldplug All udev Devices...
+         Starting [0;1;39mColdplug All udev Devices[0m...
+[   16.889275] systemd[1]: Finished Create List of Static Device Nodes.
+[[0;32m  OK  [0m] Finished [0;1;39mCreate List of Static Devi[   16.891195] systemd[1]: modprobe@configfs.service: Deactivated successfully.
+ce Nodes[0m.
+[   16.892800] systemd[1]: Finished Load Kernel Module configfs.
+[[0;32m  OK  [0m] Finished [0;1;39mLoad Kernel Module configf[   16.894600] systemd[1]: modprobe@drm.service: Deactivated successfully.
+s[0m.
+[   16.895837] systemd[1]: Finished Load Kernel Module drm.
+[[0;32m  OK  [0m] Finished [0;1;39mLoad Kernel Module drm[0m.
+[   16.897425] systemd[1]: modprobe@fuse.service: Deactivated successfully.
+[   16.898555] systemd[1]: Finished Load Kernel Module fuse.
+[[0;32m  OK  [0m] Finished [0;1;39mLoad Kernel Module fuse[0m.
+[   16.900898] systemd[1]: Mounting FUSE Control File System...
+         Mounting [0;1;39mFUSE Control File System[0m...
+[   16.902838] systemd[1]: Mounting Kernel Configuration File System...
+         Mounting [0;1;39mKernel Configuration File System[0m...
+[   16.905318] systemd[1]: Started File System Check Daemon to report status.
+[[0;32m  OK  [0m] Started [0;1;39mFile System Check Daemon to report status[0m.
+[   16.923807] systemd[1]: Mounted Huge Pages File System.
+[[0;32m  OK  [0m] Mounted [0;1;39mHuge Pages File System[0m.
+[   16.925851] systemd[1]: Mounted POSIX Message Queue File System.
+[[0;32m  OK  [0m] Mounted [0;1;39mPOSIX Messa[   16.927154] systemd[1]: Mounted Kernel Debug File System.
+ge Queue File System[0m.
+[[0;32m  OK  [0m] Mounted [0;1;39mKernel Debu[   16.928478] systemd[1]: Mounted Kernel Trace File System.
+g File System[0m.
+[[0;32m  OK  [0m] Mounted [0;1;39mKernel Trac[   16.930190] systemd[1]: Mounted FUSE Control File System.
+e File System[0m.
+[[0;32m  OK  [0m] Mounted [0;1;39mFUSE Contro[   16.931809] systemd[1]: Mounted Kernel Configuration File System.
+l File System[0m.
+[[0;32m  OK  [0m] Mounted [0;1;39mKernel Configuration File System[0m.
+[   16.939164] systemd[1]: Finished Coldplug All udev Devices.
+[[0;32m  OK  [0m] Finished [0;1;39mColdplug All udev Devices[0m.
+[   16.964127] systemd[1]: Started Journal Service.
+[[0;32m  OK  [0m] Started [0;1;39mJournal Service[0m.
+[   16.993493] pstore: Using crash dump compression: deflate
+[   16.997040] pstore: Registered efi_pstore as persistent store backend
+[[0;32m  OK  [0m] Finished [0;1;39mLoad Kernel Module efi_pstore[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mSet the console keyboard layout[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mFile System Check on Root Device[0m.
+         Starting [0;1;39mRemount Root and Kernel File Systems[0m...
+[   17.542961] EXT4-fs (nvme0n1p1): re-mounted 1704c5c0-f1f1-4418-b861-7e80cddeb8e5 r/w. Quota mode: none.
+[[0;32m  OK  [0m] Finished [0;1;39mRemount Root and Kernel File Systems[0m.
+         Starting [0;1;39mDevice-Mapper Multipath Device Controller[0m...
+         Starting [0;1;39mFlush Journal to Persistent Storage[0m...
+         Starting [0;1;39mLoad/Save Random Seed[0m...
+         Starting [0;1;39mCreate System Users[0m...
+[[0;32m  OK  [0m] Finished [0;1;39mLoad/Save Random Seed[0m.
+[   17.603410] bridge: filtering via arp/ip/ip6tables is no longer available by default. Update your scripts to load br_netfilter if you need this.
+[   17.664333] alua: device handler registered
+[   17.664998] systemd-journald[179]: Received client request to flush runtime journal.
+[   17.667261] emc: device handler registered
+[   17.669556] rdac: device handler registered
+[   17.706949] Bridge firewalling registered
+[[0;32m  OK  [0m] Finished [0;1;39mFlush Journal to Persistent Storage[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mCreate System Users[0m.
+         Starting [0;1;39mCreate Static Device Nodes in /dev[0m...
+[[0;32m  OK  [0m] Finished [0;1;39mLoad Kernel Modules[0m.
+         Starting [0;1;39mApply Kernel Variables[0m...
+[[0;32m  OK  [0m] Finished [0;1;39mCreate Static Device Nodes in /dev[0m.
+         Starting [0;1;39mRule-based Manage…for Device Events and Files[0m...
+[[0;32m  OK  [0m] Finished [0;1;39mApply Kernel Variables[0m.
+[[0;32m  OK  [0m] Started [0;1;39mDevice-Mapper Multipath Device Controller[0m.
+[[0;32m  OK  [0m] Started [0;1;39mRule-based Manager for Device Events and Files[0m.
+[[0;32m  OK  [0m] Started [0;1;39mDispatch Password …ts to Console Directory Watch[0m.
+[[0;32m  OK  [0m] Reached target [0;1;39mLocal Encrypted Volumes[0m.
+[[0;32m  OK  [0m] Found device [0;1;39m/dev/ttyS0[0m.
+[[0;32m  OK  [0m] Listening on [0;1;39mLoad/Save RF …itch Status /dev/rfkill Watch[0m.
+[[0;32m  OK  [0m] Found device [0;1;39mAmazon Elastic Block Store UEFI[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mMonitoring of LVM… dmeventd or progress polling[0m.
+[[0;32m  OK  [0m] Reached target [0;1;39mPreparation for Local File Systems[0m.
+         Mounting [0;1;39mPrepare /run/qemu…ack-load modules from there[0m...
+         Mounting [0;1;39mMount unit for core20, revision 2496[0m...
+         Mounting [0;1;39mMount unit for core22, revision 1802[0m...
+         Mounting [0;1;39mMount unit for lxd, revision 31333[0m...
+         Mounting [0;1;39mMount unit for snapd, revision 23771[0m...
+[[0;32m  OK  [0m] Reached target [0;1;39mContainers[0m.
+         Starting [0;1;39mFile System Check on /dev/disk/by-label/UEFI[0m...
+[[0;32m  OK  [0m] Mounted [0;1;39mPrepare /run/qemu …lback-load modules from there[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mFile System Check on /dev/disk/by-label/UEFI[0m.
+         Mounting [0;1;39m/boot/efi[0m...
+[[0;32m  OK  [0m] Mounted [0;1;39mMount unit for core22, revision 1802[0m.
+[[0;32m  OK  [0m] Mounted [0;1;39mMount unit for core20, revision 2496[0m.
+[[0;32m  OK  [0m] Mounted [0;1;39mMount unit for lxd, revision 31333[0m.
+[[0;32m  OK  [0m] Mounted [0;1;39mMount unit for snapd, revision 23771[0m.
+[[0;32m  OK  [0m] Reached target [0;1;39mMounted snaps[0m.
+[[0;32m  OK  [0m] Mounted [0;1;39m/boot/efi[0m.
+[[0;32m  OK  [0m] Reached target [0;1;39mLocal File Systems[0m.
+         Starting [0;1;39mLoad AppArmor profiles[0m...
+         Starting [0;1;39mSet console font and keymap[0m...
+         Starting [0;1;39mCreate final runt…dir for shutdown pivot root[0m...
+         Starting [0;1;39mTell Plymouth To Write Out Runtime Data[0m...
+         Starting [0;1;39mQEMU KVM preparation - module, ksm, hugepages[0m...
+         Starting [0;1;39mSet Up Additional Binary Formats[0m...
+         Starting [0;1;39mCreate Volatile Files and Directories[0m...
+         Starting [0;1;39mUncomplicated firewall[0m...
+[[0;32m  OK  [0m] Finished [0;1;39mSet console font and keymap[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mCreate final runt…e dir for shutdown pivot root[0m.
+         Mounting [0;1;39mArbitrary Executable File Formats File System[0m...
+[[0;32m  OK  [0m] Mounted [0;1;39mArbitrary Executable File Formats File System[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mSet Up Additional Binary Formats[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mQEMU KVM preparation - module, ksm, hugepages[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mCreate Volatile Files and Directories[0m.
+         Starting [0;1;39mRecord System Boot/Shutdown in UTMP[0m...
+[[0;32m  OK  [0m] Finished [0;1;39mRecord System Boot/Shutdown in UTMP[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mTell Plymouth To Write Out Runtime Data[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mLoad AppArmor profiles[0m.
+         Starting [0;1;39mLoad AppArmor pro…managed internally by snapd[0m...
+         Starting [0;1;39mCloud-init: Local Stage (pre-network)[0m...
+[[0;32m  OK  [0m] Finished [0;1;39mLoad AppArmor pro…s managed internally by snapd[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mUncomplicated firewall[0m.
+[   30.218117] cloud-init[465]: Cloud-init v. 24.4.1-0ubuntu0~22.04.2 running 'init-local' at Fri, 18 Apr 2025 23:03:29 +0000. Up 30.19 seconds.
+[[0;32m  OK  [0m] Finished [0;1;39mCloud-init: Local Stage (pre-network)[0m.
+[[0;32m  OK  [0m] Reached target [0;1;39mPreparation for Network[0m.
+         Starting [0;1;39mOpen vSwitch Database Unit[0m...
+         Starting [0;1;39mNetwork Configuration[0m...
+[[0;32m  OK  [0m] Started [0;1;39mNetwork Configuration[0m.
+         Starting [0;1;39mWait for Network to be Configured[0m...
+         Starting [0;1;39mNetwork Name Resolution[0m...
+[[0;32m  OK  [0m] Started [0;1;39mNetwork Name Resolution[0m.
+[[0;32m  OK  [0m] Reached target [0;1;39mHost and Network Name Lookups[0m.
+[[0;32m  OK  [0m] Started [0;1;39mOpen vSwitch Database Unit[0m.
+         Starting [0;1;39mOpenVSwitch configuration for cleanup[0m...
+         Starting [0;1;39mOpen vSwitch Forwarding Unit[0m...
+[[0;32m  OK  [0m] Started [0;1;39mOpen vSwitch Forwarding Unit[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mOpenVSwitch configuration for cleanup[0m.
+[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for… to be Configured (33s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for… to be Configured (34s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for… to be Configured (34s / no limit)
+M[K[[0m[0;31m*     [0m] A start job is running for Wait for… to be Configured (35s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for… to be Configured (35s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for… to be Configured (36s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for… to be Configured (36s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for… to be Configured (37s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for… to be Configured (37s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for… to be Configured (38s / no limit)
+M[K[     [0;31m*[0m] A start job is running for Wait for… to be Configured (38s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for… to be Configured (39s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for… to be Configured (39s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for… to be Configured (40s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for… to be Configured (40s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for… to be Configured (41s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for… to be Configured (41s / no limit)
+M[K[[0m[0;31m*     [0m] A start job is running for Wait for… to be Configured (42s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for… to be Configured (42s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for… to be Configured (43s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for… to be Configured (43s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for… to be Configured (44s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for… to be Configured (44s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for… to be Configured (45s / no limit)
+M[K[     [0;31m*[0m] A start job is running for Wait for… to be Configured (45s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for… to be Configured (46s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for… to be Configured (46s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for… to be Configured (47s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for… to be Configured (47s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for… to be Configured (48s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for… to be Configured (48s / no limit)
+M[K[[0m[0;31m*     [0m] A start job is running for Wait for… to be Configured (49s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for… to be Configured (49s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for… to be Configured (50s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for… to be Configured (50s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for… to be Configured (51s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for… to be Configured (51s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for… to be Configured (52s / no limit)
+M[K[     [0;31m*[0m] A start job is running for Wait for… to be Configured (52s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for… to be Configured (53s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for… to be Configured (53s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for… to be Configured (54s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for… to be Configured (54s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for… to be Configured (55s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for… to be Configured (55s / no limit)
+M[K[[0m[0;31m*     [0m] A start job is running for Wait for… to be Configured (56s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for… to be Configured (56s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for… to be Configured (57s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for… to be Configured (57s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for… to be Configured (58s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for… to be Configured (58s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for… to be Configured (59s / no limit)
+M[K[     [0;31m*[0m] A start job is running for Wait for… to be Configured (59s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…to be Configured (1min / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…to be Configured (1min / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…be Configured (1min 1s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…be Configured (1min 1s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…be Configured (1min 2s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…be Configured (1min 2s / no limit)
+M[K[[0m[0;31m*     [0m] A start job is running for Wait for…be Configured (1min 3s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…be Configured (1min 3s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…be Configured (1min 4s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…be Configured (1min 4s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…be Configured (1min 5s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…be Configured (1min 5s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…be Configured (1min 6s / no limit)
+M[K[     [0;31m*[0m] A start job is running for Wait for…be Configured (1min 6s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…be Configured (1min 7s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…be Configured (1min 7s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…be Configured (1min 8s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…be Configured (1min 8s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…be Configured (1min 9s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…be Configured (1min 9s / no limit)
+M[K[[0m[0;31m*     [0m] A start job is running for Wait for…e Configured (1min 10s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (1min 10s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…e Configured (1min 11s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…e Configured (1min 11s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…e Configured (1min 12s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…e Configured (1min 12s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…e Configured (1min 13s / no limit)
+M[K[     [0;31m*[0m] A start job is running for Wait for…e Configured (1min 13s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…e Configured (1min 14s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…e Configured (1min 14s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…e Configured (1min 15s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…e Configured (1min 15s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…e Configured (1min 16s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (1min 16s / no limit)
+M[K[[0m[0;31m*     [0m] A start job is running for Wait for…e Configured (1min 17s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (1min 17s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…e Configured (1min 18s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…e Configured (1min 18s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…e Configured (1min 19s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…e Configured (1min 19s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…e Configured (1min 20s / no limit)
+M[K[     [0;31m*[0m] A start job is running for Wait for…e Configured (1min 20s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…e Configured (1min 21s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…e Configured (1min 21s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…e Configured (1min 22s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…e Configured (1min 22s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…e Configured (1min 23s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (1min 23s / no limit)
+M[K[[0m[0;31m*     [0m] A start job is running for Wait for…e Configured (1min 24s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (1min 24s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…e Configured (1min 25s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…e Configured (1min 25s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…e Configured (1min 26s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…e Configured (1min 26s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…e Configured (1min 27s / no limit)
+M[K[     [0;31m*[0m] A start job is running for Wait for…e Configured (1min 27s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…e Configured (1min 28s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…e Configured (1min 28s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…e Configured (1min 29s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…e Configured (1min 29s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…e Configured (1min 30s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (1min 30s / no limit)
+M[K[[0m[0;31m*     [0m] A start job is running for Wait for…e Configured (1min 31s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (1min 31s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…e Configured (1min 32s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…e Configured (1min 32s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…e Configured (1min 33s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…e Configured (1min 33s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…e Configured (1min 34s / no limit)
+M[K[     [0;31m*[0m] A start job is running for Wait for…e Configured (1min 34s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…e Configured (1min 35s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…e Configured (1min 35s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…e Configured (1min 36s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…e Configured (1min 36s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…e Configured (1min 37s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (1min 37s / no limit)
+M[K[[0m[0;31m*     [0m] A start job is running for Wait for…e Configured (1min 38s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (1min 38s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…e Configured (1min 39s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…e Configured (1min 39s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…e Configured (1min 40s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…e Configured (1min 40s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…e Configured (1min 41s / no limit)
+M[K[     [0;31m*[0m] A start job is running for Wait for…e Configured (1min 41s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…e Configured (1min 42s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…e Configured (1min 42s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…e Configured (1min 43s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…e Configured (1min 43s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…e Configured (1min 44s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (1min 44s / no limit)
+M[K[[0m[0;31m*     [0m] A start job is running for Wait for…e Configured (1min 45s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (1min 45s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…e Configured (1min 46s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…e Configured (1min 46s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…e Configured (1min 47s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…e Configured (1min 47s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…e Configured (1min 48s / no limit)
+M[K[     [0;31m*[0m] A start job is running for Wait for…e Configured (1min 48s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…e Configured (1min 49s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…e Configured (1min 49s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…e Configured (1min 50s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…e Configured (1min 50s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…e Configured (1min 51s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (1min 51s / no limit)
+M[K[[0m[0;31m*     [0m] A start job is running for Wait for…e Configured (1min 52s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (1min 52s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…e Configured (1min 53s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…e Configured (1min 53s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…e Configured (1min 54s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…e Configured (1min 54s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…e Configured (1min 55s / no limit)
+M[K[     [0;31m*[0m] A start job is running for Wait for…e Configured (1min 55s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…e Configured (1min 56s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…e Configured (1min 56s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…e Configured (1min 57s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…e Configured (1min 57s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…e Configured (1min 58s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (1min 58s / no limit)
+M[K[[0m[0;31m*     [0m] A start job is running for Wait for…e Configured (1min 59s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (1min 59s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…to be Configured (2min / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…to be Configured (2min / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…be Configured (2min 1s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…be Configured (2min 1s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…be Configured (2min 2s / no limit)
+M[K[     [0;31m*[0m] A start job is running for Wait for…be Configured (2min 2s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…be Configured (2min 3s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…be Configured (2min 3s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…be Configured (2min 4s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…be Configured (2min 4s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…be Configured (2min 5s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…be Configured (2min 5s / no limit)
+M[K[[0m[0;31m*     [0m] A start job is running for Wait for…be Configured (2min 6s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…be Configured (2min 6s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…be Configured (2min 7s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…be Configured (2min 7s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…be Configured (2min 8s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…be Configured (2min 8s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…be Configured (2min 9s / no limit)
+M[K[     [0;31m*[0m] A start job is running for Wait for…be Configured (2min 9s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…e Configured (2min 10s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…e Configured (2min 10s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…e Configured (2min 11s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…e Configured (2min 11s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…e Configured (2min 12s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (2min 12s / no limit)
+M[K[[0m[0;31m*     [0m] A start job is running for Wait for…e Configured (2min 13s / no limit)
+M[K[[0;1;31m*[0m[0;31m*    [0m] A start job is running for Wait for…e Configured (2min 13s / no limit)
+M[K[[0;31m*[0;1;31m*[0m[0;31m*   [0m] A start job is running for Wait for…e Configured (2min 14s / no limit)
+M[K[ [0;31m*[0;1;31m*[0m[0;31m*  [0m] A start job is running for Wait for…e Configured (2min 14s / no limit)
+M[K[  [0;31m*[0;1;31m*[0m[0;31m* [0m] A start job is running for Wait for…e Configured (2min 15s / no limit)
+M[K[   [0;31m*[0;1;31m*[0m[0;31m*[0m] A start job is running for Wait for…e Configured (2min 15s / no limit)
+M[K[    [0;31m*[0;1;31m*[0m] A start job is running for Wait for…e Configured (2min 16s / no limit)
+M[K[     [0;31m*[0m] A start job is running for Wait for…e Configured (2min 16s / no limit)
+M[K[[0;1;31mFAILED[0m] Failed to start [0;1;39mWait for Network to be Configured[0m.
+[KSee 'systemctl status systemd-networkd-wait-online.service' for details.
+         Starting [0;1;39mCloud-init: Network Stage[0m...
+[  153.466760] cloud-init[599]: Cloud-init v. 24.4.1-0ubuntu0~22.04.2 running 'init' at Fri, 18 Apr 2025 23:05:32 +0000. Up 153.44 seconds.
+[  153.475554] cloud-init[599]: ci-info: +++++++++++++++++++++++++++Net device info++++++++++++++++++++++++++++
+[  153.476842] cloud-init[599]: ci-info: +--------+-------+-----------+-----------+-------+-------------------+
+[  153.478079] cloud-init[599]: ci-info: | Device |   Up  |  Address  |    Mask   | Scope |     Hw-Address    |
+[  153.479258] cloud-init[599]: ci-info: +--------+-------+-----------+-----------+-------+-------------------+
+[  153.490474] cloud-init[599]: ci-info: |  ens5  | False |     .     |     .     |   .   | 02:23:7d:3f:d6:5d |
+[  153.491719] cloud-init[599]: ci-info: |   lo   |  True | 127.0.0.1 | 255.0.0.0 |  host |         .         |
+[  153.492907] cloud-init[599]: ci-info: |   lo   |  True |  ::1/128  |     .     |  host |         .         |
+[  153.506617] cloud-init[599]: ci-info: +--------+-------+-----------+-----------+-------+-------------------+
+[  153.507965] cloud-init[599]: ci-info: +++++++++++++++++++Route IPv6 info+++++++++++++++++++
+[  153.509071] cloud-init[599]: ci-info: +-------+-------------+---------+-----------+-------+
+[  153.510171] cloud-init[599]: ci-info: | Route | Destination | Gateway | Interface | Flags |
+[  153.522333] cloud-init[599]: ci-info: +-------+-------------+---------+-----------+-------+
+[  153.523421] cloud-init[599]: ci-info: +-------+-------------+---------+-----------+-------+
+[  154.715528] cloud-init[599]: Generating public/private rsa key pair.
+[  154.716497] cloud-init[599]: Your identification has been saved in /etc/ssh/ssh_host_rsa_key
+[  154.717618] cloud-init[599]: Your public key has been saved in /etc/ssh/ssh_host_rsa_key.pub
+[  154.718704] cloud-init[599]: The key fingerprint is:
+[  154.729980] cloud-init[599]: SHA256:bomoMkTRxbmVZ4zio8ydGukPLlcnEvdkrerzeCRG6UQ root@ip-10-0-0-117
+[  154.731176] cloud-init[599]: The key's randomart image is:
+[  154.731908] cloud-init[599]: +---[RSA 3072]----+
+[  154.732567] cloud-init[599]: |  . o.. +        |
+[  154.745935] cloud-init[599]: | . . E + +       |
+[  154.746636] cloud-init[599]: |  . o = +        |
+[  154.747304] cloud-init[599]: | . . O o .       |
+[  154.747983] cloud-init[599]: |. o X * S        |
+[  154.748642] cloud-init[599]: | . B X B .       |
+[  154.749293] cloud-init[599]: |. ..B B +        |
+[  154.761913] cloud-init[599]: |o..=.o.o         |
+[  154.762603] cloud-init[599]: | o+.o++.         |
+[  154.763274] cloud-init[599]: +----[SHA256]-----+
+[  154.763924] cloud-init[599]: Generating public/private ecdsa key pair.
+[  154.764788] cloud-init[599]: Your identification has been saved in /etc/ssh/ssh_host_ecdsa_key
+[[0;32m  OK  [0m] Finished [0;1;39mCloud-init: Network Stage[0m.
+[  154.768334] cloud-init[599]: Your public key has been saved in /etc/ssh/ssh_host_ecdsa_key.pub
+[[0;32m  OK  [0m] Reached target [0;1;39mCloud-config availability[0m.
+[  154.770989] cloud-init[599]: The key fingerprint is:
+[[0;32m  OK  [0m] Reached target [0;1;39mSystem Initialization[0m.
+[  154.771213] cloud-init[599]: SHA256:GAuR2sIXCvVRHpqUmY99jBMtYOsn+8Pj79rjdjXKTxQ root@ip-10-0-0-117
+[  154.783837] cloud-init[599]: The key's randomart image is:
+[  154.784571] cloud-init[599]: +---[ECDSA 256]---+
+[  154.793880] cloud-init[599]: | .. *Bo.         |
+[  154.794561] cloud-init[599]: |.  +*Bo..        |
+[  154.795231] cloud-init[599]: | o +*=o=    E    |
+[  154.795888] cloud-init[599]: |  =.+.=+o    .   |
+[  154.796514] cloud-init[599]: |   oo +oS   .    |
+[  154.809884] cloud-init[599]: |     +     .o    |
+[  154.810571] cloud-init[599]: |    ..   . o..   |
+[  154.811250] cloud-init[599]: |     .+.o +.     |
+[  154.811904] cloud-init[599]: |     .+O=o ..    |
+[  154.812570] cloud-init[599]: +----[SHA256]-----+
+[  154.813215] cloud-init[599]: Generating public/private ed25519 key pair.
+[  154.826112] cloud-init[599]: Your identification has been saved in /etc/ssh/ssh_host_ed25519_key
+[  154.827280] cloud-init[599]: Your public key has been saved in /etc/ssh/ssh_host_ed25519_key.pub
+[  154.828438] cloud-init[599]: The key fingerprint is:
+[  154.841922] cloud-init[599]: SHA256:ti+Jm20b6oAmmFPdJNV5Cb/M+QaUJsXJcBq6lnJAQus root@ip-10-0-0-117
+[  154.843123] cloud-init[599]: The key's randomart image is:
+[  154.843862] cloud-init[599]: +--[ED25519 256]--+
+[  154.844540] cloud-init[599]: | .o . ..+*oo     |
+[  154.845170] cloud-init[599]: |   + . .o**.     |
+[  154.849884] cloud-init[599]: |  . o o o.=      |
+[  154.850555] cloud-init[599]: | . . = o * o     |
+[  154.851223] cloud-init[599]: |  E o * S *      |
+[  154.851884] cloud-init[599]: |.o . + . . o     |
+[  154.852526] cloud-init[599]: |= o .  .o.  o    |
+[  154.865889] cloud-init[599]: | +   ..++o .     |
+[  154.866567] cloud-init[599]: |     .=ooo.      |
+[  154.867237] cloud-init[599]: +----[SHA256]-----+
+[[0;32m  OK  [0m] Started [0;1;39mACPI Events Check[0m.
+[[0;32m  OK  [0m] Started [0;1;39mDaily Cleanup of Temporary Directories[0m.
+[[0;32m  OK  [0m] Reached target [0;1;39mPath Units[0m.
+[[0;32m  OK  [0m] Listening on [0;1;39mACPID Listen Socket[0m.
+[[0;32m  OK  [0m] Listening on [0;1;39mcloud-init hotplug hook socket[0m.
+[[0;32m  OK  [0m] Listening on [0;1;39mD-Bus System Message Bus Socket[0m.
+[[0;32m  OK  [0m] Listening on [0;1;39mOpen-iSCSI iscsid Socket[0m.
+         Starting [0;1;39mLibvirt local socket[0m...
+[[0;32m  OK  [0m] Listening on [0;1;39mSocket unix for snap application lxd.daemon[0m.
+[[0;32m  OK  [0m] Listening on [0;1;39mSocket unix f…p application lxd.user-daemon[0m.
+         Starting [0;1;39mSocket activation for snappy daemon[0m...
+[[0;32m  OK  [0m] Listening on [0;1;39mUUID daemon activation socket[0m.
+[[0;32m  OK  [0m] Listening on [0;1;39mVirtual machine lock manager socket[0m.
+[[0;32m  OK  [0m] Listening on [0;1;39mVirtual machine lock manager admin socket[0m.
+[[0;32m  OK  [0m] Listening on [0;1;39mVirtual machine log manager socket[0m.
+[[0;32m  OK  [0m] Listening on [0;1;39mVirtual machine log manager socket[0m.
+[[0;32m  OK  [0m] Listening on [0;1;39mLibvirt local socket[0m.
+[[0;32m  OK  [0m] Listening on [0;1;39mSocket activation for snappy daemon[0m.
+[[0;32m  OK  [0m] Listening on [0;1;39mLibvirt admin socket[0m.
+[[0;32m  OK  [0m] Listening on [0;1;39mLibvirt local read-only socket[0m.
+[[0;32m  OK  [0m] Reached target [0;1;39mSocket Units[0m.
+[[0;32m  OK  [0m] Reached target [0;1;39mBasic System[0m.
+[[0;32m  OK  [0m] Started [0;1;39mACPI event daemon[0m.
+[[0;32m  OK  [0m] Started [0;1;39mD-Bus System Message Bus[0m.
+[[0;32m  OK  [0m] Started [0;1;39mSave initial kernel messages after boot[0m.
+         Starting [0;1;39mRemove Stale Onli…t4 Metadata Check Snapshots[0m...
+         Starting [0;1;39mRecord successful boot for GRUB[0m...
+[[0;32m  OK  [0m] Started [0;1;39mirqbalance daemon[0m.
+         Starting [0;1;39mDispatcher daemon for systemd-networkd[0m...
+         Starting [0;1;39mOpen vSwitch[0m...
+         Starting [0;1;39mSystem Logging Service[0m...
+[[0;32m  OK  [0m] Reached target [0;1;39mPreparation for Logins[0m.
+         Starting [0;1;39mWait until snapd is fully seeded[0m...
+         Starting [0;1;39mSnap Daemon[0m...
+         Starting [0;1;39mUser Login Management[0m...
+         Starting [0;1;39mVirtual Machine a…tainer Registration Service[0m...
+[[0;32m  OK  [0m] Finished [0;1;39mOpen vSwitch[0m.
+[[0;32m  OK  [0m] Reached target [0;1;39mNetwork[0m.
+[[0;32m  OK  [0m] Reached target [0;1;39mNetwork is Online[0m.
+[[0;32m  OK  [0m] Started [0;1;39mDownload data for …ailed at package install time[0m.
+[[0;32m  OK  [0m] Started [0;1;39mamazon-ssm-agent[0m.
+         Starting [0;1;39mchrony, an NTP client/server[0m...
+         Starting [0;1;39mLSB: Load bridge … and apply settings for CML[0m...
+         Starting [0;1;39mEC2 Instance Connect Host Key Harvesting[0m...
+[[0;32m  OK  [0m] Started [0;1;39mFail2Ban Service[0m.
+         Starting [0;1;39mA high performanc… and a reverse proxy server[0m...
+[[0;32m  OK  [0m] Reached target [0;1;39mPreparation for Remote File Systems[0m.
+[[0;32m  OK  [0m] Reached target [0;1;39mRemote File Systems[0m.
+         Starting [0;1;39mLSB: automatic crash report generation[0m...
+[[0;32m  OK  [0m] Finished [0;1;39mAvailability of block devices[0m.
+[[0;32m  OK  [0m] Started [0;1;39mRegular background program processing daemon[0m.
+         Starting [0;1;39mOpenVPN service[0m...
+         Starting [0;1;39mOpen vSwitch Record Hostname[0m...
+         Starting [0;1;39mService for snap application lxd.activate[0m...
+         Starting [0;1;39mPermit User Sessions[0m...
+[[0;32m  OK  [0m] Finished [0;1;39mOpenVPN service[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mPermit User Sessions[0m.
+         Starting [0;1;39mHold until boot process finishes up[0m...
+         Starting [0;1;39mTerminate Plymouth Boot Screen[0m...
+[[0;32m  OK  [0m] Finished [0;1;39mHold until boot process finishes up[0m.
+[[0;32m  OK  [0m] Started [0;1;39mSerial Getty on ttyS0[0m.
+         Starting [0;1;39mSet console scheme[0m...
+[[0;32m  OK  [0m] Finished [0;1;39mTerminate Plymouth Boot Screen[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mOpen vSwitch Record Hostname[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mRecord successful boot for GRUB[0m.
+         Starting [0;1;39mGRUB failed boot detection[0m...
+[[0;32m  OK  [0m] Started [0;1;39mVirtual Machine an…ontainer Registration Service[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mGRUB failed boot detection[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mSet console scheme[0m.
+[[0;32m  OK  [0m] Created slice [0;1;39mSlice /system/getty[0m.
+[[0;32m  OK  [0m] Started [0;1;39mGetty on tty1[0m.
+[[0;32m  OK  [0m] Reached target [0;1;39mLogin Prompts[0m.
+[[0;32m  OK  [0m] Started [0;1;39mUser Login Management[0m.
+         Starting [0;1;39mVirtualization daemon[0m...
+[[0;32m  OK  [0m] Started [0;1;39mUnattended Upgrades Shutdown[0m.
+[[0;32m  OK  [0m] Started [0;1;39mLSB: automatic crash report generation[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mRemove Stale Onli…ext4 Metadata Check Snapshots[0m.
+[[0;32m  OK  [0m] Started [0;1;39mSystem Logging Service[0m.
+[[0;32m  OK  [0m] Started [0;1;39mchrony, an NTP client/server[0m.
+[[0;32m  OK  [0m] Reached target [0;1;39mSystem Time Synchronized[0m.
+[[0;32m  OK  [0m] Started [0;1;39mDaily apt download activities[0m.
+[[0;32m  OK  [0m] Started [0;1;39mDaily apt upgrade and clean activities[0m.
+[[0;32m  OK  [0m] Started [0;1;39mDaily dpkg database backup timer[0m.
+[[0;32m  OK  [0m] Started [0;1;39mPeriodic ext4 Onli…ata Check for All Filesystems[0m.
+[[0;32m  OK  [0m] Started [0;1;39mDiscard unused blocks once a week[0m.
+[[0;32m  OK  [0m] Started [0;1;39mDaily rotation of log files[0m.
+[[0;32m  OK  [0m] Started [0;1;39mDaily man-db regeneration[0m.
+[[0;32m  OK  [0m] Started [0;1;39mMessage of the Day[0m.
+[[0;32m  OK  [0m] Started [0;1;39mCheck to see wheth…w version of Ubuntu available[0m.
+[[0;32m  OK  [0m] Reached target [0;1;39mTimer Units[0m.
+[[0;32m  OK  [0m] Started [0;1;39mDispatcher daemon for systemd-networkd[0m.
+[[0;32m  OK  [0m] Started [0;1;39mLSB: Load bridge m…es and apply settings for CML[0m.
+[[0;32m  OK  [0m] Finished [0;1;39mEC2 Instance Connect Host Key Harvesting[0m.
+         Starting [0;1;39mOpenBSD Secure Shell server[0m...
+[[0;32m  OK  [0m] Started [0;1;39mOpenBSD Secure Shell server[0m.
+[[0;32m  OK  [0m] Started [0;1;39mA high performance…er and a reverse proxy server[0m.
+[[0;32m  OK  [0m] Started [0;1;39mVirtualization daemon[0m.
+         Starting [0;1;39mSuspend/Resume Running libvirt Guests[0m...
+[[0;32m  OK  [0m] Finished [0;1;39mSuspend/Resume Running libvirt Guests[0m.
+[  160.983213] cloud-init[1022]: Cloud-init v. 24.4.1-0ubuntu0~22.04.2 running 'modules:config' at Fri, 18 Apr 2025 23:05:39 +0000. Up 160.93 seconds.
+
+Ubuntu 22.04.5 LTS ip-10-0-0-117 ttyS0
+
+ip-10-0-0-117 login: [  164.924797] cloud-init[1058]: Cloud-init v. 24.4.1-0ubuntu0~22.04.2 running 'modules:final' at Fri, 18 Apr 2025 23:05:43 +0000. Up 164.88 seconds.
+[  164.950930] cloud-init[1058]: Disabling UFW firewall...
+[  165.973622] cloud-init[1058]: Firewall stopped and disabled on system startup
+[  165.980679] cloud-init[1058]: UFW disable command attempted.
+ci-info: +++++++++++++++++++++++++++++++++++++++++++++++Authorized keys from /home/ubuntu/.ssh/authorized_keys for user ubuntu++++++++++++++++++++++++++++++++++++++++++++++++
+ci-info: +---------+-------------------------------------------------------------------------------------------------+---------+---------------------------------------------+
+ci-info: | Keytype |                                       Fingerprint (sha256)                                      | Options |                   Comment                   |
+ci-info: +---------+-------------------------------------------------------------------------------------------------+---------+---------------------------------------------+
+ci-info: | ssh-rsa | 50:b4:2b:b5:59:9f:79:a7:08:a9:12:d6:9a:bf:e9:e4:94:46:25:33:d2:36:29:c2:78:de:59:fa:0f:15:ce:11 |    -    | packer_6801f51d-bee2-15af-f43c-68a7e347177a |
+ci-info: | ssh-rsa | dc:01:31:e2:3b:fd:f0:d1:aa:c2:f5:f0:cc:da:e2:df:06:2d:f1:09:b2:29:66:9e:2c:3b:cd:7d:ff:4f:75:f4 |    -    |                terraform-key                |
+ci-info: +---------+-------------------------------------------------------------------------------------------------+---------+---------------------------------------------+
+<14>Apr 18 23:05:45 cloud-init: #############################################################
+<14>Apr 18 23:05:45 cloud-init: -----BEGIN SSH HOST KEY FINGERPRINTS-----
+<14>Apr 18 23:05:45 cloud-init: 256 SHA256:GAuR2sIXCvVRHpqUmY99jBMtYOsn+8Pj79rjdjXKTxQ root@ip-10-0-0-117 (ECDSA)
+<14>Apr 18 23:05:45 cloud-init: 256 SHA256:ti+Jm20b6oAmmFPdJNV5Cb/M+QaUJsXJcBq6lnJAQus root@ip-10-0-0-117 (ED25519)
+<14>Apr 18 23:05:45 cloud-init: 3072 SHA256:bomoMkTRxbmVZ4zio8ydGukPLlcnEvdkrerzeCRG6UQ root@ip-10-0-0-117 (RSA)
+<14>Apr 18 23:05:45 cloud-init: -----END SSH HOST KEY FINGERPRINTS-----
+<14>Apr 18 23:05:45 cloud-init: #############################################################
+-----BEGIN SSH HOST KEY KEYS-----
+ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHz316607n2nC0nIn+53r5Pq3x0/aIns4IbnqISte+c0O5xhyLMJ1j0I9s+SVqs/rYfgd1dIPboD5gZ/eAdmb5Q= root@ip-10-0-0-117
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ82v7Ug4EoaCtLzOSZPuKiupc+9v3CHBj54XyRWeDdA root@ip-10-0-0-117
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC2+EA+hZaH+cV0b5akAgJwGFoo2KWiR6UcgkspcAFCw/dBJaGRD3wV6YVLCkt1hLlJw16pBOH2uXomSjXMbXlYkqloMQox6m0uAP1O0MoBsd8E4CbA/eXwZyBRy33PLg3tqV+pW1FPchBa0hSW3Hh00Sr59V14Cf7/OrxjxJYlunuMqX9FjBF/42xAIcENhyML6WiUurkleOVEjwvNhAD+/u5I/HnrzGLUsxzpysEICN2LYG/AsoIpObv4WqnNVoNpnIJIy0aRyFMQQSsV1mz4B0c4zhuLR+lzwqlSwUZ6SQb7ftQVTip2aC24I6ortWEFi738wvFqxNv74VU3NVYbHXQvzHLhWifdo1jDSc5KVdZ54nZl+bmTOTTVZ3nhBVI5TCdVikdUuTJTcnjm9MZVl5/3lGdqpjevzsOZ92hso3jPSJwYxkSKJEyjlnYaV7RDbBxdhL41Ib9Z0rrqOLdt5FgjEcJYQdYFeL5wZ+hzPJus40ajZHFCDx9kTOtyQjU= root@ip-10-0-0-117
+-----END SSH HOST KEY KEYS-----
+[  166.181209] cloud-init[1058]: Minimal cloud-init process completed.
+	2025-04-18T23:11:07+00:00

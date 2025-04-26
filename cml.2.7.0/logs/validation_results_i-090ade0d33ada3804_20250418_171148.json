@@ -1,0 +1,135 @@
+{
+    "instance_status": {
+        "status": "Details Found",
+        "state": "running",
+        "details": {}
+    },
+    "iam_permissions": {
+        "status": "Passed",
+        "details": {
+            "ec2:DescribeInstances": "Allowed",
+            "ec2:DescribeInstanceStatus": "Allowed",
+            "ec2:DescribeSecurityGroups": "Allowed",
+            "ec2:DescribeNetworkAcls": "Allowed",
+            "ec2:DescribeSubnets": "Allowed",
+            "ec2:GetConsoleOutput": "Allowed",
+            "iam:SimulatePrincipalPolicy": "Allowed",
+            "sts:GetCallerIdentity": "Allowed",
+            "ssm:SendCommand": "Allowed",
+            "ssm:GetCommandInvocation": "Allowed"
+        },
+        "all_required_met": true
+    },
+    "security_groups": {
+        "status": "Checked",
+        "details": {
+            "outbound_http": "Allowed",
+            "outbound_https": "Allowed",
+            "inbound_ssh": "Denied/Missing"
+        },
+        "ids_found": [
+            "sg-0e134106c5167749b"
+        ]
+    },
+    "nacls": {
+        "finding_status": "Found (Explicit)",
+        "nacl_id": "acl-047547eced37425ca",
+        "rule_check_status": "Checked",
+        "rule_details": {
+            "nacl_id": "acl-047547eced37425ca",
+            "outbound_http": "Allowed",
+            "outbound_https": "Allowed",
+            "inbound_ephemeral": "Allowed"
+        },
+        "raw_nacl_details": {
+            "Associations": [
+                {
+                    "NetworkAclAssociationId": "aclassoc-08b220a5300a726c0",
+                    "NetworkAclId": "acl-047547eced37425ca",
+                    "SubnetId": "subnet-04bc4fbadf7fff150"
+                }
+            ],
+            "Entries": [
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                }
+            ],
+            "IsDefault": true,
+            "NetworkAclId": "acl-047547eced37425ca",
+            "Tags": [],
+            "VpcId": "vpc-0fedc0381e22264bc",
+            "OwnerId": "450339903191"
+        }
+    },
+    "ssm_check": {
+        "status": "Failed (InvalidInstanceId)",
+        "details": {
+            "error": "An error occurred (InvalidInstanceId) when calling the SendCommand operation: Instances [[i-090ade0d33ada3804]] not in a valid state for account 450339903191"
+        }
+    },
+    "ssh_check": {
+        "status": "Failed (Timeout)",
+        "details": {
+            "error": "Connection timed out (10s)."
+        }
+    },
+    "system_log": {
+        "status": "Retrieved",
+        "details": {
+            "log_content": "\b\u001f\u05ef\u01ec\u04dd\uf39c$q\u6726*f$\u0017}\u07d9\\^L_}~f^\u0374M9\u07de:\u0013E\"\u05eby \u0013-%}-9\u07ef4u\u0016\u059b\u79f6n\u05ce(\u05ebm=^vo+^Xy\\X\u98bbZujajmi^z{k<\u0768\u05eb]\u04fd\u05ec)j9\u77b76^\u06ebn\u0016\u059b\u79f6y\u07ea+u\u06ed%wNy^|L#\u07b2\u059b+!yZ\u001bZnWzwN^t{\u9f2dzb\u04de}\u0013\bZ\u001bZnWz\u03b9~\u05ebm=^vo+^Xy;<v\u059b\u001cwu-ib\u0017}tf\u07b9~\u7b75\u000fL#G!y'\u05edz}\u9f2dzb\u04de~T\fZ\u001bZnWz5j+u\u06ed%wNzwP3\u02ca\u05e1jmi^z{k<\u0768\u05ebn\u05ce\u001b\u05ec)j94\u0013E\"\u05ebyP\u0017K8 \u000b-%}-9:\u0013E\"\u05eby\\3\u9b8bhr_jhNz4\u021b4M4(\u001e*4M4LtqwhNz7\u021b4M4(\u001e*4GtL_}whN{\u04fd6\u021b4M4(\u001eg\u001d4\u046d4M1M\u001b})\u0763\r9m5\u0697\"n4M4\u04b7{L\\M4M4}\u007f\bv4J\\M4J\u07b2q&zm14M4LvN7}}whN{\u0234M4M4.))v*r#\"\u069e\u07ae9y\bo+^\u05dfjm9\f\u0014)\u0c87nq}x\u001f\u000eIb\u000eLt\u7fbc\u05f4)\u0d8b$-~\u0226j\u0007)\u2db6~9z\u001f\u0006x,\u0019M4M4\u047e\u001ey4LtM4M\u001bM:t4w%,z\u001c$\u0017}}}}\u031c4f{|_8bvW4vN{4\u0377G%,y,\"^v\u001c$qlsN|\u07efw\"xb2\u05e6d{*\u000b49B\u0729yZrIb\u0782+-z\u04df9^\"\u000b\u001e\u0626zZh\u05ebfrG^M9:Zz)x\u065e~+N|y\u037by9v\u02aej_*'M>\u0018*K!z9z)\u0003\u023d\uc2899M)z\n#jb\u02b8)&7\u04dfumb\u05e0+r1!w{*\b\u061a,wN6)\u0297)zr^tMP,ij\u001e\u001et^tN:e%k'H$\u07ae'\u001b\u0007k\uc289Z\u001aufj:+\u06cdN\u06d8^v^jyewz\bwNm\u001a\\jwZn\nez\uc289Nxzn0zn'jzz5tI34\\\u00044)\u279bNN\u0000#nmsh\u0017N:zn)^zn'jzz5tI34]\"\u00044)\u279bN~;\u0000#nmtyAh\"\u0017N\u07efzIj_6Otvz)l!\u0014,\u0007i^wNM8\u0712\u046bH1\"\u001bj\u01dbj"
+        }
+    }
+}

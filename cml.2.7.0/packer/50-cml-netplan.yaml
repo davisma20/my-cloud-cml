@@ -1,0 +1,8 @@
+# /etc/netplan/50-cml-netplan.yaml
+network:
+  version: 2
+  ethernets:
+    eth0:
+      dhcp4: true
+      dhcp-identifier: mac # Use MAC address for DHCP identification
+      # Optional: You might need dhcp6: true if using IPv6

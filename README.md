@@ -1,8 +1,8 @@
 # README
 
-Version 2.8.0-DevNet, March 21, 2025
+Version 2.8.1-DevNet, March 22, 2025
 
-> **This is a customized fork of the [Cisco DevNet cloud-cml repository](https://github.com/CiscoDevNet/cloud-cml) with added support for DevNet Expert workstation deployment.**
+> **This is a customized fork of the [Cisco DevNet cloud-cml repository](https://github.com/CiscoDevNet/cloud-cml) with added support for DevNet Expert workstation deployment and enhanced security features.**
 
 CML instances can run on Azure and AWS cloud infrastructure.  This repository provides automation tooling using Terraform to deploy and manage CML in the cloud.  We have tested CML deployments using this tool chain in both clouds.  **The use of this tool is considered BETA**.  The tool has certain requirements and prerequisites which are described in this README and in the [documentation](documentation) directory.
 
@@ -10,9 +10,9 @@ CML instances can run on Azure and AWS cloud infrastructure.  This repository pr
 
 > [!IMPORTANT]
 >
-> **Version 2.7 vs 2.8**
+> **CML Version Information**
 >
-> CML2 version 2.8 has been released in November 2024.  As CML 2.8 uses Ubuntu 24.04 as the base operating system, cloud-cml needs to accommodate for that during image selection when bringing up the VM on the hosting service (AWS, Azure, ...).  This means that going forward, cloud-cml supports 2.8 and not 2.7 anymore.  If CML versions earlier than CML 2.8 should be used then please select the release with the tag `v2.7.2` that still supports CML 2.7!
+> This fork is configured to use CML version 2.8.1-14. While CML 2.8 has been released, this deployment specifically targets the 2.8.1-14 release using the package file `cml2_2.8.1-14_amd64-20.pkg`. If you need to use a different CML version, you will need to update the configuration and ensure the appropriate package file is available.
 >
 > **Support:**
 >
@@ -28,6 +28,133 @@ CML instances can run on Azure and AWS cloud infrastructure.  This repository pr
 
 > [!NOTE]
 > For instructions on deploying only the DevNet Expert workstation (without CML), see [DEVNET_WORKSTATION.md](DEVNET_WORKSTATION.md).
+
+## Project Folder Structure (2025-04-25)
+
+The following directories and files define the current layout of this repository:
+
+- `cml.2.7.0/` — All Terraform, Packer, scripts, documentation, logs, and artifacts for CML 2.7.0
+    - `artifacts/` — Validation results, forensic logs, and system logs
+    - `assets/` — CML asset files
+    - `cml_validator_utils/` — Python utilities for validation (network, connectivity, IAM, results)
+    - `documentation/` — All project and troubleshooting documentation (AWS.md, PACKER_BUILD.md, etc.)
+    - `images/` — Diagrams and screenshots
+    - `logs/` — Build and validation logs
+    - `modules/` — Terraform modules for AWS/Azure deployments
+    - `packer/` — Packer templates and scripts for AMI builds
+    - `refplat/`, `refplat2.8/` — Reference platform ISOs and related files
+    - `scripts/` — Utility and deployment scripts
+    - `sessionmanager-bundle/` — AWS SSM Session Manager plugin
+    - `terraform/` — Terraform configuration files
+    - `validators/` — Legacy validation scripts (superseded by `validations/`)
+- `cml.2.8.1/` — Disk image and files for CML 2.8.1 (in progress)
+- `cml_validator_utils/` — Shared Python validation utilities
+- `keys/` — SSH keys (excluded from git)
+- `security/` — Security-related files
+- `validations/` — Modular validation scripts (run_validation.py, check_ssm_registration.py, etc.)
+- `.gitignore` — Excludes all PEM keys, credentials, and sensitive files from git
+- `README.md`, `LICENSE`, `INFO` — Project documentation and metadata
+
+### Key Documentation Files
+- `README.md` — This file; high-level overview and quick start
+- `cml.2.7.0/documentation/` — All versioned deployment, troubleshooting, and operations docs
+- `cml.2.7.0/documentation/PACKER_BUILD.md` — Packer build and troubleshooting
+- `cml.2.7.0/documentation/TROUBLESHOOTING.md` — Common deployment and validation issues
+- `cml.2.7.0/documentation/AWS.md` — AWS-specific deployment and configuration
+
+### Validation Scripts
+- All new validation scripts are in `validations/` (not `cml.2.7.0/validators/`)
+- Use `python3 validations/run_validation.py --instance-id <INSTANCE_ID> --all` for full validation
+- SSM agent checks are preferred for connectivity; SSH is optional and requires a key
+
+### Security
+- All PEM keys and credentials are excluded from git via `.gitignore` (see `keys/`)
+- No `.env`, `.tfstate`, or other sensitive files are tracked
+
+### Versioning
+- Each CML version has its own folder (e.g., `cml.2.7.0/`, `cml.2.8.1/`)
+- Never overwrite or delete previous version folders; always add new ones for upgrades
+
+## Current Status (as of 2025-04-16)
+
+**Troubleshooting Paused - Infrastructure Destroyed**
+
+Deployment is currently blocked by an issue where EC2 instances consistently fail cloud-init during the `package_update_upgrade_install` stage (specifically `apt-get update` hangs/fails). This leads to Terraform timeouts waiting for instance status checks.
+
+**Investigation Summary:**
+*   **Root Cause:** Suspected network connectivity issue preventing `apt-get` from reaching repositories.
+*   **Ruled Out:** Custom Netplan configuration in Packer AMI.
+*   **Security Group:** Verified to allow outbound HTTP/HTTPS.
+*   **NACLs:** Most likely cause. The default NACL is suspected of blocking outbound traffic. `run_validation.py` was enhanced to check NACLs.
+*   **IAM Blocker:** The AWS credentials used (`root`) lack `ec2:DescribeNetworkAcls` permission, preventing the script from verifying NACL rules.
+
+**Update:** The persistent `terraform destroy` error related to `templatefile` evaluation and the `custom_scripts_yaml` variable has been **resolved**. The fix involved modifying `modules/deploy/aws/main.tf` to assign the pre-rendered `local.cloud_config` variable directly to the `aws_instance.cml_controller`'s `user_data`, avoiding a problematic secondary template evaluation during the destroy phase.
+
+The infrastructure is currently **destroyed**.
+
+**Next Steps:**
+1.  Re-run `terraform apply` to provision the infrastructure.
+2.  Resume troubleshooting the original cloud-init boot issues, focusing on potential NACL restrictions or IAM permission problems identified previously using `run_validation.py`.
+
+## Versioned Infrastructure Layout
+
+This repository now uses a versioned folder structure for CML infrastructure code and assets:
+
+- `cml.2.7.0/`: Contains all Terraform, Packer, scripts, documentation, and supporting files for the CML 2.7.0 release. This folder is a complete, working snapshot for that version.
+- `cml.2.8.1/`: (In progress) Use this folder to begin building and testing the next CML release. Start by copying only what you need from `cml.2.7.0/` and adapt for 2.8.1 changes. This approach supports clean, iterative upgrades and easy rollbacks.
+
+**Best Practice:** Always add new version folders for major upgrades. Never overwrite or delete previous version folders—this preserves traceability and enables parallel development or hotfixes if needed.
+
+## Custom AMI Building with Packer
+
+This repository includes support for building custom CML AMIs using Packer. The Packer templates and scripts are located in the `packer` directory and provide the following benefits:
+
+- **Customizable AMI**: Build a CML AMI with all required dependencies pre-installed
+- **Security Hardening**: Includes security best practices like automatic updates, UFW firewall, and fail2ban protection
+- **Reproducible Builds**: Create consistent AMIs across different AWS regions
+
+To build a custom CML AMI:
+
+1. Navigate to the packer directory:
+   ```bash
+   cd packer
+   ```
+
+2. Run the Packer build command:
+   ```bash
+   packer build cml-simple.pkr.hcl
+   ```
+
+3. After the build completes (approximately 15 minutes), the new AMI ID will be displayed in the output.
+
+4. Update the `cml_ami` value in the `config.yml` file with the new AMI ID.
+
+> **Detailed Instructions**: For comprehensive documentation on the CML Packer build process, including troubleshooting and security features, see [PACKER_BUILD.md](documentation/PACKER_BUILD.md).
+
+The custom AMI includes:
+- All required dependencies for CML virtualization
+- Security hardening features (UFW, fail2ban, automatic updates)
+- Performance optimizations for KVM and networking
+- Properly initialized CML controller with default admin credentials
+
+## Password Configuration
+
+CML deployments require proper password configuration to ensure successful authentication after installation. The default admin and sysadmin passwords are configured in the `config.yml` file:
+
+```yaml
+secret:
+  manager: dummy  # Using 'dummy' for direct password configuration
+  secrets:
+    app:
+      username: admin
+      raw_secret: '1234QWer!'  # Default admin password
+    sys:
+      username: sysadmin
+      raw_secret: '1234QWer!'  # Default sysadmin password
+```
+
+> [!IMPORTANT]
+> If you encounter authentication issues after deployment, it's recommended to perform a complete rebuild with `terraform destroy` followed by `terraform apply`. This ensures passwords are properly set during initial installation. See [TROUBLESHOOTING.md](documentation/TROUBLESHOOTING.md#authentication-and-password-issues) for more information.
 
 ## General requirements
 
@@ -162,6 +289,9 @@ These steps are only required if using CyberArk Conjur as an external secrets ma
    }
    ```
 
+<<<<<<< HEAD
+## CML Password Management
+=======
 #### Using AWS Secrets Manager
 
 To use AWS Secrets Manager for storing your CML secrets:
@@ -203,25 +333,33 @@ To use AWS Secrets Manager for storing your CML secrets:
 For more detailed information, see the [AWS Secrets Manager documentation](AWS_SECRETS_MANAGER.md).
 
 ### Terraform installation
+>>>>>>> origin/main
 
-Terraform can be downloaded for free from [here](https://developer.hashicorp.com/terraform/downloads). This site has also instructions how to install it on various supported platforms.
-
-Deployments of CML using Terraform were tested using the versions mentioned below on Ubuntu Linux.
-
-```bash
-$ terraform version
-Terraform v1.10.4
-on linux_amd64
-+ provider registry.terraform.io/ciscodevnet/cml2 v0.8.1
-+ provider registry.terraform.io/hashicorp/aws v5.83.0
-+ provider registry.terraform.io/hashicorp/cloudinit v2.3.5
-+ provider registry.terraform.io/hashicorp/random v3.6.1
-$
-```
-
-It is assumed that the CML cloud repository was cloned to the computer where Terraform was installed. The following command are all executed within the directory that has the cloned repositories. In particular, this `README.md`, the `main.tf` and the `config.yml` files, amongst other files.
-
-When installed, run `terraform init` to initialize Terraform. This will download the required providers and create the state files.
+> [!IMPORTANT]
+> **Understanding CML Credentials**
+>
+> CML uses two different sets of credentials:
+> 
+> 1. **System Administration (sysadmin)**: For accessing the system administration cockpit at `https://<cml-ip>:9090`
+> 2. **CML Application (admin)**: For accessing the main CML GUI at `https://<cml-ip>`
+>
+> **Password Configuration:**
+>
+> By default, if you don't explicitly set passwords in `config.yml`, random 16-character passwords will be generated during deployment. To set specific passwords:
+>
+> ```yaml
+> # In config.yml
+> secrets:
+>   app:
+>     username: admin
+>     raw_secret: your-admin-password  # Uncomment and set this
+>
+>   sys:
+>     username: sysadmin
+>     raw_secret: your-sysadmin-password  # Uncomment and set this
+> ```
+>
+> For troubleshooting password issues, see the [TROUBLESHOOTING.md](documentation/TROUBLESHOOTING.md#cml-authentication-issues) guide.
 
 ## Cloud specific instructions
 
@@ -296,7 +434,7 @@ This repository contains Terraform configurations for deploying Cisco Modeling L
 1. AWS Account with appropriate permissions
 2. Terraform >= 1.1.0
 3. AWS CLI configured with your credentials
-4. CML software package (version 2.7.0 or later)
+4. CML software package (version 2.8.1-14)
 5. Reference platform files (compatible with your CML version)
 6. SSH key pair in your target AWS region
 
@@ -304,7 +442,7 @@ This repository contains Terraform configurations for deploying Cisco Modeling L
 
 ### CML Software Package
 The CML package should contain:
-- Main package file (e.g., `cml2_2.7.0-4_amd64-20.pkg`)
+- Main package file (e.g., `cml2_2.8.1-14_amd64-20.pkg`)
 - Digital signature file (`.signature`)
 - Certificate file (`.pem`)
 - Verification script (`cisco_x509_verify_release.py3`)
@@ -348,7 +486,7 @@ The reference platform package includes:
 5. Upload required files to S3:
    ```bash
    # Upload CML software package
-   aws s3 cp cml2_2.7.0-4_amd64-20.pkg s3://your-bucket/
+   aws s3 cp cml2_2.8.1-14_amd64-20.pkg s3://your-bucket/
 
    # Create refplat directory and upload reference platform files
    aws s3 cp refplat/ s3://your-bucket/refplat/ --recursive
@@ -374,108 +512,186 @@ The deployment creates:
 4. Security groups for CML and workstation
 5. Optional compute nodes for clustering
 
-## Configuration Guide
+## Documentation Map
 
-### AWS Configuration
-- `region`: AWS region for deployment
-- `availability_zone`: Specific AZ for instances
-- `bucket`: S3 bucket for CML files
-- `flavor`: Instance type for CML controller
-- `profile`: IAM instance profile
+All project documentation is now centralized in the `documentation/` folder. Below is a map of the most important documents and their purposes:
 
-### Network Configuration
-- `public_vpc_ipv4_cidr`: VPC CIDR range
-- `allowed_ipv4_subnets`: IP ranges allowed to access CML
-- Optional: Use existing VPC/Gateway with `vpc_id` and `gw_id`
+### Core Documentation
+- [README.md](documentation/README.md): Overview of the documentation structure and getting started.
+- [CHANGELOG.md](documentation/CHANGELOG.md): Full project changelog and release history.
+- [TODO.md](documentation/TODO.md): Project TODOs and planned features.
+- [NEXT_STEPS.md](documentation/NEXT_STEPS.md): Immediate next actions and recommendations.
 
-### CML Configuration
-- `disk_size`: Root volume size
-- `controller_hostname`: CML hostname
-- `key_name`: SSH key pair name
-- `enable_patty`: Enable terminal access
-- `software`: Exact name of CML package file
-- `refplat.iso`: Exact name of reference platform ISO
+### Specialized Documentation Subfolders
+- [documentation/packer/README.md](documentation/packer/README.md): Packer-specific usage, troubleshooting, and build notes.
+- [documentation/packer/NEXT_STEPS_README.md](documentation/packer/NEXT_STEPS_README.md): Next steps for Packer-based builds.
+- [documentation/packer/NETWORK_DIAGNOSTICS_README.md](documentation/packer/NETWORK_DIAGNOSTICS_README.md): Network diagnostics and troubleshooting for Packer builds.
+- [documentation/security/hardening/README.md](documentation/security/hardening/README.md): Security hardening documentation and best practices.
 
-### Security Best Practices
-1. Use environment variables for AWS credentials
-2. Restrict `allowed_ipv4_subnets` in production
-3. Enable EBS encryption if required
-4. Use secrets management in production
-5. Verify package signatures before deployment
-6. Keep sensitive files out of version control
+### Cloud and Deployment Guides
+- [AWS.md](documentation/AWS.md): AWS-specific deployment instructions.
+- [CML_DEPLOYMENT.md](documentation/CML_DEPLOYMENT.md): General CML deployment overview.
+- [CML_INSTALLATION.md](documentation/CML_INSTALLATION.md): Step-by-step CML installation guide.
+- [PACKER_BUILD.md](documentation/PACKER_BUILD.md): Building custom AMIs with Packer.
 
-## Accessing CML
+### Troubleshooting & Forensics
+- [TROUBLESHOOTING.md](documentation/TROUBLESHOOTING.md): Troubleshooting common issues.
+- [CML_Forensic_Troubleshooting.md](documentation/CML_Forensic_Troubleshooting.md): Forensic analysis and advanced troubleshooting.
+- [SERVICE_MONITORING.md](documentation/SERVICE_MONITORING.md): Monitoring CML services and health.
 
-1. Connect to DevNet workstation:
-   ```bash
-   ssh -i your-key.pem ubuntu@workstation-ip
-   ```
+### Connectivity & Workstation
+- [CML_DEVNET_CONNECTIVITY.md](documentation/CML_DEVNET_CONNECTIVITY.md): CML and DevNet connectivity setup.
+- [DEVNET_WORKSTATION.md](documentation/DEVNET_WORKSTATION.md): DevNet Expert workstation setup and usage.
 
-2. Access CML GUI:
-   - Open browser on workstation
-   - Navigate to https://cml-controller
-   - Default credentials in documentation
-   - Change passwords on first login
+---
 
-## Troubleshooting
+All new documentation should be added to the `documentation/` folder and referenced here for consistency and discoverability.
 
-### CML Controller Instance Reachability Issues
+## Project Root File Map
 
-If you encounter "Instance reachability check failed" errors with the CML controller:
+```
+/
+├── .git/ (Git internal directory)
+├── .gitignore
+├── .terraform/ (Terraform internal directory)
+├── .terraform.lock.hcl
+├── CHANGELOG.md
+├── CML-IMG-REL-CCO_RELEASE.pem
+├── CML_DEPLOYMENT.md
+├── DEVNET_WORKSTATION.md
+├── LICENSE
+├── NEXT_STEPS.md
+├── None_validation.log
+├── README.md
+├── TODO.md
+├── aws_cli_system_log.txt
+├── check_ssm_registration.py
+├── cisco_x509_verify_release.py3
+├── cloud-init-test.yaml
+├── cml-access-key.pem
+├── cml-assets/
+├── cml-cloudinit-test_*.json
+├── cml-controller-*.json
+├── cml-network-fix.tfplan
+├── cml2_2.7.0-4_amd64-20-pkg.zip
+├── cml2_2.7.0-4_amd64-20.pkg.README
+├── cml2_2.7.0-4_amd64-20.pkg.signature
+├── cml2_2.8.1-14_amd64-35_SHA256-disk1.vmdk
+├── cml_controller_screenshot.json
+├── cml_controller_system_log.txt
+├── cml_validator_utils/
+│   └── ... (Utility scripts and modules)
+├── compare_validation_results.py
+├── config.yml
+├── config.yml.example
+├── console_screenshot_*.jpg
+├── decode_screenshot.py
+├── devicecheck_forensic.json
+├── devnet_*.json
+├── documentation/
+│   └── ... (Project documentation files)
+├── forensic_*.log
+├── i-*.log (Instance-specific logs/validation results)
+├── i-*.txt (Instance-specific system logs)
+├── i-*.jpg (Instance-specific screenshots)
+├── images/
+│   └── ... (Image files, e.g., diagrams)
+├── import-cml.json
+├── logs/
+├── main.tf
+├── modules/
+│   └── ... (Terraform modules)
+├── monitor_cml_logs.sh
+├── monitor_logs.sh
+├── network_validated_ami.auto.tfvars
+├── output.tf
+├── packer/
+│   └── ... (Packer templates, scripts, and logs)
+├── prepare.bat
+├── prepare.sh
+├── quicktest_forensic_forensic.json
+├── refplat/
+│   └── ... (Reference platform files)
+├── refplat2.8/
+├── refplat_p-*.zip
+├── requirements.txt
+├── run_validation.py
+├── screenshot_*.jpg
+├── scripts/
+│   └── ... (General utility scripts)
+├── security/
+│   └── ... (Security-related files)
+├── serial_log_*.txt
+├── sessionmanager-bundle/
+├── sessionmanager-bundle.zip
+├── ssh_jump_connect.py
+├── terraform/
+├── terraform-key.pem
+├── terraform.auto.tfvars
+├── terraform.options-cfg.example.tfvars
+├── terraform.tf
+├── terraform.tfstate
+├── terraform.tfstate.backup
+├── terraform.tfvars
+├── tf_apply_with_logs.sh
+├── tfplan
+├── ubuntu-cloudinit-test_*.json
+├── upload-images-to-aws.sh
+├── validation_results_*.json
+├── validator.log
+├── validators/
+│   └── ... (Validation scripts and helpers)
+└── variables.tf
+```
 
-1. **Check Instance Size**: Ensure you're using a sufficiently powerful instance type (c5.4xlarge or larger recommended).
+## Validation Scripts
 
-2. **Examine Logs**: SSH into the instance and check the logs:
-   ```bash
-   ssh -i your-key.pem ubuntu@<instance-ip>
-   sudo cat /var/log/cml-provision.log
-   sudo cat /var/log/cloud-init-output.log
-   ```
+All validation scripts are now located in the top-level `validations/` directory. To validate your CML deployment, use:
 
-3. **Monitor Resources**: Check resource usage during initialization:
-   ```bash
-   ssh -i your-key.pem ubuntu@<instance-ip>
-   htop
-   ```
+```sh
+cd validations
+python3 run_validation.py --instance-id <INSTANCE_ID> --all
+```
 
-4. **Increase Timeouts**: If the instance is timing out during initialization, consider increasing the timeouts in:
-   - `modules/deploy/data/cml.sh`
-   - `modules/deploy/data/cloud-config.txt`
+Replace `<INSTANCE_ID>` with your actual AWS EC2 instance ID (e.g., `i-0e0bc211293ebad69`).
 
-5. **Check Network Configuration**: Ensure the security groups and network settings allow proper connectivity.
+This structure allows you to reuse validation scripts across all CML versions (e.g., `cml.2.7.0`, `cml.2.8.1`).
 
-### RDP Access to DevNet Workstation
+## Recent Updates
 
-If you're having trouble accessing the DevNet workstation via RDP:
+### CML Service Check Feature (April 20, 2025)
 
-1. **Verify Security Group**: Ensure port 3389 is open in the security group.
+Successfully implemented and debugged the `--check-cml-services` flag in `run_validation.py`. This feature allows direct verification of core CML service status via SSM, crucial for post-deployment validation. The implementation involved adding a new method (`check_cml_services_via_ssm`), updating the argument parser, fixing class initialization (`__init__` method addition), and refining error handling for SSM command execution.
 
-2. **Check RDP Service**: SSH into the workstation and verify the RDP service:
-   ```bash
-   ssh -i your-key.pem ubuntu@<workstation-ip>
-   sudo systemctl status xrdp
-   ```
+This feature was instrumental in diagnosing that the CML instance `i-0cdb562a0ff8c9206` was missing the `virl2-uwm.service`, confirming an incomplete installation originating from an older AMI build.
 
-3. **RDP Credentials**: Use the following default credentials:
-   - Username: `devnet`
-   - Password: `devnet123`
+## Next Steps (Troubleshooting CML Installation)
 
-4. **Restart RDP Service**: If needed, restart the service:
-   ```bash
-   sudo systemctl restart xrdp
-   ```
+The validation script confirmed that the currently deployed CML instance (`i-0cdb562a0ff8c9206`) was built from an AMI where CML services were not installed correctly due to an issue in the Packer build script (`packer/install_cml_2.7.0.sh`) that has since been fixed (problematic `setup.sh` execution was commented out).
 
-## Support
+To resolve this and get a correctly functioning CML instance, the following steps are required:
 
-For issues with:
-- Deployment: Open an issue in this repository
-- CML software: Contact Cisco support
-- AWS services: Contact AWS support
+1.  **Rebuild AMI:**
+    *   Navigate to the `packer` directory: `cd /Users/miked/Documents/Projects/python_project/my-cloud-cml/packer`
+    *   Run the Packer build: `packer build .`
+    *   Monitor the build process for successful completion.
+2.  **Update AMI Variable:**
+    *   After the Packer build succeeds, verify that the new AMI ID has been automatically written to `/Users/miked/Documents/Projects/python_project/my-cloud-cml/network_validated_ami.auto.tfvars`.
+3.  **Redeploy Instance with Terraform:**
+    *   Navigate to the project root directory: `cd /Users/miked/Documents/Projects/python_project/my-cloud-cml`
+    *   Apply the Terraform configuration to destroy the old instance and create a new one with the updated AMI: `terraform apply -auto-approve`
+4.  **Final Validation:**
+    *   Identify the new instance ID from the Terraform output.
+    *   Run the validation script against the new instance, including the service check: `python run_validation.py -i <new-instance-id> --check-cml-services`
+    *   Confirm that the output shows all CML services as `active (running)`. 
 
-## Contributing
+## Artifacts, Keys, and Scripts
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+- All PEM keys are now in `cml.2.7.0/keys/`
+- All log and artifact files are in `cml.2.7.0/artifacts/`
+- All scripts (e.g., `prepare.sh`, `prepare.bat`) are in `cml.2.7.0/scripts/`
+- All configuration and asset files are in `cml.2.7.0/assets/`
+- All validator utilities are in `cml.2.7.0/validators/`
+- CML 2.8.1 disk image is in `cml.2.8.1/`
 
-## License
-
-This project is licensed under the terms of the LICENSE file included in this repository.
+**The project root is now clean and all files are organized by version and function.**

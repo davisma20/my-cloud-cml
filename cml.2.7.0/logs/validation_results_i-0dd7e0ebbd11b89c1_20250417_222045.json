@@ -1,0 +1,136 @@
+{
+    "instance_status": {
+        "status": "Details Found",
+        "state": "running",
+        "details": {}
+    },
+    "iam_permissions": {
+        "status": "Passed",
+        "details": {
+            "ec2:DescribeInstances": "Allowed",
+            "ec2:DescribeInstanceStatus": "Allowed",
+            "ec2:DescribeSecurityGroups": "Allowed",
+            "ec2:DescribeNetworkAcls": "Allowed",
+            "ec2:DescribeSubnets": "Allowed",
+            "ec2:GetConsoleOutput": "Allowed",
+            "iam:SimulatePrincipalPolicy": "Allowed",
+            "sts:GetCallerIdentity": "Allowed",
+            "ssm:SendCommand": "Allowed",
+            "ssm:GetCommandInvocation": "Allowed"
+        },
+        "all_required_met": true
+    },
+    "security_groups": {
+        "status": "Checked",
+        "details": {
+            "outbound_http": "Allowed",
+            "outbound_https": "Allowed",
+            "inbound_ssh": "Allowed"
+        },
+        "ids_found": [
+            "sg-0b62619df651aa4ef"
+        ]
+    },
+    "nacls": {
+        "finding_status": "Found (Explicit)",
+        "nacl_id": "acl-0c6151d9794d045f4",
+        "rule_check_status": "Checked",
+        "rule_details": {
+            "nacl_id": "acl-0c6151d9794d045f4",
+            "outbound_http": "Allowed",
+            "outbound_https": "Allowed",
+            "inbound_ephemeral": "Allowed"
+        },
+        "raw_nacl_details": {
+            "Associations": [
+                {
+                    "NetworkAclAssociationId": "aclassoc-04e3adc370a62e1be",
+                    "NetworkAclId": "acl-0c6151d9794d045f4",
+                    "SubnetId": "subnet-0c83ed8f5c33269ed"
+                }
+            ],
+            "Entries": [
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                }
+            ],
+            "IsDefault": true,
+            "NetworkAclId": "acl-0c6151d9794d045f4",
+            "Tags": [],
+            "VpcId": "vpc-02a548508df32dd19",
+            "OwnerId": "450339903191"
+        }
+    },
+    "ssm_check": {
+        "status": "Passed",
+        "details": {
+            "ssm_status": "Success",
+            "output": "SSM Agent is responding"
+        }
+    },
+    "ssh_check": {
+        "status": "Passed",
+        "details": {
+            "message": "Connection successful."
+        }
+    },
+    "system_log": {
+        "status": "Retrieved",
+        "details": {
+            "log_content": "G]\u001emu\u057f=s]4M4M4o=}~\u001anWM4@H9'ILtM4N64M4M4M4w}~zwM4M45q1y\u02edx8i^-ybv+M4M\u0000<bq\u01a5\u0227\u061a,wM4M4{\u001b^\u05dd\u001c\u01a5D\u0003&j4M4\u04b7z\u07b1n\u05adjg\u001d4M4M4M4M1M4M4M=}\u07fa\u019b4M4\u04b7z\u07b1n\u05adjg\u001d4M4M4M4M1M4M4o\u05fcwM{\u019b4M4\u04b7z\u07b1n\u05adjg\u001d4M4F{t1M4M4o\u05fd{\u019b4M4\u04b7z\u07b1n\u05adjg\u001d4M4F{^1M4M4m\u001cu\u07fa\u019b4M4\u04b7z\u07b1n\u05adjg\u001d4M4Fq\u01f4M1M4M4mu\u07ed\u001eM4M+z\u01eb\u001e]j\u05a6zm1M4M4m{M4\u001d4M4F\u007f_}\u0002<Z4M4\u04b7z\u07b1n\u05adjg\u001d4M4F\u007fM1M4M4mu\u0000#5TM4J\u07b1z\u01edZLtM4M\u001bm^M4M4M4\u0477~\u001anWM4J\u07b1z\u01edZLtM4M\u001b}M4M4M4\u0477}~zwM4M4\u001ez\u06e9uZM4M4M4M4LtM4N6}\uec66{M4M4\u001ez\u06e9uZM4M4o\u001aM4LtM4N7}}z\u01ebtM4GAHn@ 4M4HH9-1mkM4\u0000#\u0016\u007ft@\u0002<\u0016\u007ft\u05c3\u00040\u0004GL[kw<_\f8\u06afL[m|M4M4K\u001ern-I.by4M4#\u0001 \u07b1M4M\u00030&k:'\u0010-lej\u001e\u0012\u000eK]5zm5M4M4\u001f*^^-y\u04953M4M4$R\u0227k+t\u0569z4M4M$g%.)^v\u07f1h\u007fmvmM\u001c^M4M6rZ\u001c.\u01e4g%&j4}}}~fs'%z1x\u001d}k\u0018yN}\u05cf74M4\u001c\r^r\u05dd}\u078c\u001f:k\u01ecM4Z_Lx\u01b4fj!"
+        }
+    }
+}

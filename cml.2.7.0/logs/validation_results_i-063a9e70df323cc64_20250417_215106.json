@@ -1,0 +1,51 @@
+{
+    "instance_status": {
+        "status": "Skipped (No Instance Details)",
+        "state": "unknown",
+        "details": {}
+    },
+    "iam_permissions": {
+        "status": "Passed",
+        "details": {
+            "ec2:DescribeInstances": "Allowed",
+            "ec2:DescribeInstanceStatus": "Allowed",
+            "ec2:DescribeSecurityGroups": "Allowed",
+            "ec2:DescribeNetworkAcls": "Allowed",
+            "ec2:DescribeSubnets": "Allowed",
+            "ec2:GetConsoleOutput": "Allowed",
+            "iam:SimulatePrincipalPolicy": "Allowed",
+            "sts:GetCallerIdentity": "Allowed",
+            "ssm:SendCommand": "Allowed",
+            "ssm:GetCommandInvocation": "Allowed"
+        },
+        "all_required_met": true
+    },
+    "security_groups": {
+        "status": "Skipped (No Instance Details)",
+        "details": {},
+        "ids_found": []
+    },
+    "nacls": {
+        "finding_status": "Skipped (No Instance/Subnet Details)",
+        "nacl_id": null,
+        "rule_check_status": "Not Checked",
+        "rule_details": {},
+        "raw_nacl_details": null
+    },
+    "ssm_check": {
+        "status": "Skipped (Instance State: unknown)",
+        "details": {}
+    },
+    "ssh_check": {
+        "status": "Skipped (Instance State: unknown)",
+        "details": {}
+    },
+    "system_log": {
+        "status": "Error (CLI Command Failed)",
+        "details": {
+            "error": "AWS CLI command failed with exit code 254. Stderr: An error occurred (InvalidInstanceID.NotFound) when calling the GetConsoleOutput operation: The instance ID 'i-063a9e70df323cc64' does not exist",
+            "return_code": 254,
+            "stderr": "\nAn error occurred (InvalidInstanceID.NotFound) when calling the GetConsoleOutput operation: The instance ID 'i-063a9e70df323cc64' does not exist\n"
+        }
+    }
+}

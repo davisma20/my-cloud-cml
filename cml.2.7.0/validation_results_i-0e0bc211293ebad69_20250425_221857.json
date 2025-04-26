@@ -1,0 +1,160 @@
+{
+    "instance_details": {
+        "Architecture": "x86_64",
+        "BlockDeviceMappings": [
+            {
+                "DeviceName": "/dev/sda1",
+                "Ebs": {
+                    "AttachTime": "2025-04-26 04:15:50+00:00",
+                    "DeleteOnTermination": true,
+                    "Status": "attached",
+                    "VolumeId": "vol-069f74d5fcbf5f382"
+                }
+            }
+        ],
+        "ClientToken": "terraform-20250426041549332300000002",
+        "EbsOptimized": false,
+        "EnaSupport": true,
+        "Hypervisor": "xen",
+        "IamInstanceProfile": {
+            "Arn": "arn:aws:iam::450339903191:instance-profile/cml-ssm-profile",
+            "Id": "AIPAWRWSZS3L3FHCT3YYZ"
+        },
+        "NetworkInterfaces": [
+            {
+                "Association": {
+                    "IpOwnerId": "450339903191",
+                    "PublicDnsName": "",
+                    "PublicIp": "18.218.104.202"
+                },
+                "Attachment": {
+                    "AttachTime": "2025-04-26 04:15:50+00:00",
+                    "AttachmentId": "eni-attach-058be21cc832c741c",
+                    "DeleteOnTermination": true,
+                    "DeviceIndex": 0,
+                    "Status": "attached",
+                    "NetworkCardIndex": 0
+                },
+                "Description": "",
+                "Groups": [
+                    {
+                        "GroupId": "sg-05e60d7eca8425528",
+                        "GroupName": "tf-sg-cml-0cbb8b92"
+                    }
+                ],
+                "Ipv6Addresses": [],
+                "MacAddress": "02:6b:43:84:b2:fb",
+                "NetworkInterfaceId": "eni-0eac50b229b6a0721",
+                "OwnerId": "450339903191",
+                "PrivateIpAddress": "10.0.0.209",
+                "PrivateIpAddresses": [
+                    {
+                        "Association": {
+                            "IpOwnerId": "450339903191",
+                            "PublicDnsName": "",
+                            "PublicIp": "18.218.104.202"
+                        },
+                        "Primary": true,
+                        "PrivateIpAddress": "10.0.0.209"
+                    }
+                ],
+                "SourceDestCheck": true,
+                "Status": "in-use",
+                "SubnetId": "subnet-004ff534d94240f72",
+                "VpcId": "vpc-0f9e34c51974f4858",
+                "InterfaceType": "interface",
+                "Operator": {
+                    "Managed": false
+                }
+            }
+        ],
+        "RootDeviceName": "/dev/sda1",
+        "RootDeviceType": "ebs",
+        "SecurityGroups": [
+            {
+                "GroupId": "sg-05e60d7eca8425528",
+                "GroupName": "tf-sg-cml-0cbb8b92"
+            }
+        ],
+        "SourceDestCheck": true,
+        "Tags": [
+            {
+                "Key": "Name",
+                "Value": "cml-controller-0cbb8b92"
+            }
+        ],
+        "VirtualizationType": "hvm",
+        "CpuOptions": {
+            "CoreCount": 4,
+            "ThreadsPerCore": 2
+        },
+        "CapacityReservationSpecification": {
+            "CapacityReservationPreference": "open"
+        },
+        "HibernationOptions": {
+            "Configured": false
+        },
+        "MetadataOptions": {
+            "State": "applied",
+            "HttpTokens": "required",
+            "HttpPutResponseHopLimit": 1,
+            "HttpEndpoint": "enabled",
+            "HttpProtocolIpv6": "disabled",
+            "InstanceMetadataTags": "disabled"
+        },
+        "EnclaveOptions": {
+            "Enabled": false
+        },
+        "PlatformDetails": "Linux/UNIX",
+        "UsageOperation": "RunInstances",
+        "UsageOperationUpdateTime": "2025-04-26 04:15:50+00:00",
+        "PrivateDnsNameOptions": {
+            "HostnameType": "ip-name",
+            "EnableResourceNameDnsARecord": false,
+            "EnableResourceNameDnsAAAARecord": false
+        },
+        "MaintenanceOptions": {
+            "AutoRecovery": "default"
+        },
+        "CurrentInstanceBootMode": "legacy-bios",
+        "NetworkPerformanceOptions": {
+            "BandwidthWeighting": "default"
+        },
+        "Operator": {
+            "Managed": false
+        },
+        "InstanceId": "i-0e0bc211293ebad69",
+        "ImageId": "ami-03f52ea97f5c41818",
+        "State": {
+            "Code": 16,
+            "Name": "running"
+        },
+        "PrivateDnsName": "ip-10-0-0-209.us-east-2.compute.internal",
+        "PublicDnsName": "",
+        "StateTransitionReason": "",
+        "KeyName": "terraform-key",
+        "AmiLaunchIndex": 0,
+        "ProductCodes": [],
+        "InstanceType": "c5.2xlarge",
+        "LaunchTime": "2025-04-26 04:15:50+00:00",
+        "Placement": {
+            "GroupName": "",
+            "Tenancy": "default",
+            "AvailabilityZone": "us-east-2a"
+        },
+        "Monitoring": {
+            "State": "disabled"
+        },
+        "SubnetId": "subnet-004ff534d94240f72",
+        "VpcId": "vpc-0f9e34c51974f4858",
+        "PrivateIpAddress": "10.0.0.209",
+        "PublicIpAddress": "18.218.104.202"
+    },
+    "ssm_agent_status": {
+        "status": "Passed",
+        "details": {
+            "ssm_status": "Success",
+            "output": "SSM Agent is responding"
+        }
+    }
+}

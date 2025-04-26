@@ -4,9 +4,29 @@
 *.tfstate.*
 .terraform.lock.hcl
 
+# Logs and temporary files
+cml_deployment_logs/
+cml_install_logs/
+cml_logs/
+sessionmanager-bundle/
+import-cml.json
+*.log
+*_full_system_log.txt
+aws_cli_system_log.txt
+crash.log
+*.jpg
+packer/*.log
+
+# Scripts and service files (that are generated or temporary)
+cml_fix.sh
+fix_cml_install.sh
+cml_install_fix_manual.sh
+cml_install_improved.service
+
 # Local configs
 config.yml
 .envrc
+terraform.tfvars
 
 # Large files and packages
 *.pkg
@@ -33,5 +53,7 @@ Thumbs.db
 # Terraform state files
 terraform.tfstate
 terraform.tfstate.backup
-.terraform/
-.terraform.lock.hcl
+
+# Ignore SSH private keys used for validation
+keys/
+cml-validation-key.pem

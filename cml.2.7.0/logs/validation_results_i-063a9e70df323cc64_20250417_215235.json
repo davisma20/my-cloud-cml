@@ -1,0 +1,140 @@
+{
+    "instance_status": {
+        "status": "Details Found",
+        "state": "running",
+        "details": {
+            "raw_state_info": {
+                "Code": 16,
+                "Name": "running"
+            }
+        }
+    },
+    "iam_permissions": {
+        "status": "Passed",
+        "details": {
+            "ec2:DescribeInstances": "Allowed",
+            "ec2:DescribeInstanceStatus": "Allowed",
+            "ec2:DescribeSecurityGroups": "Allowed",
+            "ec2:DescribeNetworkAcls": "Allowed",
+            "ec2:DescribeSubnets": "Allowed",
+            "ec2:GetConsoleOutput": "Allowed",
+            "iam:SimulatePrincipalPolicy": "Allowed",
+            "sts:GetCallerIdentity": "Allowed",
+            "ssm:SendCommand": "Allowed",
+            "ssm:GetCommandInvocation": "Allowed"
+        },
+        "all_required_met": true
+    },
+    "security_groups": {
+        "status": "Checked",
+        "details": {
+            "outbound_http": "Allowed",
+            "outbound_https": "Allowed",
+            "inbound_ssh": "Allowed"
+        },
+        "ids_found": [
+            "sg-0b62619df651aa4ef"
+        ]
+    },
+    "nacls": {
+        "finding_status": "Found (Explicit)",
+        "nacl_id": "acl-0c6151d9794d045f4",
+        "rule_check_status": "Checked",
+        "rule_details": {
+            "nacl_id": "acl-0c6151d9794d045f4",
+            "outbound_http": "Allowed",
+            "outbound_https": "Allowed",
+            "inbound_ephemeral": "Allowed"
+        },
+        "raw_nacl_details": {
+            "Associations": [
+                {
+                    "NetworkAclAssociationId": "aclassoc-04e3adc370a62e1be",
+                    "NetworkAclId": "acl-0c6151d9794d045f4",
+                    "SubnetId": "subnet-0c83ed8f5c33269ed"
+                }
+            ],
+            "Entries": [
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                }
+            ],
+            "IsDefault": true,
+            "NetworkAclId": "acl-0c6151d9794d045f4",
+            "Tags": [],
+            "VpcId": "vpc-02a548508df32dd19",
+            "OwnerId": "450339903191"
+        }
+    },
+    "ssm_check": {
+        "status": "Failed (InvalidInstanceId)",
+        "details": {
+            "error": "An error occurred (InvalidInstanceId) when calling the SendCommand operation: Instances [[i-063a9e70df323cc64]] not in a valid state for account 450339903191"
+        }
+    },
+    "ssh_check": {
+        "status": "Failed (Timeout)",
+        "details": {
+            "error": "Connection timed out (10s)."
+        }
+    },
+    "system_log": {
+        "status": "Retrieved",
+        "details": {
+            "log_content": "Nk\u05fbw\u001chu4N\u06f4\u000133@\u000f -1Shu4N\u0511\u000133@\u000f -1chu4NT\u000133@\u000f -1shu4Nt\u000133@\u000f -1\u04c3hu4N\u07d4\u000133@\u000f -1\u04d3hu4N\u07f4\u000133@\u000f -1\u04e3hu4N\u0511\u000133@\u000f -1\u04f3hu4N`\u0002<\u00013hu\u000f\\&zm1M4M4\u0016}}4\u04fd\u0000!$@L\u001d{C3ILuM4M4\u001e7}}NT0\u0003hu&zm1M4M4\u0016}}zm1M4M4Lxo_}\u07d9M4M4Lxo_}M;\u06ee81\u0003\u000104jYhq^vg\u001e6yM4\u01cd}4\u04fev'z4N\u0002g\u001d4M4M4MtM1M4M4G}M;}\u00030\rM4M4MtM4LtM4M\u001f}}NchfM4M4M4M4LtM4N6}N\u07c0\u07be'\u001ezjmM42nWw~ig\u05f4N\u001a\\zj+z\u001dz4Nu&zm1M4M4M4M4\u001d4M4M4\u05df}4\u04fexz\u001d{ILtM4M4]4M4M4M4\u0477{\u007fM45^g\u001d4M4]4M4M1M4M8o_}M;\b+fzk\u001eg\u05f4M4M4M4]4LtM4N6}NS^:'x3\u0000\u0596z\u0227vj)ZnWjx\u001eM4:yu3w0\u000f{\u001e)\ue76b\u068aV\u069e\u0007MNz\u001d{LhfzZ\"\u06bdi^z4~\u05f4\u03896j]^j\u0007{jz4~4`\u0002<N)t\u017d4M7O6\u0000#,\u0003\b\bib1}_)\u001dt~5\u06e2\u000e\u0000\u0002\u046abr't\uc289\u0667],\u0017sM4A#MMo@\b\b54\bQn4n\"`\u0696*\u0018Wz]4\u07cdw\u0000 SI\u0010U\u0016F*\thmba\bezM}\b\b54\bQn4n\"tZ\u001bjX]!\bezM~\u0000\b\b54\bQn4n\"uZ\u001bjX]a\bezM~\b\u0014)\u0000#0\u0000~0(+b}4\u07cdw\u0000 sN't<\u9b74\u0576{L_y4M4~5d\t\u05davXz\u0626zj)ZnW~5{&(\te\bR!e\u0000R4\u07cd{!bt^+-z\u001a\u979aM4M4LtM4}~5\u0306&\u07aevz\bvz,jzj+g\u001d4M1M=}M\u05fe2\u0018z\u06b6*'E\"\u05eby\u8c6b\u0799\u9a2f)LtFM4M4y\u007fM7^<bmj\u0628\u0017^g\u01afzgzm1M\u001fM4\u001d4}4\u07cd|!bt^+-z\u001a\u979a\u0177{4L[}}~5\u0306&\u07aevz\bvz,jzj+g\u00174M4M1u}M\u038f2\u0018z\u06b6*'E\"\u05eby\u8c6b\u0799\u9a2f)L^M4M47}\u007fM7_<<bmj\u0628\u0017^g\u01afzgzm1{N4M4\u0017}}4\u07cd}!bt^+-z\u001a\u979asM4L_}}~5yL\\M4M4}}\u068aVuq4~5h\u0627j\u694b7zZ')S4~5%,zw'\u07c9&j4}~fs'%z1}}\u07d9bvW}M6^z{4~6\u001eiz)B=D\u0767n$n+lz\u0726\u8773\ub787^5MM)z)Iy^wj\u0007nm{+_vwo:kmxM7u-\u05da\u0626ynk+]\u07cd<M7x-=[)yhrK\u001d\u019bg\u001a,\u02e9M\u0001)m:'zX\u0268n)b(+b\n'NZz4M8M7}>bs,hfMMJz\u0795&\u0756)\u0004 \u0006\u0013X>uMtV(\u0011ME\b\r\u007f\u07d6sZs\u001ev\u001c{(mW(%zrKI(\u8a36)"
+        }
+    }
+}

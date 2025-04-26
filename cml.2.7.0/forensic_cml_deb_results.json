@@ -1,0 +1,43 @@
+[
+  {
+    "deb": "cml2_2.7.0-4_amd64.deb",
+    "virl2-uwm.service": false,
+    "virl2-controller.service": true,
+    "service_entries": [
+      "drwxr-xr-x root/root         0 2024-03-15 20:21 ./usr/lib/systemd/system/firewalld.service.d/",
+      "-rw-r--r-- root/root       128 2024-03-15 20:12 ./usr/lib/systemd/system/firewalld.service.d/firewalld.conf",
+      "drwxr-xr-x root/root         0 2024-03-15 20:21 ./usr/lib/systemd/system/ksmtuned.service.d/",
+      "-rw-r--r-- root/root       130 2024-03-15 20:12 ./usr/lib/systemd/system/ksmtuned.service.d/ksmtuned-disable-merge-across.conf",
+      "-rw-r--r-- root/root       526 2024-03-15 20:12 ./usr/lib/systemd/system/libvirtd-firewalld-reload.service",
+      "-rw-r--r-- root/root       345 2024-03-15 20:12 ./usr/lib/systemd/system/libvirtd-firewalld-restart.service",
+      "drwxr-xr-x root/root         0 2024-03-15 20:21 ./usr/lib/systemd/system/libvirtd.service.d/",
+      "-rw-r--r-- root/root        90 2024-03-15 20:12 ./usr/lib/systemd/system/libvirtd.service.d/libvirtd-systemd-lxcfixer.conf",
+      "drwxr-xr-x root/root         0 2024-03-15 20:21 ./usr/lib/systemd/system/nfs-blkmap.service.d/",
+      "-rw-r--r-- root/root        60 2024-03-15 20:12 ./usr/lib/systemd/system/nfs-blkmap.service.d/nfs-blkmap-modprobe.conf",
+      "-rw-r--r-- root/root       283 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-backup-db.service",
+      "-rw-r--r-- root/root       580 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-compute-setup.service",
+      "-rw-r--r-- root/root       603 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-configure.service",
+      "-rw-r--r-- root/root       648 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-controller.service",
+      "-rw-r--r-- root/root       637 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-core-driver.service",
+      "-rw-r--r-- root/root       506 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-devicemux.service",
+      "-rw-r--r-- root/root       637 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-dispatcher.service",
+      "-rw-r--r-- root/root       594 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-fabric.service",
+      "-rw-r--r-- root/root       674 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-initial-setup.service",
+      "-rw-r--r-- root/root       707 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-ipsnooper.service",
+      "-rw-r--r-- root/root       607 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-licensing.service",
+      "-rw-r--r-- root/root       718 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-lowlevel-driver.service",
+      "-rw-r--r-- root/root       681 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-monitor.service",
+      "-rw-r--r-- root/root       433 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-overlay-fs.service",
+      "-rw-r--r-- root/root       523 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-pcapdemux.service",
+      "-rw-r--r-- root/root       661 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-protect-bridges@.service",
+      "-rw-r--r-- root/root       476 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-remount-images.service",
+      "-rw-r--r-- root/root       461 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-send-stats.service",
+      "-rw-r--r-- root/root       390 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-software-upgrade.service",
+      "-rw-r--r-- root/root      1073 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-sshd-cluster.service",
+      "-rw-r--r-- root/root       605 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-sshd.service",
+      "-rw-r--r-- root/root       867 2024-03-15 20:12 ./usr/lib/systemd/system/virl2-vlan-zero@.service"
+    ],
+    "postinst": "#!/bin/bash\n# postinst script for cml\n#\n# see: dh_installdeb(1)\n\nset -e\nif [[ \"2.7.0-4\" =~ dev ]]; then\n    set -x\nfi\n\n# summary of how this script can be called:\n#        * <postinst> `configure' <most-recently-configured-version>\n#        * <old-postinst> `abort-upgrade' <new version>\n#        * <conflictor's-postinst> `abort-remove' `in-favour' <package>\n#          <new-version>\n#        * <postinst> `abort-remove'\n#        * <deconfigured's-postinst> `abort-deconfigure' `in-favour'\n#          <failed-install-package> <version> `removing'\n#          <conflicting-package> <version>\n# for details, see https://www.debian.org/doc/debian-policy/ or\n",
+    "errors": []
+  }
+]

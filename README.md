@@ -50,6 +50,15 @@ The infrastructure is currently **destroyed**.
 1.  Re-run `terraform apply` to provision the infrastructure.
 2.  Resume troubleshooting the original cloud-init boot issues, focusing on potential NACL restrictions or IAM permission problems identified previously using `run_validation.py`.
 
+## Versioned Infrastructure Layout
+
+This repository now uses a versioned folder structure for CML infrastructure code and assets:
+
+- `cml.2.7.0/`: Contains all Terraform, Packer, scripts, documentation, and supporting files for the CML 2.7.0 release. This folder is a complete, working snapshot for that version.
+- `cml.2.8.1/`: (In progress) Use this folder to begin building and testing the next CML release. Start by copying only what you need from `cml.2.7.0/` and adapt for 2.8.1 changes. This approach supports clean, iterative upgrades and easy rollbacks.
+
+**Best Practice:** Always add new version folders for major upgrades. Never overwrite or delete previous version folders—this preserves traceability and enables parallel development or hotfixes if needed.
+
 ## Custom AMI Building with Packer
 
 This repository includes support for building custom CML AMIs using Packer. The Packer templates and scripts are located in the `packer` directory and provide the following benefits:
@@ -589,3 +598,14 @@ To resolve this and get a correctly functioning CML instance, the following step
     *   Identify the new instance ID from the Terraform output.
     *   Run the validation script against the new instance, including the service check: `python run_validation.py -i <new-instance-id> --check-cml-services`
     *   Confirm that the output shows all CML services as `active (running)`. 
+
+## Artifacts, Keys, and Scripts
+
+- All PEM keys are now in `cml.2.7.0/keys/`
+- All log and artifact files are in `cml.2.7.0/artifacts/`
+- All scripts (e.g., `prepare.sh`, `prepare.bat`) are in `cml.2.7.0/scripts/`
+- All configuration and asset files are in `cml.2.7.0/assets/`
+- All validator utilities are in `cml.2.7.0/validators/`
+- CML 2.8.1 disk image is in `cml.2.8.1/`
+
+**The project root is now clean and all files are organized by version and function.**

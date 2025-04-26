@@ -1,0 +1,49 @@
+{
+    "instance_status": {
+        "status": "Error Finding State",
+        "state": "unknown",
+        "details": {}
+    },
+    "iam_permissions": {
+        "status": "Checked (Assumed for Root)",
+        "details": {
+            "ec2:DescribeInstances": "Allowed (Assumed for Root)",
+            "ec2:DescribeInstanceStatus": "Allowed (Assumed for Root)",
+            "ec2:DescribeSecurityGroups": "Allowed (Assumed for Root)",
+            "ec2:DescribeNetworkAcls": "Allowed (Assumed for Root)",
+            "ec2:DescribeSubnets": "Allowed (Assumed for Root)",
+            "ec2:GetConsoleOutput": "Allowed (Assumed for Root)",
+            "iam:SimulatePrincipalPolicy": "Allowed (Assumed for Root)",
+            "sts:GetCallerIdentity": "Allowed (Assumed for Root)",
+            "ssm:SendCommand": "Allowed (Assumed for Root)",
+            "ssm:GetCommandInvocation": "Allowed (Assumed for Root)"
+        },
+        "all_required_met": true
+    },
+    "security_groups": {
+        "status": "Skipped (No Instance Details)",
+        "details": {},
+        "ids_found": []
+    },
+    "nacls": {
+        "finding_status": "Skipped (No Instance/Subnet Details)",
+        "nacl_id": null,
+        "rule_check_status": "Not Checked",
+        "rule_details": {},
+        "raw_nacl_details": null
+    },
+    "ssm_check": {
+        "status": "Skipped (Instance State: unknown)",
+        "details": {}
+    },
+    "ssh_check": {
+        "status": "Skipped (Instance State: unknown)",
+        "details": {}
+    },
+    "system_log": {
+        "status": "Error (Unexpected)",
+        "details": {
+            "error": "Parameter validation failed:\nInvalid type for parameter InstanceId, value: None, type: <class 'NoneType'>, valid types: <class 'str'>"
+        }
+    }
+}

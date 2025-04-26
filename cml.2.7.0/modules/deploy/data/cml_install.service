@@ -1,0 +1,47 @@
+[Unit]
+Description=Initial CML2 Installation
+After=network.target
+Before=getty@tty1.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/bin/chvt 1
+# Add timestamps to our logging
+ExecStartPre=/bin/sh -c "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Starting CML2 installation process\" > /var/log/cml_install.log"
+ExecStartPre=/bin/sh -c "echo \"Preparing CML first boot run\" | tee -a /var/log/cml_install.log"
+
+# Check if CML2 is already installed and purge if needed
+ExecStartPre=/bin/sh -c "if /bin/dpkg -l cml2; then echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Purging existing CML2 installation\" >> /var/log/cml_install.log; /bin/dpkg --configure -a; /bin/apt-get -y purge cml2; fi"
+
+# Reconfigure wireshark without interactive prompts
+ExecStartPre=/bin/sh -c "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Configuring wireshark\" >> /var/log/cml_install.log; echo 'wireshark-common wireshark-common/install-setuid boolean true' | debconf-set-selections && DEBIAN_FRONTEND=noninteractive dpkg-reconfigure wireshark-common 2>&1 >> /var/log/cml_install.log"
+
+# Install CML2 package with verbose logging
+ExecStart=/bin/sh -c "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Installing CML2 package\" >> /var/log/cml_install.log; DEBIAN_FRONTEND=noninteractive apt-get -y install /root/cml2*.deb 2>&1 | tee -a /var/log/cml_install.log"
+
+# Remove CML2 package file after installation
+ExecStart=/bin/sh -c "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Removing CML2 package file\" >> /var/log/cml_install.log; /bin/rm -f /root/cml2*.deb"
+
+# Create the unconfigured flag file to trigger first-time setup
+ExecStart=/bin/sh -c "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Creating unconfigured flag file\" >> /var/log/cml_install.log; /bin/touch /etc/.virl2_unconfigured"
+
+# Set log level with proper escaping
+ExecStart=/bin/sh -c "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Setting log level to WARNING\" >> /var/log/cml_install.log; sed -i 's/^LOG_LEVEL=.*/LOG_LEVEL=WARNING/g' /etc/default/virl2 && sed -i 's/^SMART_LOG_LEVEL=.*/SMART_LOG_LEVEL=WARNING/g' /etc/default/virl2"
+
+# Cleanup
+ExecStartPost=/bin/sh -c "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Disabling installation service\" >> /var/log/cml_install.log"
+ExecStartPost=/bin/systemctl disable cml_install.service
+ExecStartPost=/bin/sh -c "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Removing installation service file\" >> /var/log/cml_install.log"
+ExecStartPost=/bin/rm -f /etc/systemd/system/cml_install.service
+ExecStartPost=/bin/systemctl daemon-reload
+ExecStartPost=/bin/sh -c "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Installation service completed successfully\" >> /var/log/cml_install.log"
+
+# Prevent timeout - give the installation plenty of time
+TimeoutStartSec=1800s
+
+# Standard I/O settings
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,135 @@
+{
+    "instance_status": {
+        "status": "Details Found",
+        "state": "running",
+        "details": {}
+    },
+    "iam_permissions": {
+        "status": "Passed",
+        "details": {
+            "ec2:DescribeInstances": "Allowed",
+            "ec2:DescribeInstanceStatus": "Allowed",
+            "ec2:DescribeSecurityGroups": "Allowed",
+            "ec2:DescribeNetworkAcls": "Allowed",
+            "ec2:DescribeSubnets": "Allowed",
+            "ec2:GetConsoleOutput": "Allowed",
+            "iam:SimulatePrincipalPolicy": "Allowed",
+            "sts:GetCallerIdentity": "Allowed",
+            "ssm:SendCommand": "Allowed",
+            "ssm:GetCommandInvocation": "Allowed"
+        },
+        "all_required_met": true
+    },
+    "security_groups": {
+        "status": "Checked",
+        "details": {
+            "outbound_http": "Allowed",
+            "outbound_https": "Allowed",
+            "inbound_ssh": "Denied/Missing"
+        },
+        "ids_found": [
+            "sg-0c1c072eef88f2b7e"
+        ]
+    },
+    "nacls": {
+        "finding_status": "Found (Explicit)",
+        "nacl_id": "acl-071d33a15c7a935d9",
+        "rule_check_status": "Checked",
+        "rule_details": {
+            "nacl_id": "acl-071d33a15c7a935d9",
+            "outbound_http": "Allowed",
+            "outbound_https": "Allowed",
+            "inbound_ephemeral": "Allowed"
+        },
+        "raw_nacl_details": {
+            "Associations": [
+                {
+                    "NetworkAclAssociationId": "aclassoc-0352092c8dd005ce5",
+                    "NetworkAclId": "acl-071d33a15c7a935d9",
+                    "SubnetId": "subnet-08a60b97de22373a9"
+                }
+            ],
+            "Entries": [
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": true,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": true,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 100
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "allow",
+                    "RuleNumber": 101
+                },
+                {
+                    "CidrBlock": "0.0.0.0/0",
+                    "Egress": false,
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32767
+                },
+                {
+                    "Egress": false,
+                    "Ipv6CidrBlock": "::/0",
+                    "Protocol": "-1",
+                    "RuleAction": "deny",
+                    "RuleNumber": 32768
+                }
+            ],
+            "IsDefault": true,
+            "NetworkAclId": "acl-071d33a15c7a935d9",
+            "Tags": [],
+            "VpcId": "vpc-0676e7524d02f9855",
+            "OwnerId": "450339903191"
+        }
+    },
+    "ssm_check": {
+        "status": "Failed (InvalidInstanceId)",
+        "details": {
+            "error": "An error occurred (InvalidInstanceId) when calling the SendCommand operation: Instances [[i-0195b86957c5a419e]] not in a valid state for account 450339903191"
+        }
+    },
+    "ssh_check": {
+        "status": "Error (Key Missing)",
+        "details": {
+            "error": "SSH Key path configuration missing."
+        }
+    },
+    "system_log": {
+        "status": "Retrieved",
+        "details": {
+            "log_content": "M}:5uqkzi+x\u0013H\u0003\u023d\"\u05eby88lrJ\u07bd\u07e0*\u001bvNvN\u0461%~g(\"g)bbN=t=3\u0716$ikz\bwNt\u04ce\u00100\u00020%^}4\u04dd5n~+\u06ae^+-zyj(\u06b6*'Nt\u06ef45Ki\"xb)\u04dd7\u07cdzm]f\u0016\u0233{]\u04dd8MzmihrlP\u0004B\f\"\u000fH\b\u0002=#Nx^z[\u0795m\u07c9\u01a5\u001euy9\u04ee;g-fj\u0007z{\\jh+\u8d87(+{Nt<4Dz\btL\t3\u9b8bhr_jhNt\u007f7<\"\u0014)\u0000#~E\n\u0627Ntw\u0234M4M\u0006\u001e\u0627\u001bU\u0018\u0007^'\u001e\u04ddt)r-4M4}/mv\u0007{kZh\u021b9N8\"M4M7\u001aj\u0018\u0007^'\u001ei^u\u05dc\u05eczj0\u0228g$z'{Nu\u07ce;\u0006hi\u05dd\u04ddwatj\f 1}tM4!\u0014,4M4\u04ddx!t&\u06b6f\u2dedM4r_8W%,y,\"^v\u001c$q/hrM9M<QR\u000e+$-jjzM9O9QR\u000e\u019cZ\u001bZnWzu\u068az8\u079b\u05ec\u04dd\u06de@++\u014aW^InW\u04dd\u05eei<\u0000\")Nv]zO\u0002<wyuq4}y\u07d7%,y)j4}k\u00172rW\u0017}\u07d9bvWm<5n'Nwn;4Dz\btH4D\u9b8bhr_jhNw4 z{l!y'\u06ed+uO{\u05dd\u05ec)j9_5)+-zzh\u059dvZ\u0018Z\u001bZnWz5j+u}tf%wNy\u07ceMz\u06c5!y'wzmx\u1f2dzb\u04deynS\b^v\u0016\u059b\u79f6]\u04fd\u05eb]8o+^Xy\u77bdt=v\u0016\u059b\u79f6y\u07ea+uO{\u05dd\u05ec)j9x0\u001d!z(zZnXu];\u0678wy\u07ed9y\bhjmi^z{k5\u007f8^mzo+^Xyx\u0003>\u0016\u059b\u79f6}\u068azmx\u1f2dzb\u04de}T\fZ\u001bZnWz5j+u\u06ed%wNzn94Dz\btT4<R\b\u0002\u9b8bhr_jhNz}4Dz\btW\fk\u001cW\u069a)r\u04de\u06ddr&M4M+z.\u01f81M4\u001d\u001c\u007f\"0\u04deo)r&M4M+z.\u01f914\u0017}\"0\u04de)r&M4M+z.\u01faM4kM4LtF}whNz{\u021b4M4(\u001eg\u00174M4M1}})\u0763\r9]{\"n4M4\u04b7{\u025eLxM4M4\u001d\u04cd}}\"0\u04der-4M4M\u000bhx\u001dN{7<\"\u0002--\u001b\u05ecu\u06ba[zN{7<\"\u00030\u0005,x,pjy}\u0007\u8b03X,\u001d9\uf3b7:x-i+_)\u6b0axN{{ \u0006ffzm1M4M4osM4\u001d4M4Fy4N0\u001d98hrK(\u001e&j4}}}~fs'%z1\u067dw<k\u0018;]59M}hrK(\u001eK\br\u0017%,z\u001c\u04df5^\b+bjXz\u032c\u9b6e-y\u001e\u02b89m\uc9f2*^nVX^t(H\u01ed)\u05a6~k\u001a+u"
+        }
+    }
+}

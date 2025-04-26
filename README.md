@@ -29,6 +29,52 @@ CML instances can run on Azure and AWS cloud infrastructure.  This repository pr
 > [!NOTE]
 > For instructions on deploying only the DevNet Expert workstation (without CML), see [DEVNET_WORKSTATION.md](DEVNET_WORKSTATION.md).
 
+## Project Folder Structure (2025-04-25)
+
+The following directories and files define the current layout of this repository:
+
+- `cml.2.7.0/` — All Terraform, Packer, scripts, documentation, logs, and artifacts for CML 2.7.0
+    - `artifacts/` — Validation results, forensic logs, and system logs
+    - `assets/` — CML asset files
+    - `cml_validator_utils/` — Python utilities for validation (network, connectivity, IAM, results)
+    - `documentation/` — All project and troubleshooting documentation (AWS.md, PACKER_BUILD.md, etc.)
+    - `images/` — Diagrams and screenshots
+    - `logs/` — Build and validation logs
+    - `modules/` — Terraform modules for AWS/Azure deployments
+    - `packer/` — Packer templates and scripts for AMI builds
+    - `refplat/`, `refplat2.8/` — Reference platform ISOs and related files
+    - `scripts/` — Utility and deployment scripts
+    - `sessionmanager-bundle/` — AWS SSM Session Manager plugin
+    - `terraform/` — Terraform configuration files
+    - `validators/` — Legacy validation scripts (superseded by `validations/`)
+- `cml.2.8.1/` — Disk image and files for CML 2.8.1 (in progress)
+- `cml_validator_utils/` — Shared Python validation utilities
+- `keys/` — SSH keys (excluded from git)
+- `security/` — Security-related files
+- `validations/` — Modular validation scripts (run_validation.py, check_ssm_registration.py, etc.)
+- `.gitignore` — Excludes all PEM keys, credentials, and sensitive files from git
+- `README.md`, `LICENSE`, `INFO` — Project documentation and metadata
+
+### Key Documentation Files
+- `README.md` — This file; high-level overview and quick start
+- `cml.2.7.0/documentation/` — All versioned deployment, troubleshooting, and operations docs
+- `cml.2.7.0/documentation/PACKER_BUILD.md` — Packer build and troubleshooting
+- `cml.2.7.0/documentation/TROUBLESHOOTING.md` — Common deployment and validation issues
+- `cml.2.7.0/documentation/AWS.md` — AWS-specific deployment and configuration
+
+### Validation Scripts
+- All new validation scripts are in `validations/` (not `cml.2.7.0/validators/`)
+- Use `python3 validations/run_validation.py --instance-id <INSTANCE_ID> --all` for full validation
+- SSM agent checks are preferred for connectivity; SSH is optional and requires a key
+
+### Security
+- All PEM keys and credentials are excluded from git via `.gitignore` (see `keys/`)
+- No `.env`, `.tfstate`, or other sensitive files are tracked
+
+### Versioning
+- Each CML version has its own folder (e.g., `cml.2.7.0/`, `cml.2.8.1/`)
+- Never overwrite or delete previous version folders; always add new ones for upgrades
+
 ## Current Status (as of 2025-04-16)
 
 **Troubleshooting Paused - Infrastructure Destroyed**
@@ -547,7 +593,7 @@ All validation scripts are now located in the top-level `validations/` directory
 
 ```sh
 cd validations
-python3 run_validation.py --instance-id <INSTANCE_ID> --check-cml-services
+python3 run_validation.py --instance-id <INSTANCE_ID> --all
 ```
 
 Replace `<INSTANCE_ID>` with your actual AWS EC2 instance ID (e.g., `i-0e0bc211293ebad69`).

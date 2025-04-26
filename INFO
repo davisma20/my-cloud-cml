@@ -1,0 +1,209 @@
+2025-04-25 22:55:49,728 - INFO - Validation checks started.
+2025-04-25 22:55:49,791 - INFO - Fetching details for instance: i-0e0bc211293ebad69
+2025-04-25 22:55:50,611 - INFO - Successfully retrieved details - Subnet: subnet-004ff534d94240f72, VPC: vpc-0f9e34c51974f4858, SGs: ['sg-05e60d7eca8425528']
+2025-04-25 22:55:50,622 - INFO - --- Starting Security Group Checks ---
+2025-04-25 22:56:35,664 - INFO - Validation checks started.
+2025-04-25 22:56:35,706 - INFO - Fetching details for instance: i-0e0bc211293ebad69
+2025-04-25 22:56:36,994 - INFO - Successfully retrieved details - Subnet: subnet-004ff534d94240f72, VPC: vpc-0f9e34c51974f4858, SGs: ['sg-05e60d7eca8425528']
+2025-04-25 22:57:37,397 - INFO - Validation checks started.
+2025-04-25 22:57:37,443 - INFO - Fetching details for instance: i-0e0bc211293ebad69
+2025-04-25 22:57:37,713 - INFO - Successfully retrieved details - Subnet: subnet-004ff534d94240f72, VPC: vpc-0f9e34c51974f4858, SGs: ['sg-05e60d7eca8425528']
+2025-04-25 22:57:37,719 - INFO - --- Starting Security Group Checks ---
+2025-04-25 22:57:37,719 - INFO - Checking Security Groups: sg-05e60d7eca8425528
+2025-04-25 22:57:37,824 - INFO - --- Finished Security Group Checks ---
+2025-04-25 22:57:37,824 - INFO - Finding NACL for subnet: subnet-004ff534d94240f72
+2025-04-25 22:57:37,975 - INFO - Found NACL: acl-0b7b16a9931eb96d2
+2025-04-25 22:57:37,975 - INFO - Checking NACL rules for port vpc-0f9e34c51974f4858/tcp and CIDR 0.0.0.0/0
+2025-04-25 22:58:25,407 - INFO - Validation checks started.
+2025-04-25 22:58:25,452 - INFO - Fetching details for instance: i-0e0bc211293ebad69
+2025-04-25 22:58:26,050 - INFO - Successfully retrieved details - Subnet: subnet-004ff534d94240f72, VPC: vpc-0f9e34c51974f4858, SGs: ['sg-05e60d7eca8425528']
+2025-04-25 22:58:26,055 - INFO - --- Starting Security Group Checks ---
+2025-04-25 22:58:26,055 - INFO - Checking Security Groups: sg-05e60d7eca8425528
+2025-04-25 22:58:26,143 - INFO - --- Finished Security Group Checks ---
+2025-04-25 22:58:26,143 - INFO - Finding NACL for subnet: subnet-004ff534d94240f72
+2025-04-25 22:58:26,218 - INFO - Found NACL: acl-0b7b16a9931eb96d2
+2025-04-25 22:58:26,219 - INFO - Checking NACL rules for port ('acl-0b7b16a9931eb96d2', {'Associations': [{'NetworkAclAssociationId': 'aclassoc-0e64a019129938921', 'NetworkAclId': 'acl-0b7b16a9931eb96d2', 'SubnetId': 'subnet-004ff534d94240f72'}], 'Entries': [{'CidrBlock': '0.0.0.0/0', 'Egress': True, 'Protocol': '-1', 'RuleAction': 'allow', 'RuleNumber': 100}, {'Egress': True, 'Ipv6CidrBlock': '::/0', 'Protocol': '-1', 'RuleAction': 'allow', 'RuleNumber': 101}, {'CidrBlock': '0.0.0.0/0', 'Egress': True, 'Protocol': '-1', 'RuleAction': 'deny', 'RuleNumber': 32767}, {'Egress': True, 'Ipv6CidrBlock': '::/0', 'Protocol': '-1', 'RuleAction': 'deny', 'RuleNumber': 32768}, {'CidrBlock': '0.0.0.0/0', 'Egress': False, 'Protocol': '-1', 'RuleAction': 'allow', 'RuleNumber': 100}, {'Egress': False, 'Ipv6CidrBlock': '::/0', 'Protocol': '-1', 'RuleAction': 'allow', 'RuleNumber': 101}, {'CidrBlock': '0.0.0.0/0', 'Egress': False, 'Protocol': '-1', 'RuleAction': 'deny', 'RuleNumber': 32767}, {'Egress': False, 'Ipv6CidrBlock': '::/0', 'Protocol': '-1', 'RuleAction': 'deny', 'RuleNumber': 32768}], 'IsDefault': True, 'NetworkAclId': 'acl-0b7b16a9931eb96d2', 'Tags': [], 'VpcId': 'vpc-0f9e34c51974f4858', 'OwnerId': '450339903191'})/tcp and CIDR 0.0.0.0/0
+2025-04-25 22:59:37,319 - INFO - Validation checks started.
+2025-04-25 22:59:37,363 - INFO - Fetching details for instance: i-0e0bc211293ebad69
+2025-04-25 22:59:37,627 - INFO - Successfully retrieved details - Subnet: subnet-004ff534d94240f72, VPC: vpc-0f9e34c51974f4858, SGs: ['sg-05e60d7eca8425528']
+2025-04-25 22:59:37,632 - INFO - --- Starting Security Group Checks ---
+2025-04-25 22:59:37,632 - INFO - Checking Security Groups: sg-05e60d7eca8425528
+2025-04-25 22:59:37,723 - INFO - --- Finished Security Group Checks ---
+2025-04-25 22:59:37,723 - INFO - Finding NACL for subnet: subnet-004ff534d94240f72
+2025-04-25 22:59:37,799 - INFO - Found NACL: acl-0b7b16a9931eb96d2
+2025-04-25 22:59:37,799 - INFO - Checking NACL rules for port 22/tcp and CIDR 0.0.0.0/0
+2025-04-25 22:59:37,799 - INFO - --- Starting SSM Agent Check ---
+2025-04-25 23:00:13,756 - INFO - Validation checks started.
+2025-04-25 23:00:13,800 - INFO - Fetching details for instance: i-0e0bc211293ebad69
+2025-04-25 23:00:14,058 - INFO - Successfully retrieved details - Subnet: subnet-004ff534d94240f72, VPC: vpc-0f9e34c51974f4858, SGs: ['sg-05e60d7eca8425528']
+2025-04-25 23:00:14,063 - INFO - --- Starting Security Group Checks ---
+2025-04-25 23:00:14,063 - INFO - Checking Security Groups: sg-05e60d7eca8425528
+2025-04-25 23:00:14,163 - INFO - --- Finished Security Group Checks ---
+2025-04-25 23:00:14,163 - INFO - Finding NACL for subnet: subnet-004ff534d94240f72
+2025-04-25 23:00:14,262 - INFO - Found NACL: acl-0b7b16a9931eb96d2
+2025-04-25 23:00:14,262 - INFO - Checking NACL rules for port 22/tcp and CIDR 0.0.0.0/0
+2025-04-25 23:00:14,262 - INFO - --- Starting SSM Agent Check ---
+2025-04-25 23:00:14,270 - ERROR - Error during SSM agent check: Parameter validation failed:
+Invalid type for parameter InstanceIds[0], value: {'Architecture': 'x86_64', 'BlockDeviceMappings': [{'DeviceName': '/dev/sda1', 'Ebs': {'AttachTime': datetime.datetime(2025, 4, 26, 4, 15, 50, tzinfo=tzutc()), 'DeleteOnTermination': True, 'Status': 'attached', 'VolumeId': 'vol-069f74d5fcbf5f382'}}], 'ClientToken': 'terraform-20250426041549332300000002', 'EbsOptimized': False, 'EnaSupport': True, 'Hypervisor': 'xen', 'IamInstanceProfile': {'Arn': 'arn:aws:iam::450339903191:instance-profile/cml-ssm-profile', 'Id': 'AIPAWRWSZS3L3FHCT3YYZ'}, 'NetworkInterfaces': [{'Association': {'IpOwnerId': '450339903191', 'PublicDnsName': '', 'PublicIp': '18.218.104.202'}, 'Attachment': {'AttachTime': datetime.datetime(2025, 4, 26, 4, 15, 50, tzinfo=tzutc()), 'AttachmentId': 'eni-attach-058be21cc832c741c', 'DeleteOnTermination': True, 'DeviceIndex': 0, 'Status': 'attached', 'NetworkCardIndex': 0}, 'Description': '', 'Groups': [{'GroupId': 'sg-05e60d7eca8425528', 'GroupName': 'tf-sg-cml-0cbb8b92'}], 'Ipv6Addresses': [], 'MacAddress': '02:6b:43:84:b2:fb', 'NetworkInterfaceId': 'eni-0eac50b229b6a0721', 'OwnerId': '450339903191', 'PrivateIpAddress': '10.0.0.209', 'PrivateIpAddresses': [{'Association': {'IpOwnerId': '450339903191', 'PublicDnsName': '', 'PublicIp': '18.218.104.202'}, 'Primary': True, 'PrivateIpAddress': '10.0.0.209'}], 'SourceDestCheck': True, 'Status': 'in-use', 'SubnetId': 'subnet-004ff534d94240f72', 'VpcId': 'vpc-0f9e34c51974f4858', 'InterfaceType': 'interface', 'Operator': {'Managed': False}}], 'RootDeviceName': '/dev/sda1', 'RootDeviceType': 'ebs', 'SecurityGroups': [{'GroupId': 'sg-05e60d7eca8425528', 'GroupName': 'tf-sg-cml-0cbb8b92'}], 'SourceDestCheck': True, 'Tags': [{'Key': 'Name', 'Value': 'cml-controller-0cbb8b92'}], 'VirtualizationType': 'hvm', 'CpuOptions': {'CoreCount': 4, 'ThreadsPerCore': 2}, 'CapacityReservationSpecification': {'CapacityReservationPreference': 'open'}, 'HibernationOptions': {'Configured': False}, 'MetadataOptions': {'State': 'applied', 'HttpTokens': 'required', 'HttpPutResponseHopLimit': 1, 'HttpEndpoint': 'enabled', 'HttpProtocolIpv6': 'disabled', 'InstanceMetadataTags': 'disabled'}, 'EnclaveOptions': {'Enabled': False}, 'PlatformDetails': 'Linux/UNIX', 'UsageOperation': 'RunInstances', 'UsageOperationUpdateTime': datetime.datetime(2025, 4, 26, 4, 15, 50, tzinfo=tzutc()), 'PrivateDnsNameOptions': {'HostnameType': 'ip-name', 'EnableResourceNameDnsARecord': False, 'EnableResourceNameDnsAAAARecord': False}, 'MaintenanceOptions': {'AutoRecovery': 'default'}, 'CurrentInstanceBootMode': 'legacy-bios', 'NetworkPerformanceOptions': {'BandwidthWeighting': 'default'}, 'Operator': {'Managed': False}, 'InstanceId': 'i-0e0bc211293ebad69', 'ImageId': 'ami-03f52ea97f5c41818', 'State': {'Code': 16, 'Name': 'running'}, 'PrivateDnsName': 'ip-10-0-0-209.us-east-2.compute.internal', 'PublicDnsName': '', 'StateTransitionReason': '', 'KeyName': 'terraform-key', 'AmiLaunchIndex': 0, 'ProductCodes': [], 'InstanceType': 'c5.2xlarge', 'LaunchTime': datetime.datetime(2025, 4, 26, 4, 15, 50, tzinfo=tzutc()), 'Placement': {'GroupName': '', 'Tenancy': 'default', 'AvailabilityZone': 'us-east-2a'}, 'Monitoring': {'State': 'disabled'}, 'SubnetId': 'subnet-004ff534d94240f72', 'VpcId': 'vpc-0f9e34c51974f4858', 'PrivateIpAddress': '10.0.0.209', 'PublicIpAddress': '18.218.104.202'}, type: <class 'dict'>, valid types: <class 'str'>
+2025-04-25 23:00:14,271 - INFO - --- Finished SSM Agent Check ---
+2025-04-25 23:06:26,761 - INFO - Validation checks started.
+2025-04-25 23:06:26,810 - INFO - Fetching details for instance: i-0e0bc211293ebad69
+2025-04-25 23:06:27,402 - INFO - Successfully retrieved details - Subnet: subnet-004ff534d94240f72, VPC: vpc-0f9e34c51974f4858, SGs: ['sg-05e60d7eca8425528']
+2025-04-25 23:06:27,407 - INFO - --- Starting Security Group Checks ---
+2025-04-25 23:06:27,407 - INFO - Checking Security Groups: sg-05e60d7eca8425528
+2025-04-25 23:06:27,516 - INFO - --- Finished Security Group Checks ---
+2025-04-25 23:06:27,516 - INFO - Finding NACL for subnet: subnet-004ff534d94240f72
+2025-04-25 23:06:27,605 - INFO - Found NACL: acl-0b7b16a9931eb96d2
+2025-04-25 23:06:27,605 - INFO - Checking NACL rules for port 22/tcp and CIDR 0.0.0.0/0
+2025-04-25 23:06:27,605 - INFO - --- Starting SSM Agent Check ---
+2025-04-25 23:06:30,180 - INFO - --- Finished SSM Agent Check ---
+2025-04-25 23:06:30,181 - INFO - --- Starting SSH Connection Check to Session(region_name='us-east-2') ---
+2025-04-25 23:06:30,181 - ERROR - Could not load SSH key: [Errno 2] No such file or directory: '../keys/cml-validation-key.pem'
+2025-04-25 23:06:30,181 - INFO - Validation checks complete. Saving results...
+2025-04-25 23:07:16,168 - INFO - Validation checks started.
+2025-04-25 23:07:16,216 - INFO - Fetching details for instance: i-0e0bc211293ebad69
+2025-04-25 23:07:16,485 - INFO - Successfully retrieved details - Subnet: subnet-004ff534d94240f72, VPC: vpc-0f9e34c51974f4858, SGs: ['sg-05e60d7eca8425528']
+2025-04-25 23:07:16,490 - INFO - --- Starting Security Group Checks ---
+2025-04-25 23:07:16,490 - INFO - Checking Security Groups: sg-05e60d7eca8425528
+2025-04-25 23:07:16,573 - INFO - --- Finished Security Group Checks ---
+2025-04-25 23:07:16,573 - INFO - Finding NACL for subnet: subnet-004ff534d94240f72
+2025-04-25 23:07:16,648 - INFO - Found NACL: acl-0b7b16a9931eb96d2
+2025-04-25 23:07:16,648 - INFO - Checking NACL rules for port 22/tcp and CIDR 0.0.0.0/0
+2025-04-25 23:07:16,648 - INFO - --- Starting SSM Agent Check ---
+2025-04-25 23:07:19,171 - INFO - --- Finished SSM Agent Check ---
+2025-04-25 23:07:19,171 - INFO - --- Starting SSH Connection Check to Session(region_name='us-east-2') ---
+2025-04-25 23:07:19,171 - ERROR - Could not load SSH key: [Errno 2] No such file or directory: '../keys/cml-validation-key.pem'
+2025-04-25 23:07:19,171 - INFO - Validation checks complete.
+2025-04-25 23:07:19,171 - INFO - --- Formatting Results Summary ---
+2025-04-25 23:07:19,171 - INFO - --- Finished Formatting Results Summary ---
+2025-04-25 23:07:19,171 - INFO - Script finished.
+2025-04-25 23:09:12,238 - INFO - Validation checks started.
+2025-04-25 23:09:12,286 - INFO - Fetching details for instance: i-0e0bc211293ebad69
+2025-04-25 23:09:12,607 - INFO - Successfully retrieved details - Subnet: subnet-004ff534d94240f72, VPC: vpc-0f9e34c51974f4858, SGs: ['sg-05e60d7eca8425528']
+2025-04-25 23:09:12,614 - INFO - --- Starting Security Group Checks ---
+2025-04-25 23:09:12,615 - INFO - Checking Security Groups: sg-05e60d7eca8425528
+2025-04-25 23:09:12,729 - INFO - --- Finished Security Group Checks ---
+2025-04-25 23:09:12,730 - INFO - Finding NACL for subnet: subnet-004ff534d94240f72
+2025-04-25 23:09:12,822 - INFO - Found NACL: acl-0b7b16a9931eb96d2
+2025-04-25 23:09:12,822 - INFO - Checking NACL rules for port 22/tcp and CIDR 0.0.0.0/0
+2025-04-25 23:09:12,822 - INFO - --- Starting SSM Agent Check ---
+2025-04-25 23:09:15,340 - INFO - --- Finished SSM Agent Check ---
+2025-04-25 23:09:15,344 - INFO - --- Starting SSH Connection Check to Session(region_name='us-east-2') ---
+2025-04-25 23:09:15,344 - ERROR - Could not load SSH key: [Errno 2] No such file or directory: '../keys/cml-validation-key.pem'
+2025-04-25 23:09:15,344 - INFO - Validation checks complete.
+2025-04-25 23:09:15,344 - INFO - --- Formatting Results Summary ---
+2025-04-25 23:09:15,344 - INFO - --- Finished Formatting Results Summary ---
+2025-04-25 23:09:15,345 - INFO - Script finished.
+2025-04-25 23:12:56,093 - INFO - Validation checks started.
+2025-04-25 23:12:56,159 - INFO - Fetching details for instance: i-0e0bc211293ebad69
+2025-04-25 23:12:56,772 - INFO - Successfully retrieved details - Subnet: subnet-004ff534d94240f72, VPC: vpc-0f9e34c51974f4858, SGs: ['sg-05e60d7eca8425528']
+2025-04-25 23:12:56,783 - INFO - --- Starting Security Group Checks ---
+2025-04-25 23:12:56,783 - INFO - Checking Security Groups: sg-05e60d7eca8425528
+2025-04-25 23:12:56,896 - INFO - --- Finished Security Group Checks ---
+2025-04-25 23:12:56,896 - INFO - Finding NACL for subnet: subnet-004ff534d94240f72
+2025-04-25 23:12:56,993 - INFO - Found NACL: acl-0b7b16a9931eb96d2
+2025-04-25 23:12:56,993 - INFO - Checking NACL rules for port 22/tcp and CIDR 0.0.0.0/0
+2025-04-25 23:12:56,993 - INFO - --- Starting SSM Agent Check ---
+2025-04-25 23:12:59,852 - INFO - --- Finished SSM Agent Check ---
+2025-04-25 23:12:59,853 - INFO - --- Starting SSH Connection Check to Session(region_name='us-east-2') ---
+2025-04-25 23:12:59,853 - ERROR - Could not load SSH key: [Errno 2] No such file or directory: '../keys/cml-validation-key.pem'
+2025-04-25 23:12:59,853 - INFO - Validation checks complete.
+2025-04-25 23:12:59,853 - INFO - --- Formatting Results Summary ---
+2025-04-25 23:12:59,853 - INFO - Script finished.
+2025-04-25 23:17:06,206 - INFO - Validation checks started.
+2025-04-25 23:17:06,250 - INFO - Fetching details for instance: i-0e0bc211293ebad69
+2025-04-25 23:17:06,604 - INFO - Successfully retrieved details - Subnet: subnet-004ff534d94240f72, VPC: vpc-0f9e34c51974f4858, SGs: ['sg-05e60d7eca8425528']
+2025-04-25 23:17:06,614 - INFO - --- Starting Security Group Checks ---
+2025-04-25 23:17:06,814 - INFO - --- Finished Security Group Checks ---
+2025-04-25 23:17:06,814 - INFO - Finding NACL for subnet: subnet-004ff534d94240f72
+2025-04-25 23:17:06,911 - INFO - Found NACL: acl-0b7b16a9931eb96d2
+2025-04-25 23:17:06,911 - INFO - Checking NACL rules for port 22/tcp and CIDR 0.0.0.0/0
+2025-04-25 23:17:06,911 - INFO - --- Starting SSM Agent Check ---
+2025-04-25 23:17:09,421 - INFO - --- Finished SSM Agent Check ---
+2025-04-25 23:17:09,422 - INFO - --- Starting SSH Connection Check to 18.218.104.202 ---
+2025-04-25 23:17:09,422 - ERROR - Could not load SSH key: [Errno 2] No such file or directory: '../keys/cml-validation-key.pem'
+2025-04-25 23:17:09,422 - INFO - Validation checks complete.
+2025-04-25 23:17:09,422 - INFO - --- Formatting Results Summary ---
+2025-04-25 23:17:09,422 - INFO - --- Finished Formatting Results Summary ---
+2025-04-25 23:17:09,422 - INFO - Script finished.
+2025-04-25 23:18:15,228 - INFO - Validation checks started.
+2025-04-25 23:18:15,276 - INFO - Fetching details for instance: i-0e0bc211293ebad69
+2025-04-25 23:18:15,564 - INFO - Successfully retrieved details - Subnet: subnet-004ff534d94240f72, VPC: vpc-0f9e34c51974f4858, SGs: ['sg-05e60d7eca8425528']
+2025-04-25 23:18:15,569 - INFO - --- Starting Security Group Checks ---
+2025-04-25 23:18:15,660 - INFO - --- Finished Security Group Checks ---
+2025-04-25 23:18:15,660 - INFO - Finding NACL for subnet: subnet-004ff534d94240f72
+2025-04-25 23:18:15,835 - INFO - Found NACL: acl-0b7b16a9931eb96d2
+2025-04-25 23:18:15,835 - INFO - Checking NACL rules for port 22/tcp and CIDR 0.0.0.0/0
+2025-04-25 23:18:15,835 - INFO - --- Starting SSM Agent Check ---
+2025-04-25 23:18:18,361 - INFO - --- Finished SSM Agent Check ---
+2025-04-25 23:18:18,362 - INFO - --- Starting SSH Connection Check to 18.218.104.202 ---
+2025-04-25 23:18:18,362 - ERROR - Could not load SSH key: [Errno 2] No such file or directory: '../keys/cml-validation-key.pem'
+2025-04-25 23:18:18,362 - INFO - Validation checks complete.
+2025-04-25 23:18:18,362 - INFO - --- Formatting Results Summary ---
+2025-04-25 23:18:18,362 - INFO - --- Finished Formatting Results Summary ---
+2025-04-25 23:18:18,362 - INFO - Script finished.
+2025-04-25 23:21:18,540 - INFO - Validation checks started.
+2025-04-25 23:21:18,586 - INFO - Fetching details for instance: i-0e0bc211293ebad69
+2025-04-25 23:21:19,945 - INFO - Successfully retrieved details - Subnet: subnet-004ff534d94240f72, VPC: vpc-0f9e34c51974f4858, SGs: ['sg-05e60d7eca8425528']
+2025-04-25 23:21:19,958 - INFO - --- Starting Security Group Checks ---
+2025-04-25 23:21:20,073 - INFO - --- Finished Security Group Checks ---
+2025-04-25 23:21:20,073 - INFO - Finding NACL for subnet: subnet-004ff534d94240f72
+2025-04-25 23:21:20,173 - INFO - Found NACL: acl-0b7b16a9931eb96d2
+2025-04-25 23:21:20,173 - INFO - Checking NACL rules for port 22/tcp and CIDR 0.0.0.0/0
+2025-04-25 23:21:20,174 - INFO - --- Starting SSM Agent Check ---
+2025-04-25 23:21:22,660 - INFO - --- Finished SSM Agent Check ---
+2025-04-25 23:21:22,665 - INFO - --- Starting SSH Connection Check to 18.218.104.202 ---
+2025-04-25 23:21:22,665 - ERROR - Could not load SSH key: [Errno 2] No such file or directory: '../keys/cml-validation-key.pem'
+2025-04-25 23:21:22,666 - INFO - Validation checks complete.
+2025-04-25 23:21:22,666 - INFO - --- Formatting Results Summary ---
+2025-04-25 23:21:22,666 - INFO - --- Finished Formatting Results Summary ---
+2025-04-25 23:21:22,666 - INFO - Script finished.
+2025-04-25 23:22:27,923 - INFO - Validation checks started.
+2025-04-25 23:22:27,981 - INFO - Fetching details for instance: i-0e0bc211293ebad69
+2025-04-25 23:22:28,569 - INFO - Successfully retrieved details - Subnet: subnet-004ff534d94240f72, VPC: vpc-0f9e34c51974f4858, SGs: ['sg-05e60d7eca8425528']
+2025-04-25 23:22:28,574 - INFO - --- Starting Security Group Checks ---
+2025-04-25 23:22:28,663 - INFO - --- Finished Security Group Checks ---
+2025-04-25 23:22:28,664 - INFO - Finding NACL for subnet: subnet-004ff534d94240f72
+2025-04-25 23:22:28,776 - INFO - Found NACL: acl-0b7b16a9931eb96d2
+2025-04-25 23:22:28,776 - INFO - Checking NACL rules for port 22/tcp and CIDR 0.0.0.0/0
+2025-04-25 23:22:28,776 - INFO - --- Starting SSM Agent Check ---
+2025-04-25 23:22:31,315 - INFO - --- Finished SSM Agent Check ---
+2025-04-25 23:22:31,318 - INFO - --- Starting SSH Connection Check to 18.218.104.202 ---
+2025-04-25 23:22:31,319 - ERROR - Could not load SSH key: [Errno 2] No such file or directory: '../keys/cml-validation-key.pem'
+2025-04-25 23:22:31,319 - INFO - Validation checks complete.
+2025-04-25 23:22:31,319 - INFO - --- Formatting Results Summary ---
+2025-04-25 23:22:31,319 - INFO - --- Finished Formatting Results Summary ---
+2025-04-25 23:22:31,320 - INFO - Script finished.
+2025-04-25 23:25:11,581 - INFO - Validation checks started.
+2025-04-25 23:25:11,629 - INFO - Fetching details for instance: i-0e0bc211293ebad69
+2025-04-25 23:25:12,496 - INFO - Successfully retrieved details - Subnet: subnet-004ff534d94240f72, VPC: vpc-0f9e34c51974f4858, SGs: ['sg-05e60d7eca8425528']
+2025-04-25 23:25:12,504 - INFO - --- Starting Security Group Checks ---
+2025-04-25 23:25:12,610 - INFO - --- Finished Security Group Checks ---
+2025-04-25 23:25:12,610 - INFO - Finding NACL for subnet: subnet-004ff534d94240f72
+2025-04-25 23:25:12,718 - INFO - Found NACL: acl-0b7b16a9931eb96d2
+2025-04-25 23:25:12,719 - INFO - Checking NACL rules for port 22/tcp and CIDR 0.0.0.0/0
+2025-04-25 23:25:12,719 - INFO - --- Starting SSM Agent Check ---
+2025-04-25 23:25:15,532 - INFO - --- Finished SSM Agent Check ---
+2025-04-25 23:25:15,535 - INFO - --- Starting SSH Connection Check to 18.218.104.202 ---
+2025-04-25 23:25:15,535 - ERROR - Could not load SSH key: [Errno 2] No such file or directory: '../keys/cml-validation-key.pem'
+2025-04-25 23:25:15,535 - INFO - Validation checks complete.
+2025-04-25 23:25:15,535 - INFO - --- Formatting Results Summary ---
+2025-04-25 23:25:15,535 - INFO - --- Finished Formatting Results Summary ---
+2025-04-25 23:25:15,536 - INFO - Script finished.
+2025-04-25 23:26:20,261 - INFO - Validation checks started.
+2025-04-25 23:26:20,305 - INFO - Fetching details for instance: i-0e0bc211293ebad69
+2025-04-25 23:26:20,614 - INFO - Successfully retrieved details - Subnet: subnet-004ff534d94240f72, VPC: vpc-0f9e34c51974f4858, SGs: ['sg-05e60d7eca8425528']
+2025-04-25 23:26:20,627 - INFO - --- Starting Security Group Checks ---
+2025-04-25 23:26:20,728 - INFO - --- Finished Security Group Checks ---
+2025-04-25 23:26:20,728 - INFO - Finding NACL for subnet: subnet-004ff534d94240f72
+2025-04-25 23:26:20,815 - INFO - Found NACL: acl-0b7b16a9931eb96d2
+2025-04-25 23:26:20,815 - INFO - Checking NACL rules for port 22/tcp and CIDR 0.0.0.0/0
+2025-04-25 23:26:20,816 - INFO - --- Starting SSM Agent Check ---
+2025-04-25 23:26:23,604 - INFO - --- Finished SSM Agent Check ---
+2025-04-25 23:26:23,608 - INFO - --- Starting SSH Connection Check to 18.218.104.202 ---
+2025-04-25 23:26:24,114 - ERROR - An unexpected error occurred during SSH check: Bad authentication type; allowed types: ['password']
+2025-04-25 23:26:24,114 - INFO - --- Finished SSH Connection Check ---
+2025-04-25 23:26:24,114 - INFO - Validation checks complete.
+2025-04-25 23:26:24,115 - INFO - --- Formatting Results Summary ---
+2025-04-25 23:26:24,115 - INFO - --- Finished Formatting Results Summary ---
+2025-04-25 23:26:24,115 - INFO - Script finished.

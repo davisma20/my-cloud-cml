@@ -17,6 +17,10 @@ crash.log
 *.jpg
 packer/*.log
 
+# Validation logs
+logs/
+validations/logs/
+
 # Scripts and service files (that are generated or temporary)
 cml_fix.sh
 fix_cml_install.sh
